@@ -6,17 +6,17 @@ Tài liệu này phác thảo ý tưởng và thiết kế kỹ thuật cho ứn
 
 Để hiểu rõ hơn về dự án, vui lòng đọc các tài liệu chi tiết sau:
 
-1. **[Tài liệu Yêu cầu Sản phẩm (PRD)](file:///e:/Projects/Dashboard%20Clock/doc/prd.md)**
+1. **[Tài liệu Yêu cầu Sản phẩm (PRD)](doc/prd.md)**
    * Định nghĩa tính năng cho ứng dụng Điện thoại và ứng dụng TV.
    * Trải nghiệm người dùng (UX) và Giao diện (UI) trên TV.
    * Các kịch bản sử dụng thực tế.
 
-2. **[Kiến trúc Hệ thống & Kỹ thuật (Architecture)](file:///e:/Projects/Dashboard%20Clock/doc/architecture.md)**
+2. **[Kiến trúc Hệ thống & Kỹ thuật (Architecture)](doc/architecture.md)**
    * Mô hình kết nối giữa Điện thoại và TV (mDNS, WebSockets, Local Network).
    * Các thư viện (packages) Flutter đề xuất.
    * Giải pháp bảo mật và tối ưu năng lượng.
 
-3. **[Thiết kế Kỹ thuật Android & Flutter (Technical Design)](file:///e:/Projects/Dashboard%20Clock/doc/technical_design.md)**
+3. **[Thiết kế Kỹ thuật Android & Flutter (Technical Design)](doc/technical_design.md)**
    * Cách lắng nghe thông báo trên Android (`NotificationListenerService`).
    * Hiển thị đè lên ứng dụng khác trên Android TV (`SYSTEM_ALERT_WINDOW`).
    * Quản lý chạy ngầm (Background Service) và duy trì kết nối.

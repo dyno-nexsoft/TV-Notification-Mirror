@@ -50,7 +50,7 @@ class TvMainScreen extends StatefulWidget {
   State<TvMainScreen> createState() => _TvMainScreenState();
 }
 
-class _TvMainScreenState extends State<TvMainScreen> {
+class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver {
   bool _hasOverlayPermission = false;
   String _tvIp = 'Loading IP...';
   
@@ -65,6 +65,7 @@ class _TvMainScreenState extends State<TvMainScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _checkPermission();
     _fetchIp();
     
@@ -83,8 +84,16 @@ class _TvMainScreenState extends State<TvMainScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _stateSub?.cancel();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _checkPermission();
+    }
   }
 
   Future<void> _checkPermission() async {

@@ -7,7 +7,7 @@
     <application
         android:label="phone"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/launcher_icon">
 
         <!-- Notification Listener Service -->
         <service android:name=".MyNotificationListener"

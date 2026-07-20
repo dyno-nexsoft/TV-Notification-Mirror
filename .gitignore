@@ -1,0 +1,10 @@
+# FVM local SDK (symlink) should be ignored
+.fvm/flutter_sdk
+
+# Miscellaneous
+*.log
+*.lock
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

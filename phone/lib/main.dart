@@ -273,8 +273,18 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _buildStatusCard(),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           if (!_isConnected) ...[
+            OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: _showManualConnectDialog,
+              icon: const Icon(Icons.link),
+              label: const Text('Connect with IP Address'),
+            ),
+            const SizedBox(height: 24),
             const Text(
               'Available TVs in Network',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white70),
@@ -471,6 +481,63 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               },
               child: const Text('Connect'),
             )
+          ],
+        );
+      },
+    );
+  }
+
+  void _showManualConnectDialog() {
+    final ipController = TextEditingController(text: '10.0.2.2');
+    final portController = TextEditingController(text: '8080');
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Connect with IP'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: ipController,
+                decoration: const InputDecoration(
+                  labelText: 'TV IP Address',
+                  hintText: 'e.g. 192.168.1.50 or 10.0.2.2',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: portController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Port',
+                  hintText: 'e.g. 8080',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final ip = ipController.text.trim();
+                final portStr = portController.text.trim();
+                final port = int.tryParse(portStr) ?? 8080;
+                
+                if (ip.isNotEmpty) {
+                  Navigator.pop(context); // close manual connection dialog
+                  final device = TVDevice(name: 'Manual TV', ip: ip, port: port);
+                  _showPairingDialog(device);
+                }
+              },
+              child: const Text('Connect'),
+            ),
           ],
         );
       },

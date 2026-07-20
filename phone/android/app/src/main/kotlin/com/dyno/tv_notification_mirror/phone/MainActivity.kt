@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.os.Build
 import android.provider.Settings
 import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
@@ -71,7 +72,11 @@ class MainActivity : FlutterActivity() {
                         addAction(MyNotificationListener.ACTION_NEW_NOTIFICATION)
                         addAction(MyNotificationListener.ACTION_REMOVED_NOTIFICATION)
                     }
-                    registerReceiver(receiver, filter)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
+                    } else {
+                        registerReceiver(receiver, filter)
+                    }
                 }
 
                 override fun onCancel(arguments: Any?) {

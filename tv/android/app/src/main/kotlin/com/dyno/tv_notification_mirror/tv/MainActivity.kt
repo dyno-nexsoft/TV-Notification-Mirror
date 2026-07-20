@@ -53,7 +53,7 @@ class MainActivity : FlutterActivity() {
             }
         }
         val filter = IntentFilter(ACTION_SHOW_OVERLAY)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             registerReceiver(overlayReceiver, filter, Context.RECEIVER_EXPORTED)
         } else {
             registerReceiver(overlayReceiver, filter)

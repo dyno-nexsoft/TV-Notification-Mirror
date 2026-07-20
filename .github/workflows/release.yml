@@ -1,0 +1,76 @@
+name: Build and Release APKs
+
+on:
+  push:
+    tags:
+      - 'v*' # Triggers on tags starting with v, e.g., v1.0.0
+
+permissions:
+  contents: write # Required to create releases and upload assets
+
+jobs:
+  build-and-release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout repository code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. Setup Java Environment (JDK 17 required for modern Android Gradle builds)
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'gradle'
+
+      # 3. Setup Flutter SDK
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      # 4. Build Phone Application
+      - name: Build Phone App APK
+        run: |
+          cd phone
+          flutter pub get
+          flutter build apk --release
+          
+      # 5. Build TV Application
+      - name: Build TV App APK
+        run: |
+          cd tv
+          flutter pub get
+          flutter build apk --release
+
+      # 6. Prepare assets (rename APKs for clarity in release)
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p release-assets
+          cp phone/build/app/outputs/flutter-apk/app-release.apk release-assets/tv-notification-mirror-phone.apk
+          cp tv/build/app/outputs/flutter-apk/app-release.apk release-assets/tv-notification-mirror-tv.apk
+
+      # 7. Create GitHub Release and Upload Assets
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release-assets/tv-notification-mirror-phone.apk
+            release-assets/tv-notification-mirror-tv.apk
+          name: Release ${{ github.ref_name }}
+          body: |
+            ## TV Notification Mirror Release
+            
+            Bản phát hành tự động cho phiên bản ${{ github.ref_name }}.
+            
+            ### Danh sách tệp tải về:
+            * **[Điện thoại]** `tv-notification-mirror-phone.apk`: Cài đặt trên Điện thoại Android.
+            * **[TV]** `tv-notification-mirror-tv.apk`: Cài đặt trên Android TV / Google TV.
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -488,15 +488,15 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   // Filters Tab
   Widget _buildFiltersTab() {
     final apps = [
-      {'pkg': 'com.whatsapp', 'name': 'WhatsApp'},
-      {'pkg': 'com.facebook.orca', 'name': 'Messenger'},
-      {'pkg': 'org.telegram.messenger', 'name': 'Telegram'},
-      {'pkg': 'com.viber.voip', 'name': 'Viber'},
-      {'pkg': 'com.zing.zalo', 'name': 'Zalo'},
-      {'pkg': 'com.google.android.apps.messaging', 'name': 'SMS Messages'},
-      {'pkg': 'com.google.android.gm', 'name': 'Gmail'},
-      {'pkg': 'com.facebook.katana', 'name': 'Facebook'},
-      {'pkg': 'com.instagram.android', 'name': 'Instagram'},
+      {'pkg': 'com.whatsapp', 'name': 'WhatsApp', 'icon': Icons.chat, 'color': const Color(0xFF25D366)},
+      {'pkg': 'com.facebook.orca', 'name': 'Messenger', 'icon': Icons.messenger, 'color': const Color(0xFF0084FF)},
+      {'pkg': 'org.telegram.messenger', 'name': 'Telegram', 'icon': Icons.send, 'color': const Color(0xFF0088CC)},
+      {'pkg': 'com.viber.voip', 'name': 'Viber', 'icon': Icons.phone_in_talk, 'color': const Color(0xFF7360F2)},
+      {'pkg': 'com.zing.zalo', 'name': 'Zalo', 'icon': Icons.message, 'color': const Color(0xFF0068FF)},
+      {'pkg': 'com.google.android.apps.messaging', 'name': 'SMS Messages', 'icon': Icons.sms, 'color': const Color(0xFF00B0FF)},
+      {'pkg': 'com.google.android.gm', 'name': 'Gmail', 'icon': Icons.mail, 'color': const Color(0xFFEA4335)},
+      {'pkg': 'com.facebook.katana', 'name': 'Facebook', 'icon': Icons.facebook, 'color': const Color(0xFF1877F2)},
+      {'pkg': 'com.instagram.android', 'name': 'Instagram', 'icon': Icons.camera_alt, 'color': const Color(0xFFE1306C)},
     ];
 
     return ListView.builder(
@@ -504,13 +504,19 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       itemCount: apps.length,
       itemBuilder: (context, index) {
         final app = apps[index];
-        final pkg = app['pkg']!;
-        final name = app['name']!;
+        final pkg = app['pkg'] as String;
+        final name = app['name'] as String;
+        final appIcon = app['icon'] as IconData;
+        final appColor = app['color'] as Color;
         final isEnabled = _appFilters[pkg] ?? true;
 
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
           child: SwitchListTile(
+            secondary: CircleAvatar(
+              backgroundColor: appColor.withValues(alpha: 0.2),
+              child: Icon(appIcon, color: appColor),
+            ),
             title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
             subtitle: Text(pkg, style: const TextStyle(fontSize: 12, color: Colors.grey)),
             value: isEnabled,
@@ -520,6 +526,36 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         );
       },
     );
+  }
+
+  IconData _getAppIcon(String packageName) {
+    switch (packageName) {
+      case 'com.whatsapp': return Icons.chat;
+      case 'com.facebook.orca': return Icons.messenger;
+      case 'org.telegram.messenger': return Icons.send;
+      case 'com.viber.voip': return Icons.phone_in_talk;
+      case 'com.zing.zalo': return Icons.message;
+      case 'com.google.android.apps.messaging': return Icons.sms;
+      case 'com.google.android.gm': return Icons.mail;
+      case 'com.facebook.katana': return Icons.facebook;
+      case 'com.instagram.android': return Icons.camera_alt;
+      default: return Icons.notifications;
+    }
+  }
+
+  Color _getAppColor(String packageName) {
+    switch (packageName) {
+      case 'com.whatsapp': return const Color(0xFF25D366);
+      case 'com.facebook.orca': return const Color(0xFF0084FF);
+      case 'org.telegram.messenger': return const Color(0xFF0088CC);
+      case 'com.viber.voip': return const Color(0xFF7360F2);
+      case 'com.zing.zalo': return const Color(0xFF0068FF);
+      case 'com.google.android.apps.messaging': return const Color(0xFF00B0FF);
+      case 'com.google.android.gm': return const Color(0xFFEA4335);
+      case 'com.facebook.katana': return const Color(0xFF1877F2);
+      case 'com.instagram.android': return const Color(0xFFE1306C);
+      default: return const Color(0xFF7F5AF0);
+    }
   }
 
   // History Tab
@@ -539,6 +575,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       itemBuilder: (context, index) {
         final item = _history[index];
         final appName = NotificationItem.getAppName(item.packageName);
+        final appIcon = _getAppIcon(item.packageName);
+        final appColor = _getAppColor(item.packageName);
 
         return Card(
           margin: const EdgeInsets.only(bottom: 12),
@@ -548,12 +586,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 CircleAvatar(
-                  backgroundColor: const Color(0xFF2E2A4A),
+                  backgroundColor: appColor.withValues(alpha: 0.2),
                   radius: 20,
-                  child: Text(
-                    appName.substring(0, 1),
-                    style: const TextStyle(color: Color(0xFF7F5AF0), fontWeight: FontWeight.bold),
-                  ),
+                  child: Icon(appIcon, color: appColor, size: 20),
                 ),
                 const SizedBox(width: 12),
                 Expanded(

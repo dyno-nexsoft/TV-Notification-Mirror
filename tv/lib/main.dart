@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -39,6 +40,36 @@ class MyApp extends StatelessWidget {
           elevation: 8,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ButtonStyle(
+            side: WidgetStateProperty.resolveWith<BorderSide?>((states) {
+              if (states.contains(WidgetState.focused)) {
+                return const BorderSide(color: Colors.white, width: 2.5);
+              }
+              return BorderSide.none;
+            }),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: ButtonStyle(
+            side: WidgetStateProperty.resolveWith<BorderSide?>((states) {
+              if (states.contains(WidgetState.focused)) {
+                return const BorderSide(color: Color(0xFF7F5AF0), width: 2.5);
+              }
+              return BorderSide.none;
+            }),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: ButtonStyle(
+            side: WidgetStateProperty.resolveWith<BorderSide?>((states) {
+              if (states.contains(WidgetState.focused)) {
+                return const BorderSide(color: Colors.white, width: 2.5);
+              }
+              return null;
+            }),
+          ),
+        ),
         fontFamily: 'Outfit',
       ),
       home: const TvMainScreen(),
@@ -64,6 +95,7 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
   bool _isDnd = false;
   List<dynamic> _pairedClients = [];
   Set<String> _activeTokens = {};
+  List<dynamic> _notificationHistory = [];
 
   StreamSubscription? _stateSub;
   StreamSubscription? _overlaySub;
@@ -85,6 +117,7 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
           _isDnd = data['isDnd'];
           _pairedClients = data['clients'] ?? [];
           _activeTokens = Set<String>.from(data['activeTokens'] ?? []);
+          _notificationHistory = data['history'] ?? [];
         });
       }
     });
@@ -96,6 +129,9 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
           title: data['title'] ?? '',
           text: data['text'] ?? '',
           appName: data['appName'] ?? '',
+          base64Icon: data['base64Icon'],
+          overlayPosition: data['overlayPosition'],
+          overlayDurationMs: data['overlayDuration'],
         );
       }
     });
@@ -175,6 +211,7 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
         content: Text('Remove "$deviceName" from paired devices?'),
         actions: [
           TextButton(
+            autofocus: true,
             onPressed: () => Navigator.pop(dialogCtx),
             child: const Text('Cancel'),
           ),
@@ -213,6 +250,7 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
         ),
         actions: [
           TextButton(
+            autofocus: true,
             onPressed: () => Navigator.pop(dialogCtx, false),
             child: const Text('Cancel'),
           ),
@@ -319,33 +357,128 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
                     _buildConnectedBox()
                   else
                     _buildWaitingBox(),
-                  const SizedBox(height: 40),
-                  
-                  // Paired Clients list
-                  const Text(
-                    'Paired Devices',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white70),
-                  ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 30),
                   Expanded(
-                    child: _pairedClients.isEmpty
-                        ? _buildEmptyClients()
-                        : ListView.builder(
-                            itemCount: _pairedClients.length,
-                            itemBuilder: (context, index) {
-                              final client = _pairedClients[index];
-                              final token = client['token'] as String? ?? '';
-                              return PairedDeviceCard(
-                                deviceName: client['deviceName'] ?? 'Unknown Phone',
-                                ip: client['ip'] ?? '',
-                                isOnline: _activeTokens.contains(token),
-                                onRemove: () => _confirmRemoveClient(
-                                  token,
-                                  client['deviceName'] ?? 'Unknown Phone',
-                                ),
-                              );
-                            },
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Left column: Paired Devices
+                        Expanded(
+                          flex: 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Paired Devices',
+                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white70),
+                              ),
+                              const SizedBox(height: 12),
+                              Expanded(
+                                child: _pairedClients.isEmpty
+                                    ? _buildEmptyClients()
+                                    : ListView.builder(
+                                        itemCount: _pairedClients.length,
+                                        itemBuilder: (context, index) {
+                                          final client = _pairedClients[index];
+                                          final token = client['token'] as String? ?? '';
+                                          return PairedDeviceCard(
+                                            deviceName: client['deviceName'] ?? 'Unknown Phone',
+                                            ip: client['ip'] ?? '',
+                                            isOnline: _activeTokens.contains(token),
+                                            onRemove: () => _confirmRemoveClient(
+                                              token,
+                                              client['deviceName'] ?? 'Unknown Phone',
+                                            ),
+                                          );
+                                        },
+                                      ),
+                              ),
+                            ],
                           ),
+                        ),
+                        const SizedBox(width: 30),
+                        // Vertical divider line
+                        Container(
+                          width: 1,
+                          color: Colors.white10,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                        ),
+                        const SizedBox(width: 30),
+                        // Right column: Recent Notifications history
+                        Expanded(
+                          flex: 1,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Recent Notifications',
+                                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white70),
+                              ),
+                              const SizedBox(height: 12),
+                              Expanded(
+                                child: _notificationHistory.isEmpty
+                                    ? const Center(
+                                        child: Text(
+                                          'Chưa có thông báo nào.',
+                                          style: TextStyle(color: Colors.grey, fontSize: 14),
+                                        ),
+                                      )
+                                    : ListView.builder(
+                                        itemCount: _notificationHistory.length,
+                                        itemBuilder: (context, index) {
+                                          final item = _notificationHistory[index];
+                                          final title = item['title'] ?? '';
+                                          final text = item['text'] ?? '';
+                                          final appIconBase64 = item['appIcon'] as String?;
+                                          
+                                          // Format timestamp to Time string, e.g. 15:30
+                                          final timestamp = item['timestamp'] as int? ?? DateTime.now().millisecondsSinceEpoch;
+                                          final dt = DateTime.fromMillisecondsSinceEpoch(timestamp);
+                                          final timeStr = "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
+
+                                          return Card(
+                                            color: const Color(0xFF161624),
+                                            margin: const EdgeInsets.only(bottom: 8),
+                                            child: ListTile(
+                                              leading: CircleAvatar(
+                                                backgroundColor: const Color(0xFF7F5AF0).withValues(alpha: 0.1),
+                                                child: appIconBase64 != null
+                                                    ? ClipOval(
+                                                        child: Image.memory(
+                                                          base64Decode(appIconBase64),
+                                                          width: 24,
+                                                          height: 24,
+                                                          fit: BoxFit.cover,
+                                                        ),
+                                                      )
+                                                    : const Icon(Icons.notifications, color: Color(0xFF7F5AF0), size: 20),
+                                              ),
+                                              title: Text(
+                                                title,
+                                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              subtitle: Text(
+                                                text,
+                                                style: const TextStyle(fontSize: 12, color: Colors.white70),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                              trailing: Text(
+                                                timeStr,
+                                                style: const TextStyle(fontSize: 10, color: Colors.grey),
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -359,7 +492,7 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
 
   Widget _buildOverlayWarningCard() {
     return Card(
-      color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+      color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Theme.of(context).colorScheme.error, width: 1),
@@ -396,7 +529,7 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
 
   Widget _buildNotificationWarningCard() {
     return Card(
-      color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+      color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: BorderSide(color: Theme.of(context).colorScheme.error, width: 1),
@@ -471,7 +604,7 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF2E2A4A).withOpacity(0.3),
+        color: const Color(0xFF2E2A4A).withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: const Color(0xFF7F5AF0), width: 1.5),
       ),
@@ -487,7 +620,7 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
                 const SizedBox(height: 4),
                 Text(
                   'Enter this PIN on your phone:',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white.withOpacity(0.9)),
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white.withValues(alpha: 0.9)),
                 ),
               ],
             ),
@@ -559,7 +692,7 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
       decoration: BoxDecoration(
         color: const Color(0xFF16151D),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFF2CB67D).withOpacity(0.3), width: 1.5),
+        border: Border.all(color: const Color(0xFF2CB67D).withValues(alpha: 0.3), width: 1.5),
       ),
       child: Row(
         children: [
@@ -644,7 +777,7 @@ class _TvButtonState extends State<TvButton> {
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(12),
           boxShadow: _isFocused
-              ? [BoxShadow(color: widget.color.withOpacity(0.4), blurRadius: 15, spreadRadius: 2)]
+              ? [BoxShadow(color: widget.color.withValues(alpha: 0.4), blurRadius: 15, spreadRadius: 2)]
               : [],
         ),
         child: ElevatedButton.icon(

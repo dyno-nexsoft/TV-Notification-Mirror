@@ -221,20 +221,53 @@ class ConnectorService {
   }
 
   // Send notification to TV
-  void sendNotification(NotificationItem item) {
+  void sendNotification(
+    NotificationItem item, {
+    String? base64Icon,
+    String? overlayPosition,
+    int? overlayDurationMs,
+  }) {
     if (!_isConnected || _wsChannel == null) {
       print("Cannot send notification: WebSocket not connected.");
       return;
     }
 
+    final itemJson = item.toJson();
+    if (base64Icon != null) {
+      itemJson['appIcon'] = base64Icon;
+    }
+    if (overlayPosition != null) {
+      itemJson['overlayPosition'] = overlayPosition;
+    }
+    if (overlayDurationMs != null) {
+      itemJson['overlayDuration'] = overlayDurationMs;
+    }
+
     final payload = {
       'event': 'notification_new',
       'timestamp': DateTime.now().millisecondsSinceEpoch,
-      'data': item.toJson(),
+      'data': itemJson,
     };
 
     _wsChannel!.sink.add(jsonEncode(payload));
     print("Notification sent to TV: ${item.title}");
+  }
+
+  // Send DND setting to TV
+  void sendDndToggle(bool enabled) {
+    if (!_isConnected || _wsChannel == null) {
+      print("Cannot send DND toggle: WebSocket not connected.");
+      return;
+    }
+
+    final payload = {
+      'event': 'set_dnd',
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+      'data': {'enabled': enabled},
+    };
+
+    _wsChannel!.sink.add(jsonEncode(payload));
+    print("Remote DND change sent to TV: $enabled");
   }
 
   // Send cancel notification to TV

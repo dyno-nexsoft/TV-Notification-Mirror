@@ -40,6 +40,9 @@ void onStart(ServiceInstance service) async {
           'title': event['title'],
           'text': event['text'],
           'appName': event['appName'],
+          'base64Icon': event['base64Icon'],
+          'overlayPosition': event['overlayPosition'],
+          'overlayDuration': event['overlayDuration'],
         });
       } else if (event['action'] == 'hide') {
         service.invoke('hideOverlay');
@@ -61,6 +64,7 @@ void onStart(ServiceInstance service) async {
         }).toList(),
         // Which tokens currently have an active WebSocket connection.
         'activeTokens': server.activeTokens.toList(),
+        'history': server.notificationHistory,
       });
     }
   });

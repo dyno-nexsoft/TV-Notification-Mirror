@@ -16,8 +16,11 @@ import android.provider.Settings
 import android.util.Log
 import android.view.Gravity
 import android.view.LayoutInflater
+import android.graphics.BitmapFactory
+import android.util.Base64
 import android.view.View
 import android.view.WindowManager
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.NonNull
 import io.flutter.embedding.android.FlutterActivity
@@ -65,9 +68,11 @@ class MainActivity : FlutterActivity() {
                     val title = intent.getStringExtra("title") ?: ""
                     val text = intent.getStringExtra("text") ?: ""
                     val appName = intent.getStringExtra("appName") ?: ""
+                    val base64Icon = intent.getStringExtra("base64Icon")
+                    val overlayPosition = intent.getStringExtra("overlayPosition")
                     val duration = intent.getIntExtra("duration", 5000)
                     
-                    showNotificationOverlay(title, text, appName, duration)
+                    showNotificationOverlay(title, text, appName, base64Icon, overlayPosition, duration)
                 }
             }
         }
@@ -110,9 +115,11 @@ class MainActivity : FlutterActivity() {
                     val title = call.argument<String>("title") ?: ""
                     val text = call.argument<String>("text") ?: ""
                     val appName = call.argument<String>("appName") ?: ""
+                    val base64Icon = call.argument<String>("base64Icon")
+                    val overlayPosition = call.argument<String>("overlayPosition")
                     val duration = call.argument<Int>("duration") ?: 5000
                     
-                    showNotificationOverlay(title, text, appName, duration)
+                    showNotificationOverlay(title, text, appName, base64Icon, overlayPosition, duration)
                     result.success(true)
                 }
                 "hideOverlay" -> {
@@ -166,7 +173,7 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun showNotificationOverlay(title: String, text: String, appName: String, duration: Int) {
+    private fun showNotificationOverlay(title: String, text: String, appName: String, base64Icon: String?, overlayPosition: String?, duration: Int) {
         handler.post {
             hideNotificationOverlay()
 
@@ -185,6 +192,31 @@ class MainActivity : FlutterActivity() {
                 overlayView?.findViewById<TextView>(R.id.titleText)?.text = title
                 overlayView?.findViewById<TextView>(R.id.bodyText)?.text = text
 
+                val appIconImage = overlayView?.findViewById<ImageView>(R.id.appIconImage)
+                val fallbackIndicator = overlayView?.findViewById<View>(R.id.fallbackIndicator)
+
+                if (base64Icon != null && base64Icon.isNotEmpty()) {
+                    try {
+                        val decodedString = Base64.decode(base64Icon, Base64.DEFAULT)
+                        val decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+                        if (decodedByte != null) {
+                            appIconImage?.setImageBitmap(decodedByte)
+                            appIconImage?.visibility = View.VISIBLE
+                            fallbackIndicator?.visibility = View.GONE
+                        } else {
+                            appIconImage?.visibility = View.GONE
+                            fallbackIndicator?.visibility = View.VISIBLE
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to decode base64 icon: ${e.message}")
+                        appIconImage?.visibility = View.GONE
+                        fallbackIndicator?.visibility = View.VISIBLE
+                    }
+                } else {
+                    appIconImage?.visibility = View.GONE
+                    fallbackIndicator?.visibility = View.VISIBLE
+                }
+
                 val layoutParams = WindowManager.LayoutParams(
                     WindowManager.LayoutParams.WRAP_CONTENT,
                     WindowManager.LayoutParams.WRAP_CONTENT,
@@ -198,7 +230,12 @@ class MainActivity : FlutterActivity() {
                     PixelFormat.TRANSLUCENT
                 )
 
-                layoutParams.gravity = Gravity.TOP or Gravity.END
+                layoutParams.gravity = when (overlayPosition) {
+                    "top_left" -> Gravity.TOP or Gravity.START
+                    "bottom_left" -> Gravity.BOTTOM or Gravity.START
+                    "bottom_right" -> Gravity.BOTTOM or Gravity.END
+                    else -> Gravity.TOP or Gravity.END
+                }
                 layoutParams.x = 80
                 layoutParams.y = 80
 

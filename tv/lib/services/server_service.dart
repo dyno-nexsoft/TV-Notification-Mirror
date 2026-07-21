@@ -44,6 +44,7 @@ class ServerService {
   
   bool _isRunning = false;
   bool _isDndEnabled = false; // Do Not Disturb
+  final List<Map<String, dynamic>> _notificationHistory = [];
 
   Stream<String?> get pairingPinStream => _pairingStateController.stream;
   Stream<List<ConnectedClient>> get pairedClientsStream => _clientsController.stream;
@@ -52,6 +53,7 @@ class ServerService {
   List<ConnectedClient> get pairedClients => _pairedClients;
   bool get isDndEnabled => _isDndEnabled;
   Set<String> get activeTokens => _activeTokens;
+  List<Map<String, dynamic>> get notificationHistory => _notificationHistory;
   Stream<Map<String, dynamic>> get overlayStream => _overlayController.stream;
 
   set isDndEnabled(bool value) {
@@ -255,6 +257,18 @@ class ServerService {
         return;
       }
 
+      // Handle Remote DND Control
+      if (event == 'toggle_dnd') {
+        _isDndEnabled = !_isDndEnabled;
+        print("DND mode toggled remotely to: $_isDndEnabled");
+        return;
+      }
+      if (event == 'set_dnd') {
+        _isDndEnabled = data['enabled'] as bool? ?? false;
+        print("DND mode set remotely to: $_isDndEnabled");
+        return;
+      }
+
       if (_isDndEnabled) {
         print("DND mode enabled, ignoring notification.");
         return;
@@ -264,6 +278,22 @@ class ServerService {
         final title = data['title'] ?? '';
         final text = data['text'] ?? '';
         final appName = data['appName'] ?? 'Notification';
+        final base64Icon = data['appIcon'];
+        final overlayPosition = data['overlayPosition'];
+        final overlayDuration = data['overlayDuration'];
+
+        // Add to history (keep last 15)
+        _notificationHistory.insert(0, {
+          'title': title,
+          'text': text,
+          'appName': appName,
+          'packageName': data['packageName'] ?? '',
+          'timestamp': data['postTime'] ?? DateTime.now().millisecondsSinceEpoch,
+          'appIcon': base64Icon,
+        });
+        if (_notificationHistory.length > 15) {
+          _notificationHistory.removeLast();
+        }
 
         print("Displaying notification: $title - $text from $appName");
         _overlayController.add({
@@ -271,6 +301,9 @@ class ServerService {
           'title': title,
           'text': text,
           'appName': appName,
+          'base64Icon': base64Icon,
+          'overlayPosition': overlayPosition,
+          'overlayDuration': overlayDuration,
         });
       } else if (event == 'notification_removed') {
         print("Hiding notification overlay.");

@@ -40,12 +40,23 @@
         android:layout_marginTop="8dp"
         android:gravity="center_vertical">
 
+        <!-- App icon image view -->
+        <ImageView
+            android:id="@+id/appIconImage"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="10dp"
+            android:scaleType="centerCrop"
+            android:visibility="gone" />
+
         <!-- App icon fallback indicator -->
         <View
+            android:id="@+id/fallbackIndicator"
             android:layout_width="8dp"
             android:layout_height="24dp"
             android:background="#FF2CB67D"
-            android:layout_marginEnd="10dp" />
+            android:layout_marginEnd="10dp"
+            android:visibility="visible" />
 
         <LinearLayout
             android:layout_width="match_parent"

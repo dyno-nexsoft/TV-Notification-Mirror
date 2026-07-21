@@ -43,14 +43,18 @@ class OverlayService {
     required String title,
     required String text,
     required String appName,
-    int durationMs = 5000,
+    String? base64Icon,
+    String? overlayPosition,
+    int? overlayDurationMs,
   }) async {
     try {
       await _channel.invokeMethod('showOverlay', {
         'title': title,
         'text': text,
         'appName': appName,
-        'duration': durationMs,
+        'base64Icon': base64Icon,
+        'overlayPosition': overlayPosition,
+        'duration': overlayDurationMs ?? 5000,
       });
     } on PlatformException catch (e) {
       print("Failed to show overlay: ${e.message}");

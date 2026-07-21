@@ -1,6 +1,9 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:installed_apps/installed_apps.dart';
 import 'models/notification_item.dart';
 import 'services/connector_service.dart';
 import 'services/notification_service.dart';
@@ -35,6 +38,36 @@ class MyApp extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
         ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ButtonStyle(
+            side: WidgetStateProperty.resolveWith<BorderSide?>((states) {
+              if (states.contains(WidgetState.focused)) {
+                return const BorderSide(color: Colors.white, width: 2.5);
+              }
+              return BorderSide.none;
+            }),
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: ButtonStyle(
+            side: WidgetStateProperty.resolveWith<BorderSide?>((states) {
+              if (states.contains(WidgetState.focused)) {
+                return const BorderSide(color: Color(0xFF7F5AF0), width: 2.5);
+              }
+              return BorderSide.none;
+            }),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: ButtonStyle(
+            side: WidgetStateProperty.resolveWith<BorderSide?>((states) {
+              if (states.contains(WidgetState.focused)) {
+                return const BorderSide(color: Colors.white, width: 2.5);
+              }
+              return null;
+            }),
+          ),
+        ),
         fontFamily: 'Outfit', // A modern font family, falling back to system
       ),
       home: const MainScreen(),
@@ -59,6 +92,19 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   bool _isConnected = false;
   List<NotificationItem> _history = [];
   Map<String, bool> _appFilters = {}; // packageName -> enabled
+  final Map<String, Uint8List?> _appIconCache = {};
+  String _filterSearchQuery = '';
+  List<Map<String, dynamic>> _installedPresets = [];
+
+  bool _quietHoursEnabled = false;
+  TimeOfDay _quietHoursStart = const TimeOfDay(hour: 22, minute: 0);
+  TimeOfDay _quietHoursEnd = const TimeOfDay(hour: 7, minute: 0);
+  List<String> _blockedKeywords = [];
+  String _overlayPosition = 'top_right';
+  int _overlayDurationSeconds = 5;
+  bool _tvDndEnabled = false;
+
+  final TextEditingController _keywordController = TextEditingController();
 
   StreamSubscription? _deviceSub;
   StreamSubscription? _connectionSub;
@@ -71,6 +117,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _checkPermission();
     _loadFilters();
+    _loadSettings();
+    _checkInstalledPresets();
     _isConnected = _connector.isConnected;
 
     // Listen to changes
@@ -136,6 +184,99 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     });
   }
 
+  Future<void> _loadSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _quietHoursEnabled = prefs.getBool('quiet_hours_enabled') ?? false;
+      final startHour = prefs.getInt('quiet_hours_start_hour') ?? 22;
+      final startMinute = prefs.getInt('quiet_hours_start_minute') ?? 0;
+      _quietHoursStart = TimeOfDay(hour: startHour, minute: startMinute);
+
+      final endHour = prefs.getInt('quiet_hours_end_hour') ?? 7;
+      final endMinute = prefs.getInt('quiet_hours_end_minute') ?? 0;
+      _quietHoursEnd = TimeOfDay(hour: endHour, minute: endMinute);
+
+      _blockedKeywords = prefs.getStringList('blocked_keywords') ?? [];
+      _overlayPosition = prefs.getString('overlay_position') ?? 'top_right';
+      _overlayDurationSeconds = prefs.getInt('overlay_duration_seconds') ?? 5;
+      _tvDndEnabled = prefs.getBool('tv_dnd_enabled') ?? false;
+    });
+  }
+
+  Future<void> _saveQuietHours(bool enabled, TimeOfDay start, TimeOfDay end) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('quiet_hours_enabled', enabled);
+    await prefs.setInt('quiet_hours_start_hour', start.hour);
+    await prefs.setInt('quiet_hours_start_minute', start.minute);
+    await prefs.setInt('quiet_hours_end_hour', end.hour);
+    await prefs.setInt('quiet_hours_end_minute', end.minute);
+    setState(() {
+      _quietHoursEnabled = enabled;
+      _quietHoursStart = start;
+      _quietHoursEnd = end;
+    });
+  }
+
+  Future<void> _saveBlockedKeywords() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('blocked_keywords', _blockedKeywords);
+    setState(() {});
+  }
+
+  Future<void> _saveOverlaySettings(String position, int duration) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('overlay_position', position);
+    await prefs.setInt('overlay_duration_seconds', duration);
+    setState(() {
+      _overlayPosition = position;
+      _overlayDurationSeconds = duration;
+    });
+  }
+
+  bool _isTimeInQuietHours(TimeOfDay start, TimeOfDay end, DateTime now) {
+    final nowMinutes = now.hour * 60 + now.minute;
+    final startMinutes = start.hour * 60 + start.minute;
+    final endMinutes = end.hour * 60 + end.minute;
+
+    if (startMinutes <= endMinutes) {
+      return nowMinutes >= startMinutes && nowMinutes <= endMinutes;
+    } else {
+      // Overnight quiet hours, e.g., 22:00 to 07:00
+      return nowMinutes >= startMinutes || nowMinutes <= endMinutes;
+    }
+  }
+
+  Future<void> _checkInstalledPresets() async {
+    final defaultPresets = [
+      {'pkg': 'com.whatsapp', 'name': 'WhatsApp', 'icon': Icons.chat, 'color': const Color(0xFF25D366)},
+      {'pkg': 'com.facebook.orca', 'name': 'Messenger', 'icon': Icons.messenger, 'color': const Color(0xFF0084FF)},
+      {'pkg': 'org.telegram.messenger', 'name': 'Telegram', 'icon': Icons.send, 'color': const Color(0xFF0088CC)},
+      {'pkg': 'com.viber.voip', 'name': 'Viber', 'icon': Icons.phone_in_talk, 'color': const Color(0xFF7360F2)},
+      {'pkg': 'com.zing.zalo', 'name': 'Zalo', 'icon': Icons.message, 'color': const Color(0xFF0068FF)},
+      {'pkg': 'com.google.android.apps.messaging', 'name': 'SMS Messages', 'icon': Icons.sms, 'color': const Color(0xFF00B0FF)},
+      {'pkg': 'com.google.android.gm', 'name': 'Gmail', 'icon': Icons.mail, 'color': const Color(0xFFEA4335)},
+      {'pkg': 'com.facebook.katana', 'name': 'Facebook', 'icon': Icons.facebook, 'color': const Color(0xFF1877F2)},
+      {'pkg': 'com.instagram.android', 'name': 'Instagram', 'icon': Icons.camera_alt, 'color': const Color(0xFFE1306C)},
+    ];
+
+    final List<Map<String, dynamic>> verified = [];
+    for (var preset in defaultPresets) {
+      final pkg = preset['pkg'] as String;
+      try {
+        final isInstalled = await InstalledApps.isAppInstalled(pkg);
+        if (isInstalled == true) {
+          verified.add(preset);
+        }
+      } catch (_) {}
+    }
+
+    if (mounted) {
+      setState(() {
+        _installedPresets = verified;
+      });
+    }
+  }
+
   Future<void> _saveFilter(String packageName, bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('filter_$packageName', value);
@@ -144,7 +285,31 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     });
   }
 
-  void _handleNewNotification(NotificationItem item) {
+  void _handleNewNotification(NotificationItem item) async {
+    // 1. Check Blocked Keywords (case-insensitive)
+    final titleLower = item.title.toLowerCase();
+    final textLower = item.text.toLowerCase();
+    for (final kw in _blockedKeywords) {
+      final kwLower = kw.toLowerCase();
+      if (titleLower.contains(kwLower) || textLower.contains(kwLower)) {
+        print("Notification blocked by keyword '$kw': ${item.title}");
+        return;
+      }
+    }
+
+    // 2. Check Quiet Hours
+    if (_quietHoursEnabled) {
+      if (_isTimeInQuietHours(_quietHoursStart, _quietHoursEnd, DateTime.now())) {
+        print("Notification blocked by Quiet Hours schedule: ${item.title}");
+        return;
+      }
+    }
+
+    // Dynamically register new discovered apps
+    if (!_appFilters.containsKey(item.packageName)) {
+      _saveFilter(item.packageName, true);
+    }
+
     // Check filter: default to true if not configured
     final isEnabled = _appFilters[item.packageName] ?? true;
     if (!isEnabled) {
@@ -158,9 +323,30 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       if (_history.length > 50) _history.removeLast();
     });
 
+    // Make sure we load the icon bytes to send to TV
+    final pkg = item.packageName;
+    Uint8List? iconBytes = _appIconCache[pkg];
+    if (!_appIconCache.containsKey(pkg)) {
+      try {
+        final appInfo = await InstalledApps.getAppInfo(pkg);
+        iconBytes = appInfo?.icon;
+        _appIconCache[pkg] = iconBytes;
+        if (mounted) setState(() {});
+      } catch (_) {}
+    }
+
     // Send to TV
     if (_isConnected) {
-      _connector.sendNotification(item);
+      String? base64Icon;
+      if (iconBytes != null) {
+        base64Icon = base64Encode(iconBytes);
+      }
+      _connector.sendNotification(
+        item,
+        base64Icon: base64Icon,
+        overlayPosition: _overlayPosition,
+        overlayDurationMs: _overlayDurationSeconds * 1000,
+      );
     }
   }
 
@@ -242,7 +428,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.error.withOpacity(0.15),
+        color: Theme.of(context).colorScheme.error.withValues(alpha: 0.15),
         border: Border.all(color: Theme.of(context).colorScheme.error, width: 1),
         borderRadius: BorderRadius.circular(12),
       ),
@@ -350,6 +536,29 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 style: const TextStyle(fontSize: 16, color: Colors.grey),
               ),
             ],
+            if (_isConnected) ...[
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white10),
+              SwitchListTile(
+                contentPadding: EdgeInsets.zero,
+                secondary: Icon(
+                  _tvDndEnabled ? Icons.do_not_disturb_on : Icons.do_not_disturb_off,
+                  color: _tvDndEnabled ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.primary,
+                ),
+                title: const Text('TV Do Not Disturb (DND)', style: TextStyle(fontWeight: FontWeight.bold)),
+                subtitle: const Text('Mute all notification popups on TV'),
+                value: _tvDndEnabled,
+                onChanged: (val) {
+                  setState(() {
+                    _tvDndEnabled = val;
+                  });
+                  _connector.sendDndToggle(val);
+                  SharedPreferences.getInstance().then((prefs) {
+                    prefs.setBool('tv_dnd_enabled', val);
+                  });
+                },
+              ),
+            ],
             const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -453,6 +662,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                     const SizedBox(height: 16),
                     TextField(
                       controller: pinController,
+                      autofocus: true,
                       keyboardType: TextInputType.number,
                       maxLength: 4,
                       textAlign: TextAlign.center,
@@ -515,6 +725,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             children: [
               TextField(
                 controller: ipController,
+                autofocus: true,
                 decoration: const InputDecoration(
                   labelText: 'TV IP Address',
                   hintText: 'e.g. 192.168.1.50 or 10.0.2.2',
@@ -559,9 +770,253 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   }
 
 
+  void _showAddCustomAppDialog() {
+    final controller = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Add Custom App Filter'),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'App Package Name',
+            hintText: 'e.g. com.spotify.music',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              final pkg = controller.text.trim();
+              if (pkg.isNotEmpty) {
+                _saveFilter(pkg, true);
+                Navigator.pop(dialogCtx);
+              }
+            },
+            child: const Text('Add'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOverlaySettingsCard() {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.tv, color: Color(0xFF7F5AF0)),
+                SizedBox(width: 8),
+                Text('TV Overlay Settings', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Popup Position', style: TextStyle(fontWeight: FontWeight.bold)),
+                DropdownButton<String>(
+                  value: _overlayPosition,
+                  dropdownColor: const Color(0xFF161624),
+                  underline: const SizedBox(),
+                  onChanged: (val) {
+                    if (val != null) {
+                      _saveOverlaySettings(val, _overlayDurationSeconds);
+                    }
+                  },
+                  items: const [
+                    DropdownMenuItem(value: 'top_right', child: Text('Top Right')),
+                    DropdownMenuItem(value: 'top_left', child: Text('Top Left')),
+                    DropdownMenuItem(value: 'bottom_right', child: Text('Bottom Right')),
+                    DropdownMenuItem(value: 'bottom_left', child: Text('Bottom Left')),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Text('Display Duration', style: TextStyle(fontWeight: FontWeight.bold)),
+                const Spacer(),
+                Text('$_overlayDurationSeconds seconds', style: const TextStyle(color: Colors.grey)),
+              ],
+            ),
+            Slider(
+              min: 2,
+              max: 15,
+              divisions: 13,
+              label: '$_overlayDurationSeconds s',
+              value: _overlayDurationSeconds.toDouble(),
+              onChanged: (val) {
+                _saveOverlaySettings(_overlayPosition, val.toInt());
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildQuietHoursCard() {
+    final startStr = _quietHoursStart.format(context);
+    final endStr = _quietHoursEnd.format(context);
+
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.nights_stay, color: Color(0xFF2CB67D)),
+                const SizedBox(width: 8),
+                const Text('Quiet Hours (DND Schedule)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const Spacer(),
+                Switch(
+                  value: _quietHoursEnabled,
+                  onChanged: (val) {
+                    _saveQuietHours(val, _quietHoursStart, _quietHoursEnd);
+                  },
+                ),
+              ],
+            ),
+            if (_quietHoursEnabled) ...[
+              const SizedBox(height: 16),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  OutlinedButton(
+                    onPressed: () async {
+                      final selected = await showTimePicker(
+                        context: context,
+                        initialTime: _quietHoursStart,
+                      );
+                      if (selected != null) {
+                        _saveQuietHours(_quietHoursEnabled, selected, _quietHoursEnd);
+                      }
+                    },
+                    child: Text('Start: $startStr'),
+                  ),
+                  const Icon(Icons.arrow_forward, color: Colors.grey),
+                  OutlinedButton(
+                    onPressed: () async {
+                      final selected = await showTimePicker(
+                        context: context,
+                        initialTime: _quietHoursEnd,
+                      );
+                      if (selected != null) {
+                        _saveQuietHours(_quietHoursEnabled, _quietHoursStart, selected);
+                      }
+                    },
+                    child: Text('End: $endStr'),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildKeywordFilterCard() {
+    return Card(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.filter_alt, color: Colors.orange),
+                SizedBox(width: 8),
+                Text('Blocked Keywords', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Notifications containing these keywords will not be sent to TV.',
+              style: TextStyle(fontSize: 12, color: Colors.grey),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _keywordController,
+                    decoration: InputDecoration(
+                      hintText: 'e.g., spam, discount, OTP',
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    ),
+                    onSubmitted: (val) {
+                      final trimmed = val.trim();
+                      if (trimmed.isNotEmpty && !_blockedKeywords.contains(trimmed)) {
+                        setState(() {
+                          _blockedKeywords.add(trimmed);
+                        });
+                        _saveBlockedKeywords();
+                        _keywordController.clear();
+                      }
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                ElevatedButton(
+                  onPressed: () {
+                    final val = _keywordController.text.trim();
+                    if (val.isNotEmpty && !_blockedKeywords.contains(val)) {
+                      setState(() {
+                        _blockedKeywords.add(val);
+                      });
+                      _saveBlockedKeywords();
+                      _keywordController.clear();
+                    }
+                  },
+                  child: const Text('Add'),
+                ),
+              ],
+            ),
+            if (_blockedKeywords.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _blockedKeywords.map((kw) {
+                  return Chip(
+                    label: Text(kw),
+                    onDeleted: () {
+                      setState(() {
+                        _blockedKeywords.remove(kw);
+                      });
+                      _saveBlockedKeywords();
+                    },
+                  );
+                }).toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
   // Filters Tab
   Widget _buildFiltersTab() {
-    final apps = [
+    final defaultPresets = [
       {'pkg': 'com.whatsapp', 'name': 'WhatsApp', 'icon': Icons.chat, 'color': const Color(0xFF25D366)},
       {'pkg': 'com.facebook.orca', 'name': 'Messenger', 'icon': Icons.messenger, 'color': const Color(0xFF0084FF)},
       {'pkg': 'org.telegram.messenger', 'name': 'Telegram', 'icon': Icons.send, 'color': const Color(0xFF0088CC)},
@@ -573,32 +1028,108 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       {'pkg': 'com.instagram.android', 'name': 'Instagram', 'icon': Icons.camera_alt, 'color': const Color(0xFFE1306C)},
     ];
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: apps.length,
-      itemBuilder: (context, index) {
-        final app = apps[index];
-        final pkg = app['pkg'] as String;
-        final name = app['name'] as String;
-        final appIcon = app['icon'] as IconData;
-        final appColor = app['color'] as Color;
-        final isEnabled = _appFilters[pkg] ?? true;
+    // Find other package names configured or discovered in _appFilters
+    final dynamicApps = _appFilters.keys
+        .where((pkg) => !defaultPresets.any((preset) => preset['pkg'] == pkg))
+        .map((pkg) => {
+              'pkg': pkg,
+              'name': NotificationItem.getAppName(pkg),
+              'icon': _getAppIcon(pkg),
+              'color': _getAppColor(pkg),
+            })
+        .toList();
 
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: SwitchListTile(
-            secondary: CircleAvatar(
-              backgroundColor: appColor.withValues(alpha: 0.2),
-              child: Icon(appIcon, color: appColor),
+    final allApps = [..._installedPresets, ...dynamicApps];
+
+    final filteredApps = allApps.where((app) {
+      final name = (app['name'] as String).toLowerCase();
+      final pkg = (app['pkg'] as String).toLowerCase();
+      final query = _filterSearchQuery.toLowerCase();
+      return name.contains(query) || pkg.contains(query);
+    }).toList();
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildQuietHoursCard(),
+          _buildKeywordFilterCard(),
+          _buildOverlaySettingsCard(),
+          const SizedBox(height: 8),
+          const Divider(color: Colors.white10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'App Filters (${filteredApps.length})',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.grey),
+                ),
+                TextButton.icon(
+                  onPressed: _showAddCustomAppDialog,
+                  icon: const Icon(Icons.add, size: 18),
+                  label: const Text('Add Package'),
+                ),
+              ],
             ),
-            title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
-            subtitle: Text(pkg, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-            value: isEnabled,
-            onChanged: (val) => _saveFilter(pkg, val),
-            activeThumbColor: Theme.of(context).colorScheme.primary,
           ),
-        );
-      },
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextField(
+              onChanged: (val) {
+                setState(() {
+                  _filterSearchQuery = val;
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search apps...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+              ),
+            ),
+          ),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: filteredApps.length,
+            itemBuilder: (context, index) {
+              final app = filteredApps[index];
+              final pkg = app['pkg'] as String;
+              final name = app['name'] as String;
+              final appIcon = app['icon'] as IconData;
+              final appColor = app['color'] as Color;
+              final isEnabled = _appFilters[pkg] ?? true;
+
+              return Card(
+                margin: const EdgeInsets.only(bottom: 8),
+                child: SwitchListTile(
+                  secondary: CircleAvatar(
+                    backgroundColor: appColor.withValues(alpha: 0.2),
+                    child: AppIconWidget(
+                      packageName: pkg,
+                      fallbackIcon: appIcon,
+                      fallbackColor: appColor,
+                      cache: _appIconCache,
+                      size: 24,
+                    ),
+                  ),
+                  title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                  subtitle: Text(pkg, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                  value: isEnabled,
+                  onChanged: (val) => _saveFilter(pkg, val),
+                  activeThumbColor: Theme.of(context).colorScheme.primary,
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 
@@ -662,7 +1193,13 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 CircleAvatar(
                   backgroundColor: appColor.withValues(alpha: 0.2),
                   radius: 20,
-                  child: Icon(appIcon, color: appColor, size: 20),
+                  child: AppIconWidget(
+                    packageName: item.packageName,
+                    fallbackIcon: appIcon,
+                    fallbackColor: appColor,
+                    cache: _appIconCache,
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -697,6 +1234,98 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           ),
         );
       },
+    );
+  }
+}
+
+class AppIconWidget extends StatefulWidget {
+  final String packageName;
+  final IconData fallbackIcon;
+  final Color fallbackColor;
+  final double size;
+  final Map<String, Uint8List?> cache;
+
+  const AppIconWidget({
+    super.key,
+    required this.packageName,
+    required this.fallbackIcon,
+    required this.fallbackColor,
+    this.size = 24.0,
+    required this.cache,
+  });
+
+  @override
+  State<AppIconWidget> createState() => _AppIconWidgetState();
+}
+
+class _AppIconWidgetState extends State<AppIconWidget> {
+  bool _loading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadIconIfNeeded();
+  }
+
+  @override
+  void didUpdateWidget(covariant AppIconWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.packageName != widget.packageName) {
+      _loadIconIfNeeded();
+    }
+  }
+
+  void _loadIconIfNeeded() async {
+    final pkg = widget.packageName;
+    if (widget.cache.containsKey(pkg)) {
+      return; // Already queried
+    }
+
+    if (_loading) return;
+
+    if (mounted) {
+      setState(() {
+        _loading = true;
+      });
+    }
+
+    try {
+      final appInfo = await InstalledApps.getAppInfo(pkg);
+      if (mounted) {
+        setState(() {
+          widget.cache[pkg] = appInfo?.icon;
+          _loading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          widget.cache[pkg] = null; // cache failure
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final cachedIcon = widget.cache[widget.packageName];
+    if (cachedIcon != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.memory(
+          cachedIcon,
+          width: widget.size,
+          height: widget.size,
+          fit: BoxFit.cover,
+        ),
+      );
+    }
+
+    return Icon(
+      widget.fallbackIcon,
+      color: widget.fallbackColor,
+      size: widget.size,
     );
   }
 }

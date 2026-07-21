@@ -51,16 +51,16 @@ jobs:
       - name: Prepare Release Assets
         run: |
           mkdir -p release-assets
-          cp phone/build/app/outputs/flutter-apk/app-release.apk release-assets/mirror-phone-${{ github.ref_name }}.apk
-          cp tv/build/app/outputs/flutter-apk/app-release.apk release-assets/mirror-tv-${{ github.ref_name }}.apk
+          cp phone/build/app/outputs/flutter-apk/app-release.apk release-assets/noti-mirror-phone-${{ github.ref_name }}.apk
+          cp tv/build/app/outputs/flutter-apk/app-release.apk release-assets/noti-mirror-tv-${{ github.ref_name }}.apk
 
       # 7. Create GitHub Release and Upload Assets
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release-assets/mirror-phone-${{ github.ref_name }}.apk
-            release-assets/mirror-tv-${{ github.ref_name }}.apk
+            release-assets/noti-mirror-phone-${{ github.ref_name }}.apk
+            release-assets/noti-mirror-tv-${{ github.ref_name }}.apk
           name: Release ${{ github.ref_name }}
           body: |
             ## TV Notification Mirror Release
@@ -68,8 +68,8 @@ jobs:
             Bản phát hành tự động cho phiên bản ${{ github.ref_name }}.
             
             ### Danh sách tệp tải về:
-            * **[Điện thoại]** `mirror-phone-${{ github.ref_name }}.apk`: Cài đặt trên Điện thoại Android.
-            * **[TV]** `mirror-tv-${{ github.ref_name }}.apk`: Cài đặt trên Android TV / Google TV.
+            * **[Điện thoại]** `noti-mirror-phone-${{ github.ref_name }}.apk`: Cài đặt trên Điện thoại Android.
+            * **[TV]** `noti-mirror-tv-${{ github.ref_name }}.apk`: Cài đặt trên Android TV / Google TV.
           draft: false
           prerelease: false
         env:

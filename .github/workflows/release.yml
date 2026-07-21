@@ -38,14 +38,16 @@ jobs:
         run: |
           cd phone
           flutter pub get
-          flutter build apk --release
+          VERSION_NAME=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          flutter build apk --release --build-name=$VERSION_NAME --build-number=${{ github.run_number }}
           
       # 5. Build TV Application
       - name: Build TV App APK
         run: |
           cd tv
           flutter pub get
-          flutter build apk --release
+          VERSION_NAME=$(echo "${{ github.ref_name }}" | sed 's/^v//')
+          flutter build apk --release --build-name=$VERSION_NAME --build-number=${{ github.run_number }}
 
       # 6. Prepare assets (rename APKs for clarity in release)
       - name: Prepare Release Assets

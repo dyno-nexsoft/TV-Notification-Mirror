@@ -100,7 +100,7 @@ This file provides essential context for AI coding assistants (Claude, Gemini, e
 - GitHub Actions workflow: `.github/workflows/release.yml`
 - Triggered by tags matching `v*` (e.g., `v1.0.8`).
 - Produces: `noti-mirror-phone-<tag>.apk` and `noti-mirror-tv-<tag>.apk`.
-- **Do NOT create or push tags unless the user explicitly asks.**
+- **Do NOT create or push Git tags unless the user explicitly asks to tag (committing and pushing normal commits is okay).**
 
 ---
 
@@ -137,4 +137,4 @@ git push origin vX.Y.Z
 2. **Do not add files named `*.png` to `res/drawable/` that are actually JPEG** — AAPT2 will fail the release build.
 3. **Do not call `FlutterBackgroundService().startService()`** at app startup on TV — always check `POST_NOTIFICATIONS` and overlay permissions first.
 4. **Do not use `withOpacity()`** — use `withValues(alpha: ...)` instead (deprecated in Flutter 3.x).
-5. **Do not create Git tags** unless the user explicitly says to tag.
+5. **Do not create Git tags** unless the user explicitly says to tag (committing and pushing normal commits to branch is allowed).

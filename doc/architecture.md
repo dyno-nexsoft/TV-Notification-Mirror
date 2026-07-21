@@ -12,14 +12,14 @@ Hệ thống hoạt động theo mô hình **Client-Server cục bộ (Local Pee
 
 ```mermaid
 graph TD
-    subgraph Mạng Wi-Fi Cục bộ (Local Wi-Fi Network)
-        subgraph Điện thoại (Client)
+    subgraph "Mạng Wi-Fi Cục bộ (Local Wi-Fi Network)"
+        subgraph "Điện thoại (Client)"
             A[Notification Listener Service] -->|Lọc & xử lý| B[Notification Manager]
             B -->|JSON qua WebSocket Client| C[Connection Manager]
             C -->|Quét mDNS| D[mDNS Discovery]
         end
 
-        subgraph Android TV (Server)
+        subgraph "Android TV (Server)"
             G[mDNS Advertiser] -.->|Phát sóng dịch vụ| D
             E[WebSocket Server] <-->|Kết nối / Xác thực| C
             E -->|Dữ liệu thông báo| F[System Overlay Manager]

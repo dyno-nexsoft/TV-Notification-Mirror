@@ -70,6 +70,14 @@ class MyApp extends StatelessWidget {
         ),
         fontFamily: 'Outfit', // A modern font family, falling back to system
       ),
+      builder: (context, child) {
+        return GestureDetector(
+          onTap: () {
+            FocusManager.instance.primaryFocus?.unfocus();
+          },
+          child: child,
+        );
+      },
       home: const MainScreen(),
     );
   }

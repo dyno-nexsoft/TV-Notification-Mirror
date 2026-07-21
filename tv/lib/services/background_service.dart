@@ -32,6 +32,21 @@ void onStart(ServiceInstance service) async {
   await server.init();
   await server.startServer('Android TV Server', 8080);
 
+  // Listen for overlay messages from ServerService and forward them to the UI isolate
+  server.overlayStream.listen((event) {
+    if (service is AndroidServiceInstance) {
+      if (event['action'] == 'show') {
+        service.invoke('showOverlay', {
+          'title': event['title'],
+          'text': event['text'],
+          'appName': event['appName'],
+        });
+      } else if (event['action'] == 'hide') {
+        service.invoke('hideOverlay');
+      }
+    }
+  });
+
   // Periodically send state updates to the UI
   Timer.periodic(const Duration(seconds: 1), (timer) {
     if (service is AndroidServiceInstance) {
@@ -44,6 +59,8 @@ void onStart(ServiceInstance service) async {
           'ip': c.ip,
           'token': c.token,
         }).toList(),
+        // Which tokens currently have an active WebSocket connection.
+        'activeTokens': server.activeTokens.toList(),
       });
     }
   });

@@ -1,5 +1,4 @@
 # FVM local SDK (symlink) should be ignored
-.fvm/flutter_sdk
 
 # Miscellaneous
 *.log
@@ -8,3 +7,6 @@
 Thumbs.db
 .idea/
 .vscode/
+
+# FVM Version Cache
+.fvm/

@@ -54,7 +54,23 @@ jobs:
           cp phone/build/app/outputs/flutter-apk/app-release.apk release-assets/noti-mirror-phone-${{ github.ref_name }}.apk
           cp tv/build/app/outputs/flutter-apk/app-release.apk release-assets/noti-mirror-tv-${{ github.ref_name }}.apk
 
-      # 7. Create GitHub Release and Upload Assets
+      # 7. Get Tag Message
+      - name: Get Tag Message
+        id: tag_message
+        run: |
+          git fetch --tags --force
+          # Extract annotation message of the current tag
+          TAG_MSG=$(git tag -l --format='%(contents)' ${{ github.ref_name }})
+          if [ -z "$TAG_MSG" ]; then
+            TAG_MSG="Bản phát hành tự động cho phiên bản ${{ github.ref_name }}."
+          fi
+          
+          # Multiline output handling in GitHub Actions
+          echo "tag_msg<<EOF" >> $GITHUB_OUTPUT
+          echo "$TAG_MSG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      # 8. Create GitHub Release and Upload Assets
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -63,9 +79,9 @@ jobs:
             release-assets/noti-mirror-tv-${{ github.ref_name }}.apk
           name: Release ${{ github.ref_name }}
           body: |
-            ## TV Notification Mirror Release
+            ## TV Notification Mirror Release ${{ github.ref_name }}
             
-            Bản phát hành tự động cho phiên bản ${{ github.ref_name }}.
+            ${{ steps.tag_message.outputs.tag_msg }}
             
             ### Danh sách tệp tải về:
             * **[Điện thoại]** `noti-mirror-phone-${{ github.ref_name }}.apk`: Cài đặt trên Điện thoại Android.

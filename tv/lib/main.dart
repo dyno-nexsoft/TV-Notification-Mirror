@@ -1,16 +1,19 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'services/background_service.dart';
 import 'services/overlay_service.dart';
 
-void main() async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  // Initialize background service
-  await initializeBackgroundService();
-  
+
+  // Run app immediately so UI renders without waiting for service init.
+  // initializeBackgroundService() is fast (just configure, not start),
+  // but we still fire it unawaited to avoid blocking the first frame.
+  initializeBackgroundService();
+
   runApp(const MyApp());
 }
 
@@ -60,16 +63,19 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
   bool _isRunning = false;
   bool _isDnd = false;
   List<dynamic> _pairedClients = [];
+  Set<String> _activeTokens = {};
 
   StreamSubscription? _stateSub;
+  StreamSubscription? _overlaySub;
+  StreamSubscription? _hideOverlaySub;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _checkPermission();
-    _fetchIp();
-    
+    // Run permission check and IP fetch in parallel instead of sequentially.
+    Future.wait([_checkPermission(), _fetchIp()]);
+
     // Listen to background service updates
     _stateSub = FlutterBackgroundService().on('stateUpdate').listen((data) {
       if (data != null && mounted) {
@@ -78,8 +84,24 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
           _isRunning = data['isRunning'];
           _isDnd = data['isDnd'];
           _pairedClients = data['clients'] ?? [];
+          _activeTokens = Set<String>.from(data['activeTokens'] ?? []);
         });
       }
+    });
+
+    // Listen to overlay show/hide commands forwarded from the background service
+    _overlaySub = FlutterBackgroundService().on('showOverlay').listen((data) {
+      if (data != null) {
+        OverlayService.showOverlay(
+          title: data['title'] ?? '',
+          text: data['text'] ?? '',
+          appName: data['appName'] ?? '',
+        );
+      }
+    });
+
+    _hideOverlaySub = FlutterBackgroundService().on('hideOverlay').listen((_) {
+      OverlayService.hideOverlay();
     });
   }
 
@@ -87,6 +109,8 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _stateSub?.cancel();
+    _overlaySub?.cancel();
+    _hideOverlaySub?.cancel();
     super.dispose();
   }
 
@@ -143,6 +167,33 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
     FlutterBackgroundService().invoke('removeClient', {'token': token});
   }
 
+  void _confirmRemoveClient(String token, String deviceName) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Remove Device'),
+        content: Text('Remove "$deviceName" from paired devices?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(dialogCtx);
+              _removeClient(token);
+            },
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _testOverlay() {
     OverlayService.showOverlay(
       title: 'Duyệt thử nghiệm',
@@ -151,9 +202,46 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
     );
   }
 
+  Future<bool> _showExitConfirmDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Exit TV Mirror?'),
+        content: const Text(
+          'Do you want to exit the app?\n'
+          'The WebSocket server will continue running in the background to mirror notifications.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogCtx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => Navigator.pop(dialogCtx, true),
+            child: const Text('Exit'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldExit = await _showExitConfirmDialog();
+        if (shouldExit && context.mounted) {
+          await SystemNavigator.pop();
+        }
+      },
+      child: Scaffold(
       body: Row(
         children: [
           // Left Navigation / Actions panel
@@ -225,11 +313,12 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Pairing Box
-                  if (_pairingPin != null) ...[
+                  if (_pairingPin != null)
                     _buildPairingBox()
-                  ] else ...[
-                    _buildWaitingBox()
-                  ],
+                  else if (_activeTokens.isNotEmpty)
+                    _buildConnectedBox()
+                  else
+                    _buildWaitingBox(),
                   const SizedBox(height: 40),
                   
                   // Paired Clients list
@@ -245,20 +334,14 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
                             itemCount: _pairedClients.length,
                             itemBuilder: (context, index) {
                               final client = _pairedClients[index];
-                              return Card(
-                                margin: const EdgeInsets.only(bottom: 12),
-                                child: ListTile(
-                                  leading: const Icon(Icons.phone_android, color: Color(0xFF7F5AF0)),
-                                  title: Text(
-                                    client['deviceName'] ?? 'Unknown Phone',
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
-                                  ),
-                                  subtitle: Text(client['ip'] ?? ''),
-                                  trailing: TvListTileButton(
-                                    icon: Icons.delete_outline,
-                                    color: Colors.redAccent,
-                                    onPressed: () => _removeClient(client['token']),
-                                  ),
+                              final token = client['token'] as String? ?? '';
+                              return PairedDeviceCard(
+                                deviceName: client['deviceName'] ?? 'Unknown Phone',
+                                ip: client['ip'] ?? '',
+                                isOnline: _activeTokens.contains(token),
+                                onRemove: () => _confirmRemoveClient(
+                                  token,
+                                  client['deviceName'] ?? 'Unknown Phone',
                                 ),
                               );
                             },
@@ -270,8 +353,9 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildOverlayWarningCard() {
     return Card(
@@ -457,6 +541,58 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
     );
   }
 
+  Widget _buildConnectedBox() {
+    // Find the device name(s) of active token(s)
+    String connectedDevicesText = 'Active connection established.';
+    if (_pairedClients.isNotEmpty && _activeTokens.isNotEmpty) {
+      final activeNames = _pairedClients
+          .where((c) => _activeTokens.contains(c['token']))
+          .map((c) => c['deviceName'] ?? 'Unknown Phone')
+          .toList();
+      if (activeNames.isNotEmpty) {
+        connectedDevicesText = 'Connected to: ${activeNames.join(", ")}';
+      }
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF16151D),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFF2CB67D).withOpacity(0.3), width: 1.5),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: const BoxDecoration(
+              color: Color(0x1F2CB67D),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(Icons.check_circle_outline, size: 36, color: Color(0xFF2CB67D)),
+          ),
+          const SizedBox(width: 24),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Phone Connected',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  connectedDevicesText,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildEmptyClients() {
     return const Center(
       child: Column(
@@ -531,43 +667,148 @@ class _TvButtonState extends State<TvButton> {
   }
 }
 
-class TvListTileButton extends StatefulWidget {
-  final IconData icon;
-  final Color color;
-  final VoidCallback onPressed;
+/// A TV-optimised paired device card.
+/// The info area and the delete button are SEPARATE focus nodes so that
+/// D-pad navigation can land on each independently.
+class PairedDeviceCard extends StatefulWidget {
+  final String deviceName;
+  final String ip;
+  final bool isOnline;
+  final VoidCallback onRemove;
 
-  const TvListTileButton({
+  const PairedDeviceCard({
     super.key,
-    required this.icon,
-    required this.color,
-    required this.onPressed,
+    required this.deviceName,
+    required this.ip,
+    required this.isOnline,
+    required this.onRemove,
   });
 
   @override
-  State<TvListTileButton> createState() => _TvListTileButtonState();
+  State<PairedDeviceCard> createState() => _PairedDeviceCardState();
 }
 
-class _TvListTileButtonState extends State<TvListTileButton> {
-  bool _isFocused = false;
+class _PairedDeviceCardState extends State<PairedDeviceCard> {
+  bool _cardFocused = false;
+  bool _deleteFocused = false;
 
   @override
   Widget build(BuildContext context) {
-    return Focus(
-      onFocusChange: (focus) {
-        setState(() {
-          _isFocused = focus;
-        });
-      },
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),
         decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          color: _isFocused ? widget.color.withOpacity(0.2) : Colors.transparent,
-          border: _isFocused ? Border.all(color: Colors.white, width: 1.5) : null,
+          color: const Color(0xFF16151D),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: _cardFocused
+                ? const Color(0xFF7F5AF0)
+                : Colors.white10,
+            width: _cardFocused ? 2 : 1,
+          ),
+          boxShadow: _cardFocused
+              ? [const BoxShadow(color: Color(0x557F5AF0), blurRadius: 12, spreadRadius: 1)]
+              : [],
         ),
-        child: IconButton(
-          icon: Icon(widget.icon, color: widget.color),
-          onPressed: widget.onPressed,
+        child: Row(
+          children: [
+            // ── Device info (focusable, pressing OK does nothing / future detail) ──
+            Expanded(
+              child: Focus(
+                onFocusChange: (f) => setState(() => _cardFocused = f),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2E2A4A),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.phone_android, color: Color(0xFF7F5AF0), size: 24),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Text(
+                                widget.deviceName,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              const SizedBox(width: 8),
+                              // Online / offline status dot
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: widget.isOnline
+                                      ? const Color(0xFF2CB67D)
+                                      : Colors.grey,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            widget.isOnline ? widget.ip : 'Offline',
+                            style: TextStyle(
+                              color: widget.isOnline ? Colors.grey : Colors.grey.shade600,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            // ── Delete button — its own focus node, fully independent ──
+            Focus(
+              onFocusChange: (f) => setState(() => _deleteFocused = f),
+              // GestureDetector only handles touch. TV remotes send KEY events
+              // (D-pad centre = LogicalKeyboardKey.select). We must catch them
+              // here with onKeyEvent, otherwise pressing OK does nothing.
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent &&
+                    (event.logicalKey == LogicalKeyboardKey.select ||
+                     event.logicalKey == LogicalKeyboardKey.enter ||
+                     event.logicalKey == LogicalKeyboardKey.gameButtonA)) {
+                  widget.onRemove();
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              child: GestureDetector(
+                onTap: widget.onRemove, // still works for mouse/touch
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  margin: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: _deleteFocused
+                        ? Colors.redAccent.withValues(alpha: 0.2)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(12),
+                    border: _deleteFocused
+                        ? Border.all(color: Colors.white, width: 2)
+                        : Border.all(color: Colors.white12),
+                  ),
+                  child: Icon(
+                    Icons.delete_outline,
+                    color: _deleteFocused ? Colors.white : Colors.redAccent,
+                    size: 24,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

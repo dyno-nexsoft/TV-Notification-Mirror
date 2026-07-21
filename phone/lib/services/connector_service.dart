@@ -256,6 +256,12 @@ class ConnectorService {
 
   Future<void> disconnect() async {
     _reconnectTimer?.cancel();
+    // Notify TV gracefully before closing so it updates online status immediately.
+    if (_isConnected && _wsChannel != null) {
+      try {
+        _wsChannel!.sink.add(jsonEncode({'event': 'disconnect', 'data': {}}));
+      } catch (_) {}
+    }
     _wsChannel?.sink.close();
     _isConnected = false;
     _connectionStateController.add(false);

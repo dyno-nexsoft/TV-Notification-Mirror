@@ -62,8 +62,9 @@ This file provides essential context for AI coding assistants (Claude, Gemini, e
 ## Key Technical Decisions
 
 ### Flutter SDK
-- Managed via **FVM** (`fvm stable` → Flutter 3.x stable).
+- Managed via **FVM** — pinned to **Flutter 3.44.7** (latest stable as of Jul 2026) in `.fvmrc`.
 - Use `fvm flutter` for all commands, not plain `flutter`.
+- To upgrade: run `fvm install <version>` then update `.fvmrc`.
 
 ### Android 13+ / 14+ Compatibility
 - `registerReceiver` for dynamic receivers must pass `RECEIVER_EXPORTED` or `RECEIVER_NOT_EXPORTED` on API 33+. Both `MainActivity.kt` files guard this with `Build.VERSION_CODES.TIRAMISU` checks.
@@ -81,10 +82,11 @@ This file provides essential context for AI coding assistants (Claude, Gemini, e
 - TV emulator: `emulator-5556` (AOSP TV on x86)
 - TV emulator is unsupported by `flutter run`; deploy via:
   ```powershell
-  fvm flutter build apk --debug   # in tv/
-  adb -s emulator-5556 install -r build/app/outputs/flutter-apk/app-debug.apk
+  fvm flutter build apk --profile   # in tv/ — use profile for better performance
+  adb -s emulator-5556 install -r build/app/outputs/flutter-apk/app-profile.apk
   adb -s emulator-5556 shell am start -n com.dyno.tv_notification_mirror.tv/.MainActivity
   ```
+- Use `--debug` only when you need hot reload or breakpoints; profile is AOT-compiled and much faster.
 - To connect the two emulators: run `adb -s emulator-5556 forward tcp:8080 tcp:8080`, then connect from Phone app using IP `10.0.2.2:8080`.
 
 ### Icon & Branding
@@ -108,9 +110,9 @@ This file provides essential context for AI coding assistants (Claude, Gemini, e
 # Run phone app on phone emulator
 fvm flutter run -d emulator-5554     # run in phone/
 
-# Build & deploy TV app manually
-fvm flutter build apk --debug        # run in tv/
-adb -s emulator-5556 install -r build/app/outputs/flutter-apk/app-debug.apk
+# Build & deploy TV app manually (profile = AOT, much faster than debug)
+fvm flutter build apk --profile      # run in tv/
+adb -s emulator-5556 install -r build/app/outputs/flutter-apk/app-profile.apk
 adb -s emulator-5556 shell am start -n com.dyno.tv_notification_mirror.tv/.MainActivity
 
 # Re-generate launcher icons

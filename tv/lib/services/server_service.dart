@@ -33,9 +33,14 @@ class ServerService {
   
   final List<ConnectedClient> _pairedClients = [];
   final Set<WebSocketChannel> _activeSockets = {};
+  // Tracks which paired-client tokens currently have an active WebSocket.
+  final Set<String> _activeTokens = {};
+  // Maps active socket → token so we can look up on disconnect.
+  final Map<WebSocketChannel, String> _socketToToken = {};
   
   final StreamController<String?> _pairingStateController = StreamController<String?>.broadcast();
   final StreamController<List<ConnectedClient>> _clientsController = StreamController<List<ConnectedClient>>.broadcast();
+  final StreamController<Map<String, dynamic>> _overlayController = StreamController<Map<String, dynamic>>.broadcast();
   
   bool _isRunning = false;
   bool _isDndEnabled = false; // Do Not Disturb
@@ -46,6 +51,8 @@ class ServerService {
   String? get currentPin => _currentPin;
   List<ConnectedClient> get pairedClients => _pairedClients;
   bool get isDndEnabled => _isDndEnabled;
+  Set<String> get activeTokens => _activeTokens;
+  Stream<Map<String, dynamic>> get overlayStream => _overlayController.stream;
 
   set isDndEnabled(bool value) {
     _isDndEnabled = value;
@@ -129,6 +136,26 @@ class ServerService {
             token: token,
           );
           
+          // Remove duplicate client (same IP or same device name)
+          final duplicateIndex = _pairedClients.indexWhere(
+            (c) => c.deviceName == client.deviceName || c.ip == client.ip,
+          );
+          if (duplicateIndex != -1) {
+            final oldClient = _pairedClients.removeAt(duplicateIndex);
+            // Close active socket if client is currently connected.
+            final socket = _socketToToken.entries
+                .where((e) => e.value == oldClient.token)
+                .map((e) => e.key)
+                .firstOrNull;
+            if (socket != null) {
+              _socketToToken.remove(socket);
+              _activeSockets.remove(socket);
+              _activeTokens.remove(oldClient.token);
+              socket.sink.close();
+            }
+            print("Removed old duplicate client: ${oldClient.deviceName} (${oldClient.ip})");
+          }
+
           // Save client
           _pairedClients.add(client);
           await _savePairedClients();
@@ -161,19 +188,25 @@ class ServerService {
 
       return webSocketHandler((WebSocketChannel socket, _) {
         _activeSockets.add(socket);
-        print("WebSocket client connected.");
+        _activeTokens.add(token!);
+        _socketToToken[socket] = token!;
+        print("WebSocket client connected. Token: $token");
 
         socket.stream.listen(
           (message) {
-            _handleIncomingMessage(message);
+            _handleIncomingMessage(message, socket);
           },
           onDone: () {
-            print("WebSocket client disconnected.");
+            final t = _socketToToken.remove(socket);
             _activeSockets.remove(socket);
+            if (t != null) _activeTokens.remove(t);
+            print("WebSocket client disconnected. Token: $t");
           },
           onError: (e) {
-            print("WebSocket socket error: $e");
+            final t = _socketToToken.remove(socket);
             _activeSockets.remove(socket);
+            if (t != null) _activeTokens.remove(t);
+            print("WebSocket socket error: $e");
           },
         );
 
@@ -206,16 +239,26 @@ class ServerService {
     }
   }
 
-  void _handleIncomingMessage(String message) {
-    if (_isDndEnabled) {
-      print("DND mode enabled, ignoring notification.");
-      return;
-    }
-
+  void _handleIncomingMessage(String message, WebSocketChannel socket) {
     try {
       final payload = jsonDecode(message);
       final event = payload['event'] as String;
       final data = payload['data'];
+
+      if (event == 'disconnect') {
+        // Phone is politely disconnecting — remove its socket immediately.
+        final t = _socketToToken.remove(socket);
+        _activeSockets.remove(socket);
+        if (t != null) _activeTokens.remove(t);
+        socket.sink.close();
+        print("Client requested disconnect. Token: $t");
+        return;
+      }
+
+      if (_isDndEnabled) {
+        print("DND mode enabled, ignoring notification.");
+        return;
+      }
 
       if (event == 'notification_new') {
         final title = data['title'] ?? '';
@@ -223,14 +266,17 @@ class ServerService {
         final appName = data['appName'] ?? 'Notification';
 
         print("Displaying notification: $title - $text from $appName");
-        OverlayService.showOverlay(
-          title: title,
-          text: text,
-          appName: appName,
-        );
+        _overlayController.add({
+          'action': 'show',
+          'title': title,
+          'text': text,
+          'appName': appName,
+        });
       } else if (event == 'notification_removed') {
         print("Hiding notification overlay.");
-        OverlayService.hideOverlay();
+        _overlayController.add({
+          'action': 'hide',
+        });
       }
     } catch (e) {
       print("Failed to parse message: $e");
@@ -254,6 +300,17 @@ class ServerService {
   }
 
   Future<void> removeClient(ConnectedClient client) async {
+    // Close active socket if client is currently connected.
+    final socket = _socketToToken.entries
+        .where((e) => e.value == client.token)
+        .map((e) => e.key)
+        .firstOrNull;
+    if (socket != null) {
+      _socketToToken.remove(socket);
+      _activeSockets.remove(socket);
+      _activeTokens.remove(client.token);
+      socket.sink.close();
+    }
     _pairedClients.removeWhere((c) => c.token == client.token);
     await _savePairedClients();
   }

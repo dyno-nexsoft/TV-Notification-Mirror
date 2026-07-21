@@ -415,7 +415,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   }
 
   void _showPairingDialog(TVDevice device) async {
-    // Start pairing
     final success = await _connector.startPairing(device);
     if (!success) {
       if (mounted) {
@@ -432,60 +431,75 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Pair with ${device.name}'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Enter the 4-digit PIN displayed on your TV screen:'),
-              const SizedBox(height: 16),
-              TextField(
-                controller: pinController,
-                keyboardType: TextInputType.number,
-                maxLength: 4,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 24, letterSpacing: 10, fontWeight: FontWeight.bold),
-                decoration: const InputDecoration(
-                  counterText: '',
-                  border: OutlineInputBorder(),
-                ),
+      builder: (dialogCtx) {
+        // StatefulBuilder lets us update loading state inside the dialog
+        // without needing a full-screen overlay.
+        bool isLoading = false;
+        return StatefulBuilder(
+          builder: (_, setDialogState) {
+            return AlertDialog(
+              title: Text('Pair with ${device.name}'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (isLoading) ...[
+                    const SizedBox(height: 8),
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    const Text('Connecting...', style: TextStyle(color: Colors.grey)),
+                    const SizedBox(height: 8),
+                  ] else ...[
+                    const Text('Enter the 4-digit PIN displayed on your TV screen:'),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: pinController,
+                      keyboardType: TextInputType.number,
+                      maxLength: 4,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(fontSize: 24, letterSpacing: 10, fontWeight: FontWeight.bold),
+                      decoration: const InputDecoration(
+                        counterText: '',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                final pin = pinController.text.trim();
-                if (pin.length == 4) {
-                  Navigator.pop(context); // Close dialog
-                  _showLoadingSpinner();
-                  final isPaired = await _connector.confirmPairing(device, pin);
-                  if (mounted) {
-                    Navigator.pop(context); // Close spinner
-                    if (isPaired) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Successfully paired with ${device.name}!')),
-                      );
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Incorrect PIN. Please try again.')),
-                      );
-                    }
-                  }
-                }
-              },
-              child: const Text('Connect'),
-            )
-          ],
+              actions: isLoading
+                  ? null // hide buttons while loading
+                  : [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogCtx),
+                        child: const Text('Cancel'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () async {
+                          final pin = pinController.text.trim();
+                          if (pin.length == 4) {
+                            setDialogState(() => isLoading = true);
+                            final isPaired = await _connector.confirmPairing(device, pin);
+                            if (mounted) {
+                              Navigator.pop(dialogCtx);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(isPaired
+                                      ? 'Successfully paired with ${device.name}!'
+                                      : 'Incorrect PIN. Please try again.'),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                        child: const Text('Connect'),
+                      ),
+                    ],
+            );
+          },
         );
       },
     );
   }
+
 
   void _showManualConnectDialog() {
     final ipController = TextEditingController(text: '10.0.2.2');
@@ -544,13 +558,6 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     );
   }
 
-  void _showLoadingSpinner() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-  }
 
   // Filters Tab
   Widget _buildFiltersTab() {

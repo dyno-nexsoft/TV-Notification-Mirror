@@ -1,5 +1,7 @@
 package com.dyno.tv_notification_mirror.tv
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -38,7 +40,24 @@ class MainActivity : FlutterActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
+
+        // Create notification channel FIRST — before flutter_background_service
+        // calls startForeground(), which requires this channel to already exist.
+        // Without this, removing `await initializeBackgroundService()` in Dart
+        // can cause a race condition → CannotPostForegroundServiceNotificationException.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                "tv_mirror_service_channel",
+                "TV Mirror Background Service",
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "Keeps the WebSocket server running in the background"
+                setShowBadge(false)
+            }
+            val nm = getSystemService(NotificationManager::class.java)
+            nm.createNotificationChannel(channel)
+        }
+
         // Register local broadcast receiver to show overlay from background service
         overlayReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {

@@ -80,6 +80,13 @@ class MainActivity : FlutterActivity() {
                     requestOverlayPermission()
                     result.success(true)
                 }
+                "checkNotificationPermission" -> {
+                    result.success(hasNotificationPermission())
+                }
+                "requestNotificationPermission" -> {
+                    requestNotificationPermission()
+                    result.success(true)
+                }
                 "showOverlay" -> {
                     val title = call.argument<String>("title") ?: ""
                     val text = call.argument<String>("text") ?: ""
@@ -118,6 +125,24 @@ class MainActivity : FlutterActivity() {
                 startActivity(intent)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to open overlay permission settings: ${e.message}")
+            }
+        }
+    }
+
+    private fun hasNotificationPermission(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) == android.content.pm.PackageManager.PERMISSION_GRANTED
+        } else {
+            true
+        }
+    }
+
+    private fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            try {
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 102)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to request notification permission: ${e.message}")
             }
         }
     }

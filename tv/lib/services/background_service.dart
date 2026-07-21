@@ -10,7 +10,7 @@ Future<void> initializeBackgroundService() async {
   await service.configure(
     androidConfiguration: AndroidConfiguration(
       onStart: onStart,
-      autoStart: true,
+      autoStart: false,
       isForegroundMode: true,
       notificationChannelId: 'tv_mirror_service_channel',
       initialNotificationTitle: 'TV Notification Mirror',
@@ -22,8 +22,6 @@ Future<void> initializeBackgroundService() async {
       onForeground: onStart,
     ),
   );
-  
-  await service.startService();
 }
 
 @pragma('vm:entry-point')

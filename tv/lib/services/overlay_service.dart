@@ -21,6 +21,24 @@ class OverlayService {
     }
   }
 
+  static Future<bool> checkNotificationPermission() async {
+    try {
+      final bool hasPermission = await _channel.invokeMethod('checkNotificationPermission');
+      return hasPermission;
+    } on PlatformException catch (e) {
+      print("Failed to check notification permission: ${e.message}");
+      return false;
+    }
+  }
+
+  static Future<void> requestNotificationPermission() async {
+    try {
+      await _channel.invokeMethod('requestNotificationPermission');
+    } on PlatformException catch (e) {
+      print("Failed to request notification permission: ${e.message}");
+    }
+  }
+
   static Future<void> showOverlay({
     required String title,
     required String text,

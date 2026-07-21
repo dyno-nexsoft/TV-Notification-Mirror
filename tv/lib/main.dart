@@ -52,6 +52,7 @@ class TvMainScreen extends StatefulWidget {
 
 class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver {
   bool _hasOverlayPermission = false;
+  bool _hasNotificationPermission = false;
   String _tvIp = 'Loading IP...';
   
   // Background state
@@ -97,10 +98,19 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
   }
 
   Future<void> _checkPermission() async {
-    final status = await OverlayService.checkPermission();
+    final overlayStatus = await OverlayService.checkPermission();
+    final notificationStatus = await OverlayService.checkNotificationPermission();
     setState(() {
-      _hasOverlayPermission = status;
+      _hasOverlayPermission = overlayStatus;
+      _hasNotificationPermission = notificationStatus;
     });
+
+    if (overlayStatus && notificationStatus) {
+      final isRunning = await FlutterBackgroundService().isRunning();
+      if (!isRunning) {
+        await FlutterBackgroundService().startService();
+      }
+    }
   }
 
   Future<void> _fetchIp() async {
@@ -173,6 +183,8 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
                   
                   if (!_hasOverlayPermission) ...[
                     _buildOverlayWarningCard(),
+                  ] else if (!_hasNotificationPermission) ...[
+                    _buildNotificationWarningCard(),
                   ] else ...[
                     _buildServerInfoCard(),
                   ],
@@ -181,15 +193,17 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
                   
                   // Action buttons
                   TvButton(
-                    onPressed: _hasOverlayPermission ? _toggleDnd : _checkPermission,
+                    onPressed: (_hasOverlayPermission && _hasNotificationPermission) 
+                        ? _toggleDnd 
+                        : _checkPermission,
                     color: _isDnd ? Theme.of(context).colorScheme.error : Theme.of(context).colorScheme.primary,
-                    label: !_hasOverlayPermission 
+                    label: (!_hasOverlayPermission || !_hasNotificationPermission) 
                         ? 'Check Permission Again'
                         : (_isDnd ? 'Turn DND OFF' : 'Turn DND ON'),
                     icon: _isDnd ? Icons.do_not_disturb_on : Icons.do_not_disturb_off,
                   ),
                   const SizedBox(height: 16),
-                  if (_hasOverlayPermission) ...[
+                  if (_hasOverlayPermission && _hasNotificationPermission) ...[
                     TvButton(
                       onPressed: _testOverlay,
                       color: const Color(0xFF2E2A4A),
@@ -289,6 +303,43 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
               color: Theme.of(context).colorScheme.error,
               label: 'Grant Overlay Permission',
               icon: Icons.open_in_new,
+            )
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNotificationWarningCard() {
+    return Card(
+      color: Theme.of(context).colorScheme.error.withOpacity(0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Theme.of(context).colorScheme.error, width: 1),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.warning, color: Theme.of(context).colorScheme.error),
+                const SizedBox(width: 12),
+                const Text('Permission Needed', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'This application requires Notification Permission to run background connectivity.',
+              style: TextStyle(fontSize: 14, color: Colors.white70),
+            ),
+            const SizedBox(height: 16),
+            TvButton(
+              onPressed: () => OverlayService.requestNotificationPermission(),
+              color: Theme.of(context).colorScheme.error,
+              label: 'Grant Notification Permission',
+              icon: Icons.notifications_active,
             )
           ],
         ),

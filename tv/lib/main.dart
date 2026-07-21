@@ -284,9 +284,9 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
         children: [
           // Left Navigation / Actions panel
           Expanded(
-            flex: 2,
+            flex: 1,
             child: Container(
-              padding: const EdgeInsets.all(40),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               color: const Color(0xFF0F0E16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,9 +344,9 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
           
           // Right details panel
           Expanded(
-            flex: 3,
+            flex: 2,
             child: Container(
-              padding: const EdgeInsets.all(40),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -357,7 +357,7 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
                     _buildConnectedBox()
                   else
                     _buildWaitingBox(),
-                  const SizedBox(height: 30),
+                  const SizedBox(height: 24),
                   Expanded(
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -396,14 +396,14 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
                             ],
                           ),
                         ),
-                        const SizedBox(width: 30),
+                        const SizedBox(width: 20),
                         // Vertical divider line
                         Container(
                           width: 1,
                           color: Colors.white10,
                           margin: const EdgeInsets.symmetric(vertical: 8),
                         ),
-                        const SizedBox(width: 30),
+                        const SizedBox(width: 20),
                         // Right column: Recent Notifications history
                         Expanded(
                           flex: 1,
@@ -863,38 +863,50 @@ class _PairedDeviceCardState extends State<PairedDeviceCard> {
                         child: const Icon(Icons.phone_android, color: Color(0xFF7F5AF0), size: 24),
                       ),
                       const SizedBox(width: 16),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Text(
-                                widget.deviceName,
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              const SizedBox(width: 8),
-                              // Online / offline status dot
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: widget.isOnline
-                                      ? const Color(0xFF2CB67D)
-                                      : Colors.grey,
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    widget.deviceName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold, 
+                                      fontSize: 16,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    maxLines: 1,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            widget.isOnline ? widget.ip : 'Offline',
-                            style: TextStyle(
-                              color: widget.isOnline ? Colors.grey : Colors.grey.shade600,
-                              fontSize: 13,
+                                const SizedBox(width: 8),
+                                // Online / offline status dot
+                                Container(
+                                  width: 8,
+                                  height: 8,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: widget.isOnline
+                                        ? const Color(0xFF2CB67D)
+                                        : Colors.grey,
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.isOnline ? widget.ip : 'Offline',
+                              style: TextStyle(
+                                color: widget.isOnline ? Colors.grey : Colors.grey.shade600,
+                                fontSize: 13,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              maxLines: 1,
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),

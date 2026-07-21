@@ -1,89 +1,108 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="320dp"
+    android:layout_width="340dp"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
+    android:orientation="horizontal"
     android:background="@drawable/overlay_background"
     android:padding="16dp"
+    android:gravity="center_vertical"
     android:elevation="8dp">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
-
-        <TextView
-            android:id="@+id/appNameText"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="App Name"
-            android:textColor="#FF7F5AF0"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:textAllCaps="true" />
-
-        <TextView
-            android:id="@+id/timeText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Just now"
-            android:textColor="#80FFFFFF"
-            android:textSize="12sp" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="8dp"
-        android:gravity="center_vertical">
-
-        <!-- App icon image view -->
+    <!-- Left side: App Icon Container -->
+    <FrameLayout
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginEnd="12dp">
+        
+        <!-- Custom App Icon -->
         <ImageView
             android:id="@+id/appIconImage"
-            android:layout_width="28dp"
-            android:layout_height="28dp"
-            android:layout_marginEnd="10dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:scaleType="centerCrop"
+            android:background="@drawable/fallback_icon_bg"
+            android:clipToOutline="true"
             android:visibility="gone" />
 
-        <!-- App icon fallback indicator -->
-        <View
+        <!-- Fallback icon container -->
+        <FrameLayout
             android:id="@+id/fallbackIndicator"
-            android:layout_width="8dp"
-            android:layout_height="24dp"
-            android:background="#FF2CB67D"
-            android:layout_marginEnd="10dp"
-            android:visibility="visible" />
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/fallback_icon_bg"
+            android:visibility="visible">
+            
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_notification_bell"
+                android:tint="#FFFFFFFF" />
+        </FrameLayout>
+    </FrameLayout>
 
+    <!-- Right side: Text details -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:orientation="vertical">
+
+        <!-- Top text row: App Name & Time -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <TextView
-                android:id="@+id/titleText"
-                android:layout_width="match_parent"
+                android:id="@+id/appNameText"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Notification Title"
-                android:textColor="#FFFFFFFF"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end" />
+                android:text="App Name"
+                android:textColor="#9E9E9E"
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <TextView
-                android:id="@+id/bodyText"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Notification body message goes here."
-                android:textColor="#E0FFFFFF"
-                android:textSize="16sp"
-                android:maxLines="2"
-                android:ellipsize="end" />
+                android:text=" • "
+                android:textColor="#616161"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/timeText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Just now"
+                android:textColor="#757575"
+                android:textSize="11sp" />
         </LinearLayout>
+
+        <!-- Notification Title -->
+        <TextView
+            android:id="@+id/titleText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Notification Title"
+            android:textColor="#FFFFFFFF"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <!-- Notification Body -->
+        <TextView
+            android:id="@+id/bodyText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:text="Notification body message goes here."
+            android:textColor="#CCFFFFFF"
+            android:textSize="13sp"
+            android:maxLines="2"
+            android:ellipsize="end" />
     </LinearLayout>
 </LinearLayout>

@@ -23,7 +23,7 @@ class YaruStatusCard extends StatelessWidget {
         title,
         style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
       ),
-      child: YaruTile(
+      child: YaruListTile(
         leading: Icon(
           isConnected ? YaruIcons.ok_simple : YaruIcons.error,
           color: isConnected ? Colors.greenAccent : Colors.redAccent,

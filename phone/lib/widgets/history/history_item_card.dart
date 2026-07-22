@@ -25,7 +25,7 @@ class HistoryItemCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: YaruTile(
+      child: YaruListTile(
         leading: CircleAvatar(
           backgroundColor: primaryColor.withValues(alpha: 0.15),
           radius: 20,

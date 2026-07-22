@@ -50,7 +50,7 @@ class _PairedDeviceCardState extends State<PairedDeviceCard> {
                 ]
               : [],
         ),
-        child: YaruTile(
+        child: YaruListTile(
           leading: Focus(
             onFocusChange: (f) => setState(() => _cardFocused = f),
             child: Container(

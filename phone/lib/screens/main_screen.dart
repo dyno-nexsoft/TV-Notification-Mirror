@@ -296,7 +296,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 children: [
                   if (isLoading) ...[
                     const SizedBox(height: 8),
-                    const CircularProgressIndicator(),
+                    const YaruCircularProgressIndicator(),
                     const SizedBox(height: 16),
                     const Text(
                       'Connecting...',

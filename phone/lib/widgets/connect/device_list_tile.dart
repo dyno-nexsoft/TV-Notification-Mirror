@@ -18,7 +18,7 @@ class DeviceListTile extends StatelessWidget {
     final primaryColor = Theme.of(context).colorScheme.primary;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: YaruTile(
+      child: YaruListTile(
         leading: CircleAvatar(
           backgroundColor: primaryColor.withValues(alpha: 0.15),
           child: Icon(YaruIcons.computer, color: primaryColor),

@@ -402,7 +402,7 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
 
                                             return Padding(
                                               padding: const EdgeInsets.only(bottom: 8),
-                                              child: YaruTile(
+                                              child: YaruListTile(
                                                 leading: CircleAvatar(
                                                   backgroundColor: primaryColor
                                                       .withValues(alpha: 0.15),

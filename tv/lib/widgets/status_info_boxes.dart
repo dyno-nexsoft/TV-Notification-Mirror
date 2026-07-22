@@ -13,7 +13,7 @@ class PairingBox extends StatelessWidget {
     final primaryColor = Theme.of(context).colorScheme.primary;
     return YaruSection(
       headline: const Text('New Pairing Request'),
-      child: YaruTile(
+      child: YaruListTile(
         leading: Icon(YaruIcons.key, size: 36, color: primaryColor),
         title: const Text(
           'Enter this PIN on your phone:',
@@ -47,8 +47,8 @@ class WaitingBox extends StatelessWidget {
   Widget build(BuildContext context) {
     return const YaruSection(
       headline: Text('Waiting for Connection'),
-      child: YaruTile(
-        leading: CircularProgressIndicator(strokeWidth: 3),
+      child: YaruListTile(
+        leading: YaruCircularProgressIndicator(),
         title: Text(
           'Waiting for Phone Connection',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -86,7 +86,7 @@ class ConnectedBox extends StatelessWidget {
 
     return YaruSection(
       headline: const Text('Connection Status'),
-      child: YaruTile(
+      child: YaruListTile(
         leading: const Icon(YaruIcons.ok_simple, size: 36, color: Colors.greenAccent),
         title: const Text(
           'Phone Connected',
@@ -123,7 +123,7 @@ class ServerInfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          YaruTile(
+          YaruListTile(
             title: Text('IP Address: $tvIp'),
             subtitle: const Text('Port: 8080'),
           ),

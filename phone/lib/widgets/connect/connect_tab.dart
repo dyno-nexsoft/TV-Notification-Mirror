@@ -100,7 +100,7 @@ class _ScanningCard extends StatelessWidget {
       padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       child: Row(
         children: [
-          CircularProgressIndicator(strokeWidth: 2),
+          YaruCircularProgressIndicator(),
           SizedBox(width: 16),
           Expanded(
             child: Text(

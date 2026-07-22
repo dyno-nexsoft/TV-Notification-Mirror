@@ -24,7 +24,7 @@ class QuietHoursCard extends StatelessWidget {
         headline: const Text('Quiet Hours (DND Schedule)'),
         child: Column(
           children: [
-            YaruTile(
+            YaruListTile(
               leading: Icon(YaruIcons.notification, color: Colors.greenAccent),
               title: const Text(
                 'Quiet Hours Status',

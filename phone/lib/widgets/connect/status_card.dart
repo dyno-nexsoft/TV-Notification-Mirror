@@ -37,7 +37,7 @@ class StatusCard extends StatelessWidget {
       ),
       child: Column(
         children: [
-          YaruTile(
+          YaruListTile(
             leading: Icon(
               isConnected ? YaruIcons.ok_simple : YaruIcons.cloud,
               size: 40,
@@ -55,7 +55,7 @@ class StatusCard extends StatelessWidget {
           ),
           if (isConnected) ...[
             const Divider(color: Colors.white10),
-            YaruTile(
+            YaruListTile(
               leading: Icon(
                 tvDndEnabled ? YaruIcons.error : YaruIcons.ok,
                 color: tvDndEnabled ? colorScheme.error : colorScheme.primary,

@@ -28,7 +28,7 @@ class OverlaySettingsCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            YaruTile(
+            YaruListTile(
               title: const Text(
                 'Popup Position',
                 style: TextStyle(fontWeight: FontWeight.bold),

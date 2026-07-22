@@ -136,23 +136,44 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
   void _confirmRemoveClient(String token, String deviceName) {
     showDialog(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: const Text('Remove Device'),
-        content: Text('Remove "$deviceName" from paired devices?'),
-        actions: [
-          YaruOptionButton(
-            autofocus: true,
-            onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Cancel'),
-          ),
-          YaruOptionButton(
-            onPressed: () {
-              Navigator.pop(dialogCtx);
-              _removeClient(token);
-            },
-            child: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
-          ),
-        ],
+      builder: (dialogCtx) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            YaruDialogTitleBar(
+              title: const Text('Remove Device'),
+              onClose: (_) => Navigator.pop(dialogCtx),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Remove "$deviceName" from paired devices?'),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      YaruOptionButton(
+                        autofocus: true,
+                        onPressed: () => Navigator.pop(dialogCtx),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      YaruOptionButton(
+                        onPressed: () {
+                          Navigator.pop(dialogCtx);
+                          _removeClient(token);
+                        },
+                        child: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -168,23 +189,44 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
   Future<bool> _showExitConfirmDialog() async {
     final result = await showDialog<bool>(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: const Text('Exit TV Mirror?'),
-        content: const Text(
-          'Do you want to exit the app?\n'
-          'The WebSocket server will continue running in the background to mirror notifications.',
+      builder: (dialogCtx) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            YaruDialogTitleBar(
+              title: const Text('Exit TV Mirror?'),
+              onClose: (_) => Navigator.pop(dialogCtx, false),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Do you want to exit the app?\n'
+                    'The WebSocket server will continue running in the background to mirror notifications.',
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      YaruOptionButton(
+                        autofocus: true,
+                        onPressed: () => Navigator.pop(dialogCtx, false),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      YaruOptionButton(
+                        onPressed: () => Navigator.pop(dialogCtx, true),
+                        child: const Text('Exit'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        actions: [
-          YaruOptionButton(
-            autofocus: true,
-            onPressed: () => Navigator.pop(dialogCtx, false),
-            child: const Text('Cancel'),
-          ),
-          YaruOptionButton(
-            onPressed: () => Navigator.pop(dialogCtx, true),
-            child: const Text('Exit'),
-          ),
-        ],
       ),
     );
     return result ?? false;
@@ -394,23 +436,27 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
                                             return Padding(
                                               padding: const EdgeInsets.only(bottom: 8),
                                               child: YaruListTile(
-                                                leading: CircleAvatar(
-                                                  backgroundColor: primaryColor
-                                                      .withValues(alpha: 0.15),
+                                                leading: Container(
+                                                  width: 40,
+                                                  height: 40,
+                                                  decoration: BoxDecoration(
+                                                    color: primaryColor.withValues(alpha: 0.12),
+                                                    borderRadius: BorderRadius.circular(8),
+                                                  ),
                                                   child: appIconBase64 != null
-                                                      ? ClipOval(
+                                                      ? ClipRRect(
+                                                          borderRadius: BorderRadius.circular(8),
                                                           child: Image.memory(
-                                                            base64Decode(
-                                                                appIconBase64),
-                                                            width: 24,
-                                                            height: 24,
+                                                            base64Decode(appIconBase64),
+                                                            width: 40,
+                                                            height: 40,
                                                             fit: BoxFit.cover,
                                                           ),
                                                         )
                                                       : Icon(
                                                           YaruIcons.notification,
                                                           color: primaryColor,
-                                                          size: 20,
+                                                          size: 22,
                                                         ),
                                                 ),
                                                 title: Text(

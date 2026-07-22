@@ -18,9 +18,14 @@ class DeviceListTile extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: YaruListTile(
-        leading: CircleAvatar(
-          backgroundColor: primaryColor.withValues(alpha: 0.15),
-          child: Icon(YaruIcons.computer, color: primaryColor),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: primaryColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(YaruIcons.computer, color: primaryColor, size: 22),
         ),
         title: Text(
           device.name,

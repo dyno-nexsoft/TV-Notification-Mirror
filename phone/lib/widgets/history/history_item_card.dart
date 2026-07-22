@@ -23,15 +23,19 @@ class HistoryItemCard extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: YaruListTile(
-        leading: CircleAvatar(
-          backgroundColor: primaryColor.withValues(alpha: 0.15),
-          radius: 20,
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: primaryColor.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(8),
+          ),
           child: AppIconWidget(
             packageName: item.packageName,
             fallbackIcon: YaruIcons.notification,
             fallbackColor: primaryColor,
             cache: iconCache,
-            size: 20,
+            size: 22,
           ),
         ),
         title: Row(

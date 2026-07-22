@@ -287,77 +287,93 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         bool isLoading = false;
         return StatefulBuilder(
           builder: (_, setDialogState) {
-            return AlertDialog(
-              title: Text('Pair with ${device.name}'),
-              content: Column(
+            return Dialog(
+              child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (isLoading) ...[
-                    const SizedBox(height: 8),
-                    const YaruCircularProgressIndicator(),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'Connecting...',
-                      style: TextStyle(color: Colors.grey),
+                  YaruDialogTitleBar(
+                    title: Text('Pair with ${device.name}'),
+                    isClosable: !isLoading,
+                    onClose: (_) => Navigator.pop(dialogCtx),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (isLoading) ...[
+                          const YaruCircularProgressIndicator(),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Connecting...',
+                            style: TextStyle(color: Colors.grey),
+                          ),
+                        ] else ...[
+                          const Text(
+                            'Enter the 4-digit PIN displayed on your TV screen:',
+                          ),
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: pinController,
+                            autofocus: true,
+                            keyboardType: TextInputType.number,
+                            maxLength: 4,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 28,
+                              letterSpacing: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            decoration: const InputDecoration(
+                              counterText: '',
+                              border: OutlineInputBorder(),
+                              hintText: '0000',
+                            ),
+                          ),
+                        ],
+                        const SizedBox(height: 20),
+                        if (!isLoading)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              YaruOptionButton(
+                                onPressed: () => Navigator.pop(dialogCtx),
+                                child: const Text('Cancel'),
+                              ),
+                              const SizedBox(width: 8),
+                              YaruOptionButton(
+                                onPressed: () async {
+                                  final pin = pinController.text.trim();
+                                  if (pin.length == 4) {
+                                    setDialogState(() => isLoading = true);
+                                    final isPaired = await _connector
+                                        .confirmPairing(device, pin);
+                                    if (dialogCtx.mounted) {
+                                      Navigator.pop(dialogCtx);
+                                    }
+                                    if (mounted) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            isPaired
+                                                ? 'Successfully paired with ${device.name}!'
+                                                : 'Incorrect PIN. Please try again.',
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                                child: const Text('Pair'),
+                              ),
+                            ],
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
-                  ] else ...[
-                    const Text(
-                      'Enter the 4-digit PIN displayed on your TV screen:',
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: pinController,
-                      autofocus: true,
-                      keyboardType: TextInputType.number,
-                      maxLength: 4,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        letterSpacing: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      decoration: const InputDecoration(
-                        counterText: '',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                  ],
+                  ),
                 ],
               ),
-              actions: isLoading
-                  ? null
-                  : [
-                      YaruOptionButton(
-                        onPressed: () => Navigator.pop(dialogCtx),
-                        child: const Text('Cancel'),
-                      ),
-                      YaruOptionButton(
-                        onPressed: () async {
-                          final pin = pinController.text.trim();
-                          if (pin.length == 4) {
-                            setDialogState(() => isLoading = true);
-                            final isPaired =
-                                await _connector.confirmPairing(device, pin);
-                            if (dialogCtx.mounted) {
-                              Navigator.pop(dialogCtx);
-                            }
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    isPaired
-                                        ? 'Successfully paired with ${device.name}!'
-                                        : 'Incorrect PIN. Please try again.',
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        },
-                        child: const Text('Pair'),
-                      ),
-                    ],
             );
           },
         );
@@ -372,49 +388,59 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     showDialog(
       context: context,
       builder: (dialogCtx) {
-        return AlertDialog(
-          title: const Text('Connect with IP'),
-          content: Column(
+        return Dialog(
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                controller: ipController,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'TV IP Address',
-                  hintText: 'e.g. 192.168.1.50 or 10.0.2.2',
-                  border: OutlineInputBorder(),
-                ),
+              YaruDialogTitleBar(
+                title: const Text('Connect with IP'),
+                onClose: (_) => Navigator.pop(dialogCtx),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: portController,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(
-                  labelText: 'Port',
-                  hintText: 'e.g. 8080',
-                  border: OutlineInputBorder(),
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    YaruSearchField(
+                      controller: ipController,
+                      autofocus: true,
+                      hintText: 'TV IP Address (e.g. 192.168.1.50)',
+                    ),
+                    const SizedBox(height: 12),
+                    YaruSearchField(
+                      controller: portController,
+                      hintText: 'Port (e.g. 8080)',
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        YaruOptionButton(
+                          onPressed: () => Navigator.pop(dialogCtx),
+                          child: const Text('Cancel'),
+                        ),
+                        const SizedBox(width: 8),
+                        YaruOptionButton(
+                          onPressed: () {
+                            final ip = ipController.text.trim();
+                            final port =
+                                int.tryParse(portController.text.trim()) ??
+                                    8080;
+                            if (ip.isNotEmpty) {
+                              Navigator.pop(dialogCtx);
+                              _showPairingDialog(
+                                  TVDevice(name: 'Manual TV', ip: ip, port: port));
+                            }
+                          },
+                          child: const Text('Connect'),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          actions: [
-            YaruOptionButton(
-              onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Cancel'),
-            ),
-            YaruOptionButton(
-              onPressed: () {
-                final ip = ipController.text.trim();
-                final port = int.tryParse(portController.text.trim()) ?? 8080;
-                if (ip.isNotEmpty) {
-                  Navigator.pop(dialogCtx);
-                  _showPairingDialog(TVDevice(name: 'Manual TV', ip: ip, port: port));
-                }
-              },
-              child: const Text('Connect'),
-            ),
-          ],
         );
       },
     );
@@ -424,33 +450,50 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     final controller = TextEditingController();
     showDialog(
       context: context,
-      builder: (dialogCtx) => AlertDialog(
-        title: const Text('Add Custom App Filter'),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'App Package Name',
-            hintText: 'e.g. com.spotify.music',
-            border: OutlineInputBorder(),
-          ),
+      builder: (dialogCtx) => Dialog(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            YaruDialogTitleBar(
+              title: const Text('Add Custom App Filter'),
+              onClose: (_) => Navigator.pop(dialogCtx),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  YaruSearchField(
+                    controller: controller,
+                    autofocus: true,
+                    hintText: 'App package name (e.g. com.spotify.music)',
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      YaruOptionButton(
+                        onPressed: () => Navigator.pop(dialogCtx),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      YaruOptionButton(
+                        onPressed: () {
+                          final pkg = controller.text.trim();
+                          if (pkg.isNotEmpty) {
+                            _saveFilter(pkg, true);
+                            Navigator.pop(dialogCtx);
+                          }
+                        },
+                        child: const Text('Add'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        actions: [
-          YaruOptionButton(
-            onPressed: () => Navigator.pop(dialogCtx),
-            child: const Text('Cancel'),
-          ),
-          YaruOptionButton(
-            onPressed: () {
-              final pkg = controller.text.trim();
-              if (pkg.isNotEmpty) {
-                _saveFilter(pkg, true);
-                Navigator.pop(dialogCtx);
-              }
-            },
-            child: const Text('Add'),
-          ),
-        ],
       ),
     );
   }
@@ -459,73 +502,77 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    final views = [
-      ConnectTab(
-        isConnected: _isConnected,
-        discoveredDevices: _discoveredDevices,
-        connectedTvName: _connector.connectedTvName,
-        tvDndEnabled: _settings.tvDndEnabled,
-        settings: _settings,
-        connector: _connector,
-        onSendTest: _sendTestNotification,
-        onManualConnect: _showManualConnectDialog,
-        onDndChanged: _onDndChanged,
-        onPairDevice: _showPairingDialog,
-      ),
-      FiltersTab(
-        settings: _settings,
-        appFilters: _appFilters,
-        installedPresets: _installedPresets,
-        iconCache: _appIconCache,
-        onSettingsChanged: _onSettingsChanged,
-        onFilterChanged: _saveFilter,
-        onAddCustomApp: _showAddCustomAppDialog,
-      ),
-      HistoryTab(
-        history: _history,
-        iconCache: _appIconCache,
-      ),
+    // Tab items metadata
+    final navItems = [
+      (icon: YaruIcons.computer, label: 'Connect'),
+      (icon: YaruIcons.pen, label: 'Apps'),
+      (icon: YaruIcons.history, label: 'History'),
     ];
 
-    return Scaffold(
-      appBar: YaruTitleBar(
-        title: const Text(
-          'TV Notification Mirror',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,
-            color: Colors.white,
-          ),
+    Widget buildPage(int index) {
+      if (!_hasPermission) {
+        return Column(
+          children: [
+            PermissionBanner(notifier: _notifier),
+            Expanded(child: _buildTab(index)),
+          ],
+        );
+      }
+      return _buildTab(index);
+    }
+
+    return YaruNavigationPage(
+      length: navItems.length,
+      initialIndex: _currentIndex,
+      onSelected: (i) => setState(() => _currentIndex = i),
+      leading: Padding(
+        padding: const EdgeInsets.all(8),
+        child: YaruIconButton(
+          icon: const Icon(YaruIcons.refresh),
+          onPressed: () {
+            _checkPermission();
+            _connector.startScanning();
+          },
+          tooltip: 'Refresh / Scan',
         ),
-        actions: [
-          YaruIconButton(
-            icon: const Icon(YaruIcons.refresh),
-            onPressed: () {
-              _checkPermission();
-              _connector.startScanning();
-            },
-          ),
-        ],
       ),
-      body: Column(
-        children: [
-          if (!_hasPermission) PermissionBanner(notifier: _notifier),
-          Expanded(child: views[_currentIndex]),
-        ],
+      itemBuilder: (context, index, selected) => YaruNavigationRailItem(
+        icon: Icon(navItems[index].icon),
+        label: Text(navItems[index].label),
+        style: YaruNavigationRailStyle.labelledExtended,
+        selected: selected,
       ),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) => setState(() => _currentIndex = index),
-        selectedItemColor: Theme.of(context).colorScheme.primary,
-        items: [
-          BottomNavigationBarItem(icon: Icon(YaruIcons.computer), label: 'Connect'),
-          BottomNavigationBarItem(
-            icon: Icon(YaruIcons.pen),
-            label: 'Apps',
-          ),
-          BottomNavigationBarItem(icon: Icon(YaruIcons.history), label: 'History'),
-        ],
-      ),
+      pageBuilder: (context, index) => buildPage(index),
     );
+  }
+
+  Widget _buildTab(int index) {
+    return switch (index) {
+      0 => ConnectTab(
+          isConnected: _isConnected,
+          discoveredDevices: _discoveredDevices,
+          connectedTvName: _connector.connectedTvName,
+          tvDndEnabled: _settings.tvDndEnabled,
+          settings: _settings,
+          connector: _connector,
+          onSendTest: _sendTestNotification,
+          onManualConnect: _showManualConnectDialog,
+          onDndChanged: _onDndChanged,
+          onPairDevice: _showPairingDialog,
+        ),
+      1 => FiltersTab(
+          settings: _settings,
+          appFilters: _appFilters,
+          installedPresets: _installedPresets,
+          iconCache: _appIconCache,
+          onSettingsChanged: _onSettingsChanged,
+          onFilterChanged: _saveFilter,
+          onAddCustomApp: _showAddCustomAppDialog,
+        ),
+      _ => HistoryTab(
+          history: _history,
+          iconCache: _appIconCache,
+        ),
+    };
   }
 }

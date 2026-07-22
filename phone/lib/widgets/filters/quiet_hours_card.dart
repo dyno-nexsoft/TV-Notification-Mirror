@@ -2,6 +2,7 @@ import 'package:shared/shared.dart';
 import '../../services/filter_service.dart';
 
 /// Card for configuring quiet hours (scheduled DND) using Yaru UI widgets.
+/// Uses [YaruTimeEntry] for inline, segmented time input — no dialog picker needed.
 class QuietHoursCard extends StatelessWidget {
   final AppSettings settings;
   final ValueChanged<AppSettings> onChanged;
@@ -12,11 +13,16 @@ class QuietHoursCard extends StatelessWidget {
     required this.onChanged,
   });
 
+  void _saveTime({
+    required bool enabled,
+    required TimeOfDay start,
+    required TimeOfDay end,
+  }) {
+    FilterService.saveQuietHours(enabled: enabled, start: start, end: end);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final startStr = settings.quietHoursStart.format(context);
-    final endStr = settings.quietHoursEnd.format(context);
-
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: YaruSection(
@@ -24,7 +30,7 @@ class QuietHoursCard extends StatelessWidget {
         child: Column(
           children: [
             YaruListTile(
-              leading: Icon(YaruIcons.notification, color: Colors.greenAccent),
+              leading: const Icon(YaruIcons.notification, color: Colors.greenAccent),
               title: const Text(
                 'Quiet Hours Status',
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -33,8 +39,9 @@ class QuietHoursCard extends StatelessWidget {
               trailing: YaruSwitch(
                 value: settings.quietHoursEnabled,
                 onChanged: (val) {
-                  onChanged(settings.copyWith(quietHoursEnabled: val));
-                  FilterService.saveQuietHours(
+                  final updated = settings.copyWith(quietHoursEnabled: val);
+                  onChanged(updated);
+                  _saveTime(
                     enabled: val,
                     start: settings.quietHoursStart,
                     end: settings.quietHoursEnd,
@@ -45,50 +52,66 @@ class QuietHoursCard extends StatelessWidget {
             if (settings.quietHoursEnabled) ...[
               const Divider(color: Colors.white10),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    YaruOptionButton(
-                      onPressed: () async {
-                        final selected = await showTimePicker(
-                          context: context,
-                          initialTime: settings.quietHoursStart,
-                        );
-                        if (selected != null) {
-                          final updated = settings.copyWith(
-                            quietHoursStart: selected,
-                          );
-                          onChanged(updated);
-                          FilterService.saveQuietHours(
-                            enabled: updated.quietHoursEnabled,
-                            start: updated.quietHoursStart,
-                            end: updated.quietHoursEnd,
-                          );
-                        }
-                      },
-                      child: Text('Start: $startStr'),
+                    // Start time
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Start',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4),
+                          YaruTimeEntry(
+                            initialTimeOfDay: settings.quietHoursStart,
+                            force24HourFormat: true,
+                            onChanged: (time) {
+                              if (time == null) return;
+                              final updated = settings.copyWith(quietHoursStart: time);
+                              onChanged(updated);
+                              _saveTime(
+                                enabled: updated.quietHoursEnabled,
+                                start: updated.quietHoursStart,
+                                end: updated.quietHoursEnd,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
-                    Icon(YaruIcons.go_next, color: Colors.grey),
-                    YaruOptionButton(
-                      onPressed: () async {
-                        final selected = await showTimePicker(
-                          context: context,
-                          initialTime: settings.quietHoursEnd,
-                        );
-                        if (selected != null) {
-                          final updated = settings.copyWith(
-                            quietHoursEnd: selected,
-                          );
-                          onChanged(updated);
-                          FilterService.saveQuietHours(
-                            enabled: updated.quietHoursEnabled,
-                            start: updated.quietHoursStart,
-                            end: updated.quietHoursEnd,
-                          );
-                        }
-                      },
-                      child: Text('End: $endStr'),
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: Icon(YaruIcons.go_next, color: Colors.grey),
+                    ),
+                    // End time
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'End',
+                            style: TextStyle(fontSize: 12, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 4),
+                          YaruTimeEntry(
+                            initialTimeOfDay: settings.quietHoursEnd,
+                            force24HourFormat: true,
+                            onChanged: (time) {
+                              if (time == null) return;
+                              final updated = settings.copyWith(quietHoursEnd: time);
+                              onChanged(updated);
+                              _saveTime(
+                                enabled: updated.quietHoursEnabled,
+                                start: updated.quietHoursStart,
+                                end: updated.quietHoursEnd,
+                              );
+                            },
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

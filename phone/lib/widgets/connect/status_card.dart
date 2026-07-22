@@ -75,45 +75,39 @@ class StatusCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               if (isConnected) ...[
-                OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.redAccent,
-                    side: const BorderSide(color: Colors.redAccent),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                  ),
+                YaruOptionButton(
                   onPressed: () => connector.disconnect(),
-                  icon: const Icon(YaruIcons.power),
-                  label: const Text('Disconnect'),
-                ),
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(YaruIcons.power, color: Colors.redAccent, size: 18),
+                      SizedBox(width: 6),
+                      Text('Disconnect', style: TextStyle(color: Colors.redAccent)),
+                    ],
                   ),
+                ),
+                YaruOptionButton(
                   onPressed: onSendTest,
-                  icon: const Icon(YaruIcons.go_next),
-                  label: const Text('Send Test'),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(YaruIcons.go_next, size: 18),
+                      SizedBox(width: 6),
+                      Text('Send Test'),
+                    ],
+                  ),
                 ),
               ] else ...[
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: colorScheme.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 24,
-                      vertical: 12,
-                    ),
-                  ),
+                YaruOptionButton(
                   onPressed: onScanAgain,
-                  icon: const Icon(YaruIcons.search),
-                  label: const Text('Scan Again'),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(YaruIcons.search, size: 18),
+                      SizedBox(width: 6),
+                      Text('Scan Again'),
+                    ],
+                  ),
                 ),
               ],
             ],

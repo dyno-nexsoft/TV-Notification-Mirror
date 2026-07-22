@@ -140,21 +140,17 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
         title: const Text('Remove Device'),
         content: Text('Remove "$deviceName" from paired devices?'),
         actions: [
-          TextButton(
+          YaruOptionButton(
             autofocus: true,
             onPressed: () => Navigator.pop(dialogCtx),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
-              foregroundColor: Colors.white,
-            ),
+          YaruOptionButton(
             onPressed: () {
               Navigator.pop(dialogCtx);
               _removeClient(token);
             },
-            child: const Text('Remove'),
+            child: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -179,16 +175,12 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
           'The WebSocket server will continue running in the background to mirror notifications.',
         ),
         actions: [
-          TextButton(
+          YaruOptionButton(
             autofocus: true,
             onPressed: () => Navigator.pop(dialogCtx, false),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Theme.of(context).colorScheme.primary,
-              foregroundColor: Colors.white,
-            ),
+          YaruOptionButton(
             onPressed: () => Navigator.pop(dialogCtx, true),
             child: const Text('Exit'),
           ),

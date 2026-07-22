@@ -85,7 +85,7 @@ class _KeywordFilterCardState extends State<KeywordFilterCard> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  ElevatedButton(
+                  YaruOptionButton(
                     onPressed: () => _addKeyword(_controller.text),
                     child: const Text('Add'),
                   ),

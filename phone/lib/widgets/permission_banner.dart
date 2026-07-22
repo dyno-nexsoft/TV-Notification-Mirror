@@ -1,7 +1,7 @@
 import 'package:shared/shared.dart';
 import '../services/notification_service.dart';
 
-/// Banner shown at the top of the screen when notification access is missing.
+/// Banner shown at the top of the screen when notification access is missing, using native YaruBanner.
 class PermissionBanner extends StatelessWidget {
   final NotificationService notifier;
 
@@ -9,33 +9,21 @@ class PermissionBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final errorColor = Theme.of(context).colorScheme.error;
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: errorColor.withValues(alpha: 0.15),
-        border: Border.all(color: errorColor, width: 1),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          Icon(YaruIcons.warning, color: errorColor),
-          const SizedBox(width: 12),
-          const Expanded(
-            child: Text(
-              'Notification access required to read and mirror phone notifications.',
-              style: TextStyle(fontSize: 14, color: Colors.white70),
-            ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: YaruBanner(
+        color: Colors.redAccent.withValues(alpha: 0.15),
+        child: YaruListTile(
+          leading: const Icon(YaruIcons.warning, color: Colors.redAccent),
+          title: const Text('Notification Access Required'),
+          subtitle: const Text(
+            'Notification access is required to read and mirror phone notifications to TV.',
           ),
-          TextButton(
+          trailing: YaruOptionButton(
             onPressed: () => notifier.openSettings(),
-            child: const Text(
-              'Enable',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
+            child: const Text('Enable Access'),
           ),
-        ],
+        ),
       ),
     );
   }

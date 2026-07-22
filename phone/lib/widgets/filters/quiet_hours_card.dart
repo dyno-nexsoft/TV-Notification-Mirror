@@ -49,7 +49,7 @@ class QuietHoursCard extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    OutlinedButton(
+                    YaruOptionButton(
                       onPressed: () async {
                         final selected = await showTimePicker(
                           context: context,
@@ -70,7 +70,7 @@ class QuietHoursCard extends StatelessWidget {
                       child: Text('Start: $startStr'),
                     ),
                     Icon(YaruIcons.go_next, color: Colors.grey),
-                    OutlinedButton(
+                    YaruOptionButton(
                       onPressed: () async {
                         final selected = await showTimePicker(
                           context: context,

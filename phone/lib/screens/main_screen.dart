@@ -328,11 +328,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
               actions: isLoading
                   ? null
                   : [
-                      TextButton(
+                      YaruOptionButton(
                         onPressed: () => Navigator.pop(dialogCtx),
                         child: const Text('Cancel'),
                       ),
-                      ElevatedButton(
+                      YaruOptionButton(
                         onPressed: () async {
                           final pin = pinController.text.trim();
                           if (pin.length == 4) {
@@ -355,7 +355,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                             }
                           }
                         },
-                        child: const Text('Connect'),
+                        child: const Text('Pair'),
                       ),
                     ],
             );
@@ -399,11 +399,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             ],
           ),
           actions: [
-            TextButton(
+            YaruOptionButton(
               onPressed: () => Navigator.pop(dialogCtx),
               child: const Text('Cancel'),
             ),
-            ElevatedButton(
+            YaruOptionButton(
               onPressed: () {
                 final ip = ipController.text.trim();
                 final port = int.tryParse(portController.text.trim()) ?? 8080;
@@ -436,11 +436,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
           ),
         ),
         actions: [
-          TextButton(
+          YaruOptionButton(
             onPressed: () => Navigator.pop(dialogCtx),
             child: const Text('Cancel'),
           ),
-          ElevatedButton(
+          YaruOptionButton(
             onPressed: () {
               final pkg = controller.text.trim();
               if (pkg.isNotEmpty) {
@@ -488,17 +488,17 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
     ];
 
     return Scaffold(
-      appBar: AppBar(
+      appBar: YaruTitleBar(
         title: const Text(
           'TV Notification Mirror',
           style: TextStyle(
             fontWeight: FontWeight.bold,
-            fontSize: 22,
+            fontSize: 20,
             color: Colors.white,
           ),
         ),
         actions: [
-          IconButton(
+          YaruIconButton(
             icon: const Icon(YaruIcons.refresh),
             onPressed: () {
               _checkPermission();

@@ -27,14 +27,7 @@ class DeviceListTile extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Text('${device.ip}:${device.port}'),
-        trailing: ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: primaryColor,
-            foregroundColor: Colors.white,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-          ),
+        trailing: YaruOptionButton(
           onPressed: onPair,
           child: const Text('Pair'),
         ),

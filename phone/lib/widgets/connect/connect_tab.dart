@@ -51,16 +51,19 @@ class ConnectTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           if (!isConnected) ...[
-            OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            YaruOptionButton(
+              onPressed: onManualConnect,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(YaruIcons.external_link, size: 18),
+                    const SizedBox(width: 8),
+                    const Text('Connect with IP Address'),
+                  ],
                 ),
               ),
-              onPressed: onManualConnect,
-              icon: Icon(YaruIcons.external_link),
-              label: const Text('Connect with IP Address'),
             ),
             const SizedBox(height: 24),
             YaruSection(

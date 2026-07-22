@@ -49,24 +49,21 @@ class _TvButtonState extends State<TvButton> {
                 ]
               : [],
         ),
-        child: ElevatedButton.icon(
-          style: ElevatedButton.styleFrom(
-            backgroundColor: widget.color,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-              side: _isFocused
-                  ? const BorderSide(color: Colors.white, width: 2)
-                  : BorderSide.none,
-            ),
-            elevation: _isFocused ? 12 : 4,
-          ),
+        child: YaruOptionButton(
           onPressed: widget.onPressed,
-          icon: Icon(widget.icon, size: 24),
-          label: Text(
-            widget.label,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(widget.icon, size: 24, color: widget.color),
+                const SizedBox(width: 8),
+                Text(
+                  widget.label,
+                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
           ),
         ),
       ),

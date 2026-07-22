@@ -86,31 +86,27 @@ class _FiltersTabState extends State<FiltersTab> {
                     color: Colors.grey,
                   ),
                 ),
-                TextButton.icon(
+                YaruOptionButton(
                   onPressed: widget.onAddCustomApp,
-                  icon: const Icon(YaruIcons.plus, size: 18),
-                  label: const Text('Add Package'),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(YaruIcons.plus, size: 16),
+                      SizedBox(width: 4),
+                      Text('Add Package'),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: TextField(
+            child: YaruSearchField(
+              hintText: 'Search apps...',
               onChanged: (val) {
                 setState(() => _searchQuery = val.toLowerCase());
               },
-              decoration: InputDecoration(
-                hintText: 'Search apps...',
-                prefixIcon: const Icon(YaruIcons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  vertical: 0,
-                  horizontal: 16,
-                ),
-              ),
             ),
           ),
           ListView.builder(

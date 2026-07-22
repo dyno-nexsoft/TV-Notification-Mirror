@@ -2,6 +2,7 @@ import 'package:shared/shared.dart';
 import '../services/overlay_service.dart';
 import 'tv_button.dart';
 
+/// Shown while a phone is mid-pairing, surfacing the PIN it must confirm.
 class PairingBox extends StatelessWidget {
   final String pin;
 
@@ -39,6 +40,7 @@ class PairingBox extends StatelessWidget {
   }
 }
 
+/// Default state before any phone has paired or connected.
 class WaitingBox extends StatelessWidget {
   const WaitingBox({super.key});
 
@@ -60,6 +62,7 @@ class WaitingBox extends StatelessWidget {
   }
 }
 
+/// Shown once at least one paired phone has an active WebSocket connection.
 class ConnectedBox extends StatelessWidget {
   final List<dynamic> pairedClients;
   final Set<String> activeTokens;
@@ -97,6 +100,8 @@ class ConnectedBox extends StatelessWidget {
   }
 }
 
+/// Summarizes the mirror server's running/DND state and the TV's local IP,
+/// shown once both required permissions have been granted.
 class ServerInfoCard extends StatelessWidget {
   final bool isRunning;
   final bool isDnd;
@@ -143,6 +148,8 @@ class ServerInfoCard extends StatelessWidget {
   }
 }
 
+/// Blocks the dashboard until `SYSTEM_ALERT_WINDOW` overlay permission is
+/// granted — required before any notification can be drawn over other apps.
 class OverlayWarningCard extends StatelessWidget {
   const OverlayWarningCard({super.key});
 
@@ -180,6 +187,8 @@ class OverlayWarningCard extends StatelessWidget {
   }
 }
 
+/// Blocks the dashboard until `POST_NOTIFICATIONS` permission is granted —
+/// required on API 33+ before the background mirror service can start.
 class NotificationWarningCard extends StatelessWidget {
   const NotificationWarningCard({super.key});
 

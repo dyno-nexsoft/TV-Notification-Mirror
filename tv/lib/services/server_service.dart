@@ -12,8 +12,13 @@ import 'package:shelf_web_socket/shelf_web_socket.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+/// A phone paired with (and optionally currently connected to) this TV.
 typedef ConnectedClient = MirrorDevice;
 
+/// Owns the TV's half of the mirror link: the HTTP pairing API, mDNS
+/// broadcast, and the WebSocket server that receives and forwards
+/// notifications from paired phones. Singleton so the background isolate
+/// and UI isolate observe the same server state.
 class ServerService {
   static final ServerService _instance = ServerService._internal();
   factory ServerService() => _instance;
@@ -79,146 +84,21 @@ class ServerService {
     _clientsController.add(List.from(_pairedClients));
   }
 
-  // Start the server and mDNS broadcast
+  /// Starts the HTTP+WebSocket server and mDNS broadcast. Route handling is
+  /// split across the `_handle*Request` methods below to keep this focused
+  /// on wiring routes and bringing the server/broadcast up.
   Future<void> startServer(String tvName, int port) async {
     if (_isRunning) return;
 
     final app = Router();
-
-    // HTTP Endpoint: Request pairing PIN
-    app.post(MirrorProtocol.apiPair, (shelf.Request request) async {
-      final payload = await request.readAsString();
-      try {
-        final body = jsonDecode(payload);
-        _pairingDeviceName = body['deviceName'] ?? 'Unknown Phone';
-
-        final rng = Random();
-        _currentPin = (rng.nextInt(9000) + 1000).toString();
-        _pairingStateController.add(_currentPin);
-
-        debugPrint(
-            "Pairing initiated from $_pairingDeviceName. Generated PIN: $_currentPin");
-        return shelf.Response.ok(jsonEncode({'status': 'pin_generated'}));
-      } catch (e) {
-        return shelf.Response.internalServerError(body: 'Invalid payload');
-      }
-    });
-
-    // HTTP Endpoint: Confirm PIN and retrieve Token
-    app.post(MirrorProtocol.apiPairConfirm, (shelf.Request request) async {
-      final payload = await request.readAsString();
-      try {
-        final body = jsonDecode(payload);
-        final pin = body['pin'] as String;
-
-        if (_currentPin != null && pin == _currentPin) {
-          final token = const Uuid().v4();
-          final ip =
-              request.context['shelf.io.connection_info'] as HttpConnectionInfo;
-
-          final client = MirrorDevice(
-            name: _pairingDeviceName ?? 'Android Phone',
-            ip: ip.remoteAddress.address,
-            port: port,
-            token: token,
-          );
-
-          // Remove duplicate client (same IP or same device name)
-          final duplicateIndex = _pairedClients.indexWhere(
-            (c) => c.name == client.name || c.ip == client.ip,
-          );
-          if (duplicateIndex != -1) {
-            final oldClient = _pairedClients.removeAt(duplicateIndex);
-            if (oldClient.token != null) {
-              final socket = _socketToToken.entries
-                  .where((e) => e.value == oldClient.token)
-                  .map((e) => e.key)
-                  .firstOrNull;
-              if (socket != null) {
-                _socketToToken.remove(socket);
-                _activeSockets.remove(socket);
-                _activeTokens.remove(oldClient.token);
-                socket.sink.close();
-              }
-            }
-            debugPrint(
-                "Removed old duplicate client: ${oldClient.name} (${oldClient.ip})");
-          }
-
-          _pairedClients.add(client);
-          await _savePairedClients();
-
-          _currentPin = null;
-          _pairingStateController.add(null);
-
-          debugPrint(
-              "Client paired successfully: ${client.name} (${client.ip})");
-          return shelf.Response.ok(
-              jsonEncode({'status': 'paired', 'token': token}));
-        } else {
-          return shelf.Response.forbidden(jsonEncode({'error': 'invalid_pin'}));
-        }
-      } catch (e) {
-        return shelf.Response.internalServerError(body: 'Invalid payload');
-      }
-    });
-
-    // WebSocket Endpoint: Real-time communication
-    app.get(MirrorProtocol.wsPath, (shelf.Request request) {
-      final uri = request.requestedUri;
-      final token = uri.queryParameters['token'];
-
-      final isValidToken = _pairedClients.any((c) => c.token == token);
-      if (!isValidToken) {
-        debugPrint(
-            "Unauthorized connection attempt to WebSocket. Token: $token");
-        return shelf.Response.forbidden('Unauthorized');
-      }
-
-      return webSocketHandler((WebSocketChannel socket, _) {
-        _activeSockets.add(socket);
-        _activeTokens.add(token!);
-        _socketToToken[socket] = token;
-        debugPrint("WebSocket client connected. Token: $token");
-
-        socket.stream.listen(
-          (message) {
-            _handleIncomingMessage(message as String, socket);
-          },
-          onDone: () {
-            final t = _socketToToken.remove(socket);
-            _activeSockets.remove(socket);
-            if (t != null) _activeTokens.remove(t);
-            debugPrint("WebSocket client disconnected. Token: $t");
-          },
-          onError: (e) {
-            final t = _socketToToken.remove(socket);
-            _activeSockets.remove(socket);
-            if (t != null) _activeTokens.remove(t);
-            debugPrint("WebSocket socket error: $e");
-          },
-        );
-
-        socket.sink.add(jsonEncode({'status': 'connected'}));
-      }).call(request);
-    });
+    app.post(MirrorProtocol.apiPair, _handlePairRequest);
+    app.post(MirrorProtocol.apiPairConfirm, (r) => _handlePairConfirm(r, port));
+    app.get(MirrorProtocol.wsPath, _handleWebSocketUpgrade);
 
     try {
       _server = await shelf_io.serve(app.call, InternetAddress.anyIPv4, port);
       debugPrint('HTTP Server running on port ${_server!.port}');
-
-      _broadcast = BonsoirBroadcast(
-        service: BonsoirService(
-          name: tvName,
-          type: MirrorProtocol.mdnsType,
-          port: _server!.port,
-          attributes: {'device_name': tvName},
-        ),
-      );
-      await _broadcast!.initialize();
-      await _broadcast!.start();
-      debugPrint('mDNS Service Broadcasted: $tvName.${MirrorProtocol.mdnsType}');
-
+      await _startMdnsBroadcast(tvName, _server!.port);
       _isRunning = true;
     } catch (e) {
       debugPrint("Failed to start server/broadcast: $e");
@@ -226,83 +106,227 @@ class ServerService {
     }
   }
 
+  Future<void> _startMdnsBroadcast(String tvName, int port) async {
+    _broadcast = BonsoirBroadcast(
+      service: BonsoirService(
+        name: tvName,
+        type: MirrorProtocol.mdnsType,
+        port: port,
+        attributes: {'device_name': tvName},
+      ),
+    );
+    await _broadcast!.initialize();
+    await _broadcast!.start();
+    debugPrint('mDNS Service Broadcasted: $tvName.${MirrorProtocol.mdnsType}');
+  }
+
+  /// HTTP Endpoint: Request pairing PIN.
+  Future<shelf.Response> _handlePairRequest(shelf.Request request) async {
+    final payload = await request.readAsString();
+    try {
+      final body = jsonDecode(payload);
+      _pairingDeviceName = body['deviceName'] ?? 'Unknown Phone';
+
+      final rng = Random();
+      _currentPin = (rng.nextInt(9000) + 1000).toString();
+      _pairingStateController.add(_currentPin);
+
+      debugPrint(
+          "Pairing initiated from $_pairingDeviceName. Generated PIN: $_currentPin");
+      return shelf.Response.ok(jsonEncode({'status': 'pin_generated'}));
+    } catch (e) {
+      return shelf.Response.internalServerError(body: 'Invalid payload');
+    }
+  }
+
+  /// HTTP Endpoint: Confirm PIN and retrieve Token.
+  Future<shelf.Response> _handlePairConfirm(
+      shelf.Request request, int port) async {
+    final payload = await request.readAsString();
+    try {
+      final body = jsonDecode(payload);
+      final pin = body['pin'] as String;
+
+      if (_currentPin == null || pin != _currentPin) {
+        return shelf.Response.forbidden(jsonEncode({'error': 'invalid_pin'}));
+      }
+
+      final token = const Uuid().v4();
+      final ip =
+          request.context['shelf.io.connection_info'] as HttpConnectionInfo;
+      final client = MirrorDevice(
+        name: _pairingDeviceName ?? 'Android Phone',
+        ip: ip.remoteAddress.address,
+        port: port,
+        token: token,
+      );
+
+      _removeDuplicateClient(client);
+      _pairedClients.add(client);
+      await _savePairedClients();
+
+      _currentPin = null;
+      _pairingStateController.add(null);
+
+      debugPrint("Client paired successfully: ${client.name} (${client.ip})");
+      return shelf.Response.ok(jsonEncode({'status': 'paired', 'token': token}));
+    } catch (e) {
+      return shelf.Response.internalServerError(body: 'Invalid payload');
+    }
+  }
+
+  /// Drops any existing paired client with the same name or IP as [client],
+  /// closing its socket if it's currently connected, so re-pairing from the
+  /// same phone doesn't leave stale duplicate entries behind.
+  void _removeDuplicateClient(MirrorDevice client) {
+    final duplicateIndex = _pairedClients.indexWhere(
+      (c) => c.name == client.name || c.ip == client.ip,
+    );
+    if (duplicateIndex == -1) return;
+
+    final oldClient = _pairedClients.removeAt(duplicateIndex);
+    if (oldClient.token != null) {
+      final socket = _socketToToken.entries
+          .where((e) => e.value == oldClient.token)
+          .map((e) => e.key)
+          .firstOrNull;
+      if (socket != null) {
+        _socketToToken.remove(socket);
+        _activeSockets.remove(socket);
+        _activeTokens.remove(oldClient.token);
+        socket.sink.close();
+      }
+    }
+    debugPrint(
+        "Removed old duplicate client: ${oldClient.name} (${oldClient.ip})");
+  }
+
+  /// WebSocket Endpoint: Real-time communication with a paired phone.
+  FutureOr<shelf.Response> _handleWebSocketUpgrade(shelf.Request request) {
+    final uri = request.requestedUri;
+    final token = uri.queryParameters['token'];
+
+    final isValidToken = _pairedClients.any((c) => c.token == token);
+    if (!isValidToken) {
+      debugPrint("Unauthorized connection attempt to WebSocket. Token: $token");
+      return shelf.Response.forbidden('Unauthorized');
+    }
+
+    return webSocketHandler((WebSocketChannel socket, _) {
+      _activeSockets.add(socket);
+      _activeTokens.add(token!);
+      _socketToToken[socket] = token;
+      debugPrint("WebSocket client connected. Token: $token");
+
+      socket.stream.listen(
+        (message) => _handleIncomingMessage(message as String, socket),
+        onDone: () => _handleSocketClosed(socket, 'disconnected'),
+        onError: (e) {
+          _handleSocketClosed(socket, 'error: $e');
+        },
+      );
+
+      socket.sink.add(jsonEncode({'status': 'connected'}));
+    }).call(request);
+  }
+
+  void _handleSocketClosed(WebSocketChannel socket, String reason) {
+    final t = _socketToToken.remove(socket);
+    _activeSockets.remove(socket);
+    if (t != null) _activeTokens.remove(t);
+    debugPrint("WebSocket client $reason. Token: $t");
+  }
+
+  /// Dispatches a decoded WebSocket message from a paired phone to the
+  /// matching per-event handler below.
   void _handleIncomingMessage(String message, WebSocketChannel socket) {
     try {
       final payload = jsonDecode(message);
       final event = payload['event'] as String;
       final data = payload['data'];
 
-      if (event == MirrorProtocol.eventPing) {
-        socket.sink.add(jsonEncode({
-          'event': MirrorProtocol.eventPong,
-          'timestamp': DateTime.now().millisecondsSinceEpoch,
-        }));
-        return;
-      }
-
-      if (event == MirrorProtocol.eventDisconnect) {
-        final t = _socketToToken.remove(socket);
-        _activeSockets.remove(socket);
-        if (t != null) _activeTokens.remove(t);
-        socket.sink.close();
-        debugPrint("Client requested disconnect. Token: $t");
-        return;
-      }
-
-      if (event == MirrorProtocol.eventToggleDnd) {
-        isDndEnabled = !isDndEnabled;
-        debugPrint("DND mode toggled remotely to: $isDndEnabled");
-        return;
-      }
-      if (event == MirrorProtocol.eventSetDnd) {
-        isDndEnabled = data['enabled'] as bool? ?? false;
-        debugPrint("DND mode set remotely to: $isDndEnabled");
-        return;
-      }
-
-      if (isDndEnabled) {
-        debugPrint("DND mode enabled, ignoring notification.");
-        return;
-      }
-
-      if (event == MirrorProtocol.eventNotificationNew) {
-        final title = data['title'] ?? '';
-        final text = data['text'] ?? '';
-        final appName = data['appName'] ?? 'Notification';
-        final base64Icon = data['appIcon'];
-        final overlayPosition = data['overlayPosition'];
-        final overlayDuration = data['overlayDuration'];
-
-        _notificationHistory.insert(0, {
-          'title': title,
-          'text': text,
-          'appName': appName,
-          'packageName': data['packageName'] ?? '',
-          'timestamp':
-              data['postTime'] ?? DateTime.now().millisecondsSinceEpoch,
-          'appIcon': base64Icon,
-        });
-        if (_notificationHistory.length > 15) {
-          _notificationHistory.removeLast();
-        }
-
-        debugPrint("Displaying notification: $title - $text from $appName");
-        _overlayController.add({
-          'action': 'show',
-          'title': title,
-          'text': text,
-          'appName': appName,
-          'base64Icon': base64Icon,
-          'overlayPosition': overlayPosition,
-          'overlayDuration': overlayDuration,
-        });
-      } else if (event == MirrorProtocol.eventNotificationRemoved) {
-        debugPrint("Hiding notification overlay.");
-        _overlayController.add({'action': 'hide'});
+      switch (event) {
+        case MirrorProtocol.eventPing:
+          _handlePing(socket);
+        case MirrorProtocol.eventDisconnect:
+          _handleClientDisconnect(socket);
+        case MirrorProtocol.eventToggleDnd:
+          _handleToggleDnd();
+        case MirrorProtocol.eventSetDnd:
+          _handleSetDnd(data);
+        case MirrorProtocol.eventNotificationNew:
+          _handleNewNotification(data);
+        case MirrorProtocol.eventNotificationRemoved:
+          _handleNotificationRemoved();
       }
     } catch (e) {
       debugPrint("Failed to parse message: $e");
     }
+  }
+
+  void _handlePing(WebSocketChannel socket) {
+    socket.sink.add(jsonEncode({
+      'event': MirrorProtocol.eventPong,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    }));
+  }
+
+  void _handleClientDisconnect(WebSocketChannel socket) {
+    socket.sink.close();
+    _handleSocketClosed(socket, 'requested disconnect');
+  }
+
+  void _handleToggleDnd() {
+    isDndEnabled = !isDndEnabled;
+    debugPrint("DND mode toggled remotely to: $isDndEnabled");
+  }
+
+  void _handleSetDnd(dynamic data) {
+    isDndEnabled = data['enabled'] as bool? ?? false;
+    debugPrint("DND mode set remotely to: $isDndEnabled");
+  }
+
+  void _handleNewNotification(dynamic data) {
+    if (isDndEnabled) {
+      debugPrint("DND mode enabled, ignoring notification.");
+      return;
+    }
+
+    final title = data['title'] ?? '';
+    final text = data['text'] ?? '';
+    final appName = data['appName'] ?? 'Notification';
+    final base64Icon = data['appIcon'];
+    final overlayPosition = data['overlayPosition'];
+    final overlayDuration = data['overlayDuration'];
+
+    _notificationHistory.insert(0, {
+      'title': title,
+      'text': text,
+      'appName': appName,
+      'packageName': data['packageName'] ?? '',
+      'timestamp': data['postTime'] ?? DateTime.now().millisecondsSinceEpoch,
+      'appIcon': base64Icon,
+    });
+    if (_notificationHistory.length > 15) {
+      _notificationHistory.removeLast();
+    }
+
+    debugPrint("Displaying notification: $title - $text from $appName");
+    _overlayController.add({
+      'action': 'show',
+      'title': title,
+      'text': text,
+      'appName': appName,
+      'base64Icon': base64Icon,
+      'overlayPosition': overlayPosition,
+      'overlayDuration': overlayDuration,
+    });
+  }
+
+  void _handleNotificationRemoved() {
+    if (isDndEnabled) return;
+    debugPrint("Hiding notification overlay.");
+    _overlayController.add({'action': 'hide'});
   }
 
   Future<void> stopServer() async {

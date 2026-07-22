@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../models/notification_item.dart';
 
+/// Bridges to the native `NotificationListenerService` via platform channels,
+/// exposing incoming/removed Android notifications as Dart streams.
 class NotificationService {
   static const _methodsChannel =
       MethodChannel('com.dyno.tv_notification_mirror/methods');

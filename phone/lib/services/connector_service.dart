@@ -7,8 +7,12 @@ import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+/// A TV discovered or connected from the phone's side of the mirror link.
 typedef TVDevice = MirrorDevice;
 
+/// Owns the phone's half of the mirror link: mDNS discovery, PIN pairing,
+/// and the WebSocket connection (with auto-reconnect) used to relay
+/// notifications and settings to the paired TV.
 class ConnectorService {
   final _storage = const FlutterSecureStorage();
 

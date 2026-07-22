@@ -131,6 +131,18 @@ git push origin vX.Y.Z
 
 ---
 
+## Coding Conventions
+
+- Prefer private widget classes (`class _Foo extends StatelessWidget`) over widget-returning helper functions/methods.
+- Parameterless methods that just return a value should be `getters`.
+- Keep UI files under ~200–250 lines; split with `part` / `part of` when they grow past that.
+- Keep functions under ~30–50 lines; extract helpers when they grow past that.
+- Use `///` doc comments on public functions/classes, focused on the **why**, not the how.
+- For any feature involving business logic or architecture, add or update a doc in `doc/` (this repo uses `doc/`, not `docs/`). Search `doc/` for an existing file covering the feature before creating a new one.
+- Follow null safety and idiomatic Dart/Flutter state-management practices throughout.
+
+---
+
 ## Pitfalls to Avoid
 
 1. **Do not run `adb install` from the project root** — path must be relative to where the APK was built (`tv/` or `phone/`).

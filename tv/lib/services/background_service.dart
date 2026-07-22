@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'server_service.dart';
 
+/// Registers the `flutter_background_service` configuration so the mirror
+/// server can keep running as a foreground service after the UI is backgrounded.
 Future<void> initializeBackgroundService() async {
   final service = FlutterBackgroundService();
 
@@ -24,6 +26,9 @@ Future<void> initializeBackgroundService() async {
   );
 }
 
+/// Entry point run in the background isolate: starts [ServerService] and
+/// wires its events (overlay requests, state changes) to the UI isolate,
+/// and the UI's commands (DND toggle, remove client, stop) back to it.
 @pragma('vm:entry-point')
 void onStart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();

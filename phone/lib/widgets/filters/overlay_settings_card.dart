@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
-import 'package:yaru/yaru.dart';
 import '../../services/filter_service.dart';
 
 /// Card for configuring TV overlay notification popup position and duration using Yaru UI widgets.

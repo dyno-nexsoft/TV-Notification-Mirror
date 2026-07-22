@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:shared/shared.dart';
 import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 /// A D-pad focusable TV button widget with focus highlights and scale animations.

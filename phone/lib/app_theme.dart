@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
-import 'package:yaru/yaru.dart';
 
 /// Phone application theme using pure default Yaru UI design system.
 class AppTheme {

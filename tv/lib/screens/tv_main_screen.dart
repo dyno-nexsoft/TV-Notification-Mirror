@@ -2,10 +2,9 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:yaru/yaru.dart';
+import 'package:shared/shared.dart';
 
 import '../services/overlay_service.dart';
 import '../widgets/paired_device_card.dart';

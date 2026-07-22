@@ -1,7 +1,5 @@
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
-import 'package:yaru/yaru.dart';
-import '../../models/notification_item.dart';
+import 'package:shared/shared.dart';
 import '../../services/filter_service.dart';
 import 'quiet_hours_card.dart';
 import 'keyword_filter_card.dart';

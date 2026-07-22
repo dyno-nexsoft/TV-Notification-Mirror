@@ -1,6 +1,5 @@
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
-import '../../models/notification_item.dart';
+import 'package:shared/shared.dart';
 import 'history_item_card.dart';
 
 /// The History tab — displays the last 50 received notifications.

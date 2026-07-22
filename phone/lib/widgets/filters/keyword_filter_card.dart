@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:yaru/yaru.dart';
+import 'package:shared/shared.dart';
 import '../../services/filter_service.dart';
 
 /// Card for managing blocked keywords using Yaru UI widgets.

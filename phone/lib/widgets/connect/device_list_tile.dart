@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:yaru/yaru.dart';
+import 'package:shared/shared.dart';
 import '../../services/connector_service.dart';
 
 /// A single Yaru tile representing a discovered TV device in the network list.

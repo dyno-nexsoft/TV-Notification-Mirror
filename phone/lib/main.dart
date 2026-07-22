@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:yaru/yaru.dart';
+import 'package:shared/shared.dart';
 import 'app_theme.dart';
 import 'screens/main_screen.dart';
 

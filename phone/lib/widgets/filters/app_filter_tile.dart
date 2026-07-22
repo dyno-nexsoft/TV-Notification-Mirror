@@ -1,7 +1,5 @@
 import 'dart:typed_data';
-import 'package:flutter/material.dart';
-import 'package:yaru/yaru.dart';
-import '../app_icon_widget.dart';
+import 'package:shared/shared.dart';
 
 /// A single toggle row for one installed app in the App Filters list using Yaru UI.
 class AppFilterTile extends StatelessWidget {

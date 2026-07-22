@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:yaru/yaru.dart';
+import 'package:shared/shared.dart';
 import '../../services/connector_service.dart';
 import '../../services/filter_service.dart';
 import 'status_card.dart';

@@ -1,6 +1,4 @@
-import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
-import 'package:yaru/yaru.dart';
 import 'screens/tv_main_screen.dart';
 import 'services/background_service.dart';
 

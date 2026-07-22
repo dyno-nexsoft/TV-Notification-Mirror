@@ -1,5 +1,10 @@
 /// Barrel export file for the shared TV Notification Mirror package.
+/// Re-exports Yaru UI system & Flutter foundation so consumers do not need
+/// to import package:flutter/material.dart directly.
 library shared;
+
+export 'package:flutter/material.dart';
+export 'package:yaru/yaru.dart';
 
 export 'constants/mirror_protocol.dart';
 export 'models/mirror_device.dart';

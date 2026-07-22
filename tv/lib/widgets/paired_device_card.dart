@@ -1,6 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:shared/shared.dart';
 import 'package:flutter/services.dart';
-import 'package:yaru/yaru.dart';
 
 /// A TV-optimised paired device card using Yaru UI widgets.
 /// Info area and delete button are SEPARATE focus nodes for independent D-pad navigation.

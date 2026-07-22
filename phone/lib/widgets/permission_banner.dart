@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-import 'package:yaru/yaru.dart';
+import 'package:shared/shared.dart';
 import '../services/notification_service.dart';
 
 /// Banner shown at the top of the screen when notification access is missing.

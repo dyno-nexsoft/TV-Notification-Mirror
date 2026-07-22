@@ -1,0 +1,11 @@
+name: tv_notification_mirror_workspace
+description: "Monorepo workspace for TV Notification Mirror phone and TV applications."
+publish_to: 'none'
+
+environment:
+  sdk: ^3.6.0
+
+workspace:
+  - phone
+  - tv
+  - shared

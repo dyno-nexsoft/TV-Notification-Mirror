@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:ui';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
-import 'package:flutter_background_service_android/flutter_background_service_android.dart';
 import 'server_service.dart';
 
 Future<void> initializeBackgroundService() async {
   final service = FlutterBackgroundService();
-  
+
   await service.configure(
     androidConfiguration: AndroidConfiguration(
       onStart: onStart,
@@ -57,11 +57,13 @@ void onStart(ServiceInstance service) async {
         'pin': server.currentPin,
         'isRunning': server.isRunning,
         'isDnd': server.isDndEnabled,
-        'clients': server.pairedClients.map((c) => {
-          'deviceName': c.deviceName,
-          'ip': c.ip,
-          'token': c.token,
-        }).toList(),
+        'clients': server.pairedClients
+            .map((c) => {
+                  'deviceName': c.name,
+                  'ip': c.ip,
+                  'token': c.token,
+                })
+            .toList(),
         // Which tokens currently have an active WebSocket connection.
         'activeTokens': server.activeTokens.toList(),
         'history': server.notificationHistory,
@@ -72,15 +74,16 @@ void onStart(ServiceInstance service) async {
   // Listen for actions from the UI
   service.on('toggleDnd').listen((event) {
     server.isDndEnabled = !server.isDndEnabled;
-    print("DND mode toggled to: ${server.isDndEnabled}");
+    debugPrint("DND mode toggled to: ${server.isDndEnabled}");
   });
 
   service.on('removeClient').listen((event) {
     if (event != null && event['token'] != null) {
       final token = event['token'] as String;
-      final clientToRemove = server.pairedClients.firstWhere((c) => c.token == token);
+      final clientToRemove =
+          server.pairedClients.firstWhere((c) => c.token == token);
       server.removeClient(clientToRemove);
-      print("Removed client: ${clientToRemove.deviceName}");
+      debugPrint("Removed client: ${clientToRemove.name}");
     }
   });
 

@@ -27,12 +27,20 @@ class MyNotificationListener : NotificationListenerService() {
         val id = sbn.id.toString()
         val postTime = sbn.postTime
 
-        Log.d(TAG, "Notification posted from $packageName: $title - $text")
+        val appName = try {
+            val appInfo = packageManager.getApplicationInfo(packageName, 0)
+            packageManager.getApplicationLabel(appInfo).toString()
+        } catch (e: Exception) {
+            packageName
+        }
+
+        Log.d(TAG, "Notification posted from $packageName ($appName): $title - $text")
 
         val intent = Intent(ACTION_NEW_NOTIFICATION).apply {
             setPackage(this@MyNotificationListener.packageName)
             putExtra("id", id)
             putExtra("packageName", packageName)
+            putExtra("appName", appName)
             putExtra("title", title)
             putExtra("text", text)
             putExtra("postTime", postTime)

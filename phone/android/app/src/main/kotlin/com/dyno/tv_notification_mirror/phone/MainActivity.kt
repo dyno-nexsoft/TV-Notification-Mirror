@@ -57,6 +57,7 @@ class MainActivity : FlutterActivity() {
 
                                 if (action == MyNotificationListener.ACTION_NEW_NOTIFICATION) {
                                     map["event"] = "notification_new"
+                                    map["appName"] = intent.getStringExtra("appName") ?: ""
                                     map["title"] = intent.getStringExtra("title") ?: ""
                                     map["text"] = intent.getStringExtra("text") ?: ""
                                     map["postTime"] = intent.getLongExtra("postTime", 0L)

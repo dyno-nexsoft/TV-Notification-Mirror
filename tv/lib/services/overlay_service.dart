@@ -1,14 +1,17 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class OverlayService {
-  static const _channel = MethodChannel('com.dyno.tv_notification_mirror/overlay');
+  static const _channel =
+      MethodChannel('com.dyno.tv_notification_mirror/overlay');
 
   static Future<bool> checkPermission() async {
     try {
-      final bool hasPermission = await _channel.invokeMethod('checkPermission');
+      final bool hasPermission =
+          await _channel.invokeMethod('checkPermission');
       return hasPermission;
     } on PlatformException catch (e) {
-      print("Failed to check overlay permission: ${e.message}");
+      debugPrint("Failed to check overlay permission: ${e.message}");
       return false;
     }
   }
@@ -17,16 +20,17 @@ class OverlayService {
     try {
       await _channel.invokeMethod('requestPermission');
     } on PlatformException catch (e) {
-      print("Failed to request overlay permission: ${e.message}");
+      debugPrint("Failed to request overlay permission: ${e.message}");
     }
   }
 
   static Future<bool> checkNotificationPermission() async {
     try {
-      final bool hasPermission = await _channel.invokeMethod('checkNotificationPermission');
+      final bool hasPermission =
+          await _channel.invokeMethod('checkNotificationPermission');
       return hasPermission;
     } on PlatformException catch (e) {
-      print("Failed to check notification permission: ${e.message}");
+      debugPrint("Failed to check notification permission: ${e.message}");
       return false;
     }
   }
@@ -35,7 +39,7 @@ class OverlayService {
     try {
       await _channel.invokeMethod('requestNotificationPermission');
     } on PlatformException catch (e) {
-      print("Failed to request notification permission: ${e.message}");
+      debugPrint("Failed to request notification permission: ${e.message}");
     }
   }
 
@@ -57,7 +61,7 @@ class OverlayService {
         'duration': overlayDurationMs ?? 5000,
       });
     } on PlatformException catch (e) {
-      print("Failed to show overlay: ${e.message}");
+      debugPrint("Failed to show overlay: ${e.message}");
     }
   }
 
@@ -65,7 +69,7 @@ class OverlayService {
     try {
       await _channel.invokeMethod('hideOverlay');
     } on PlatformException catch (e) {
-      print("Failed to hide overlay: ${e.message}");
+      debugPrint("Failed to hide overlay: ${e.message}");
     }
   }
 }

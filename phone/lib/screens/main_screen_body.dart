@@ -49,19 +49,158 @@ class _MainScreenBody extends StatelessWidget {
   final void Function(String packageName, bool value) onFilterChanged;
   final VoidCallback onAddCustomApp;
 
-  static const _navItems = [
-    (icon: YaruIcons.computer, label: 'Connect'),
-    (icon: YaruIcons.pen, label: 'Apps'),
-    (icon: YaruIcons.history, label: 'History'),
-  ];
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 3,
+      initialIndex: currentIndex,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('TV Mirror'),
+          actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8.0),
+              child: YaruIconButton(
+                icon: const Icon(YaruIcons.refresh),
+                onPressed: onRefresh,
+                tooltip: 'Refresh / Scan',
+              ),
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            const YaruTabBar(
+              tabs: [
+                Tab(icon: Icon(YaruIcons.computer), text: 'Connect'),
+                Tab(icon: Icon(YaruIcons.pen), text: 'Apps'),
+                Tab(icon: Icon(YaruIcons.history), text: 'History'),
+              ],
+            ),
+            if (!hasPermission) PermissionBanner(notifier: notifier),
+            Expanded(
+              child: TabBarView(
+                children: [
+                  _TabContent(
+                    index: 0,
+                    isConnected: isConnected,
+                    discoveredDevices: discoveredDevices,
+                    connectedTvName: connector.connectedTvName,
+                    tvDndEnabled: settings.tvDndEnabled,
+                    settings: settings,
+                    connector: connector,
+                    appFilters: appFilters,
+                    installedPresets: installedPresets,
+                    appIconCache: appIconCache,
+                    history: history,
+                    onSendTest: onSendTest,
+                    onManualConnect: onManualConnect,
+                    onDndChanged: onDndChanged,
+                    onPairDevice: onPairDevice,
+                    onSettingsChanged: onSettingsChanged,
+                    onFilterChanged: onFilterChanged,
+                    onAddCustomApp: onAddCustomApp,
+                  ),
+                  _TabContent(
+                    index: 1,
+                    isConnected: isConnected,
+                    discoveredDevices: discoveredDevices,
+                    connectedTvName: connector.connectedTvName,
+                    tvDndEnabled: settings.tvDndEnabled,
+                    settings: settings,
+                    connector: connector,
+                    appFilters: appFilters,
+                    installedPresets: installedPresets,
+                    appIconCache: appIconCache,
+                    history: history,
+                    onSendTest: onSendTest,
+                    onManualConnect: onManualConnect,
+                    onDndChanged: onDndChanged,
+                    onPairDevice: onPairDevice,
+                    onSettingsChanged: onSettingsChanged,
+                    onFilterChanged: onFilterChanged,
+                    onAddCustomApp: onAddCustomApp,
+                  ),
+                  _TabContent(
+                    index: 2,
+                    isConnected: isConnected,
+                    discoveredDevices: discoveredDevices,
+                    connectedTvName: connector.connectedTvName,
+                    tvDndEnabled: settings.tvDndEnabled,
+                    settings: settings,
+                    connector: connector,
+                    appFilters: appFilters,
+                    installedPresets: installedPresets,
+                    appIconCache: appIconCache,
+                    history: history,
+                    onSendTest: onSendTest,
+                    onManualConnect: onManualConnect,
+                    onDndChanged: onDndChanged,
+                    onPairDevice: onPairDevice,
+                    onSettingsChanged: onSettingsChanged,
+                    onFilterChanged: onFilterChanged,
+                    onAddCustomApp: onAddCustomApp,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-  Widget _buildTab(int index) {
+
+class _TabContent extends StatelessWidget {
+  final int index;
+  final bool isConnected;
+  final List<TVDevice> discoveredDevices;
+  final String? connectedTvName;
+  final bool tvDndEnabled;
+  final AppSettings settings;
+  final ConnectorService connector;
+  final Map<String, bool> appFilters;
+  final List<Map<String, dynamic>> installedPresets;
+  final Map<String, Uint8List?> appIconCache;
+  final List<NotificationItem> history;
+  final VoidCallback onSendTest;
+  final VoidCallback onManualConnect;
+  final ValueChanged<bool> onDndChanged;
+  final void Function(TVDevice device) onPairDevice;
+  final ValueChanged<AppSettings> onSettingsChanged;
+  final void Function(String packageName, bool value) onFilterChanged;
+  final VoidCallback onAddCustomApp;
+
+  const _TabContent({
+    required this.index,
+    required this.isConnected,
+    required this.discoveredDevices,
+    this.connectedTvName,
+    required this.tvDndEnabled,
+    required this.settings,
+    required this.connector,
+    required this.appFilters,
+    required this.installedPresets,
+    required this.appIconCache,
+    required this.history,
+    required this.onSendTest,
+    required this.onManualConnect,
+    required this.onDndChanged,
+    required this.onPairDevice,
+    required this.onSettingsChanged,
+    required this.onFilterChanged,
+    required this.onAddCustomApp,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return switch (index) {
       0 => ConnectTab(
           isConnected: isConnected,
           discoveredDevices: discoveredDevices,
-          connectedTvName: connector.connectedTvName,
-          tvDndEnabled: settings.tvDndEnabled,
+          connectedTvName: connectedTvName,
+          tvDndEnabled: tvDndEnabled,
           settings: settings,
           connector: connector,
           onSendTest: onSendTest,
@@ -84,40 +223,5 @@ class _MainScreenBody extends StatelessWidget {
         ),
     };
   }
-
-  Widget _buildPage(int index) {
-    if (!hasPermission) {
-      return Column(
-        children: [
-          PermissionBanner(notifier: notifier),
-          Expanded(child: _buildTab(index)),
-        ],
-      );
-    }
-    return _buildTab(index);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return YaruNavigationPage(
-      length: _navItems.length,
-      initialIndex: currentIndex,
-      onSelected: onTabSelected,
-      leading: Padding(
-        padding: const EdgeInsets.all(8),
-        child: YaruIconButton(
-          icon: const Icon(YaruIcons.refresh),
-          onPressed: onRefresh,
-          tooltip: 'Refresh / Scan',
-        ),
-      ),
-      itemBuilder: (context, index, selected) => YaruNavigationRailItem(
-        icon: Icon(_navItems[index].icon),
-        label: Text(_navItems[index].label),
-        style: YaruNavigationRailStyle.labelledExtended,
-        selected: selected,
-      ),
-      pageBuilder: (context, index) => _buildPage(index),
-    );
-  }
 }
+

@@ -16,10 +16,31 @@ class HistoryTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (history.isEmpty) {
-      return const Center(
-        child: Text(
-          'No notifications captured yet.',
-          style: TextStyle(color: Colors.grey),
+      final colorScheme = Theme.of(context).colorScheme;
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              YaruIcons.history,
+              size: 64,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No notifications captured yet.',
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'New notifications will appear here.',
+              style: TextStyle(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7)),
+            ),
+          ],
         ),
       );
     }

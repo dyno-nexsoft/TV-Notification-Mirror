@@ -5,9 +5,17 @@ import 'package:yaru/yaru.dart';
 class YaruAppTheme {
   YaruAppTheme._();
 
+  static final Color primaryColor = YaruColors.adwaitaPurple;
+
   /// Pure default Yaru Dark theme.
-  static ThemeData get darkTheme => yaruDark;
+  static final ThemeData darkTheme = createYaruDarkTheme(
+    primaryColor: primaryColor,
+    elevatedButtonColor: YaruColors.dark.success,
+  );
 
   /// Pure default Yaru Light theme.
-  static ThemeData get lightTheme => yaruLight;
+  static final ThemeData lightTheme = createYaruLightTheme(
+    primaryColor: primaryColor,
+    elevatedButtonColor: YaruColors.light.success,
+  );
 }

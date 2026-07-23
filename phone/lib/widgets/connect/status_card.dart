@@ -40,7 +40,7 @@ class StatusCard extends StatelessWidget {
             leading: Icon(
               isConnected ? YaruIcons.ok_simple : YaruIcons.cloud,
               size: 40,
-              color: isConnected ? Colors.greenAccent : Colors.grey,
+              color: isConnected ? colorScheme.primary : colorScheme.onSurfaceVariant,
             ),
             title: Text(
               isConnected ? (connectedTvName ?? 'Connected') : 'No Active TV Connection',
@@ -77,12 +77,12 @@ class StatusCard extends StatelessWidget {
               if (isConnected) ...[
                 YaruOptionButton(
                   onPressed: () => connector.disconnect(),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(YaruIcons.power, color: Colors.redAccent, size: 18),
+                      Icon(YaruIcons.power, color: colorScheme.error, size: 18),
                       SizedBox(width: 6),
-                      Text('Disconnect', style: TextStyle(color: Colors.redAccent)),
+                      Text('Disconnect', style: TextStyle(color: colorScheme.error)),
                     ],
                   ),
                 ),

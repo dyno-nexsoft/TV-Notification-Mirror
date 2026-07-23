@@ -98,16 +98,19 @@ class _ScanningCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      child: Row(
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          YaruCircularProgressIndicator(),
-          SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              'Scanning for TV devices in local Wi-Fi network...',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+          const YaruCircularProgressIndicator(),
+          const SizedBox(height: 24),
+          Text(
+            'Scanning for TV devices in local Wi-Fi network...',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 14,
             ),
           ),
         ],

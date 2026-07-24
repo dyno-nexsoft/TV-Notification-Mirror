@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.15] - 2026-07-24
+
+### Fixed
+- **TV App**: Corrected TV banner image generation to properly crop the exact center 16:9 portion of the original logo and resize it to the exact Android TV standard of 320x180 pixels, eliminating OS-level scaling/cropping artifacts on the TV Home screen.
+
 ## [1.0.14] - 2026-07-24
 
 ### Fixed

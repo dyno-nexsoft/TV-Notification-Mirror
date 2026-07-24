@@ -81,8 +81,9 @@ class _KeywordFilterCardState extends ConsumerState<KeywordFilterCard> {
                   spacing: 8,
                   children: [
                     Expanded(
-                        child: YaruSearchField(
+                      child: YaruSearchField(
                         controller: _controller,
+                        autofocus: false,
                         hintText: 'e.g., spam, discount, OTP',
                         onChanged: (v) => setState(() {}),
                         onClear: () {

@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.16] - 2026-07-24
+
+### Fixed
+- **TV App**: Moved `tv_banner.png` from `res/drawable` to `res/drawable-xhdpi`. This prevents Android TV's system launcher from incorrectly applying `mdpi` (1x) scaling to the banner, which was causing the top-left portion of the image to be cropped and the logo to be pushed to the bottom right.
+
 ## [1.0.15] - 2026-07-24
 
 ### Fixed

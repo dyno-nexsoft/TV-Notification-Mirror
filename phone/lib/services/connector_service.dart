@@ -41,6 +41,7 @@ class ConnectorService {
   Stream<bool> get connectionStateStream => _connectionStateController.stream;
   bool get isConnected => _isConnected;
   String? get connectedTvName => _connectedTvName;
+  List<TVDevice> get discoveredDevices => List.unmodifiable(_discoveredDevices);
 
   Future<void> _loadSavedConnection() async {
     final prefs = await SharedPreferences.getInstance();

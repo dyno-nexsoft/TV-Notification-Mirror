@@ -1,32 +1,15 @@
 import 'dart:async';
-import 'dart:convert';
-import 'package:flutter/foundation.dart';
+
+import 'package:flutter/services.dart';
+import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:installed_apps/installed_apps.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared/shared.dart';
 
 import '../services/connector_service.dart';
 import '../services/filter_service.dart';
-import '../services/notification_service.dart';
 
 part 'phone_providers.g.dart';
-
-// ── Singletons / Service Access ─────────────────────────────────────────────
-
-@Riverpod(keepAlive: true)
-ConnectorService connectorService(Ref ref) {
-  final service = ConnectorService();
-  ref.onDispose(() {
-    service.stopScanning();
-    service.disconnect();
-  });
-  return service;
-}
-
-@Riverpod(keepAlive: true)
-NotificationService notificationService(Ref ref) {
-  return NotificationService();
-}
 
 // ── App Toast Provider ────────────────────────────────────────────────────────
 
@@ -51,15 +34,29 @@ class AppToast extends _$AppToast {
 /// Manages Android notification listener permission state.
 @Riverpod(keepAlive: true)
 class Permission extends _$Permission {
+  static const _methodsChannel = MethodChannel('com.dyno.tv_notification_mirror/methods');
+  
   @override
   FutureOr<bool> build() async {
-    return ref.read(notificationServiceProvider).checkPermission();
+    return _checkPermission();
   }
 
   Future<void> checkPermission() async {
-    state = await AsyncValue.guard(() async {
-      return ref.read(notificationServiceProvider).checkPermission();
-    });
+    state = await AsyncValue.guard(_checkPermission);
+  }
+  
+  Future<bool> _checkPermission() async {
+    try {
+      return await _methodsChannel.invokeMethod('checkPermission');
+    } catch (_) {
+      return false;
+    }
+  }
+  
+  Future<void> openSettings() async {
+    try {
+      await _methodsChannel.invokeMethod('openSettings');
+    } catch (_) {}
   }
 }
 
@@ -91,89 +88,97 @@ class PhoneConnectorState {
 
 @Riverpod(keepAlive: true)
 class Connector extends _$Connector {
-  StreamSubscription<List<TVDevice>>? _deviceSub;
-  StreamSubscription<bool>? _connectionSub;
+  StreamSubscription? _stateSub;
 
   @override
   PhoneConnectorState build() {
-    final connector = ref.watch(connectorServiceProvider);
+    final service = FlutterBackgroundService();
 
-    _deviceSub?.cancel();
-    _connectionSub?.cancel();
-
-    _deviceSub = connector.devicesStream.listen((devices) {
-      state = state.copyWith(discoveredDevices: devices);
-    });
-
-    _connectionSub = connector.connectionStateStream.listen((isConnected) {
+    _stateSub?.cancel();
+    _stateSub = service.on('stateUpdate').listen((event) {
+      if (event == null) return;
+      
+      final isConnected = event['isConnected'] as bool? ?? false;
+      final connectedTvName = event['connectedTvName'] as String?;
+      
+      final rawDevices = event['discoveredDevices'] as List<dynamic>? ?? [];
+      final discoveredDevices = rawDevices.map((d) => MirrorDevice.fromJson(Map<String, dynamic>.from(d))).toList();
+      
       state = state.copyWith(
         isConnected: isConnected,
-        connectedTvName: connector.connectedTvName,
+        connectedTvName: connectedTvName,
+        discoveredDevices: discoveredDevices,
       );
     });
 
     ref.onDispose(() {
-      _deviceSub?.cancel();
-      _connectionSub?.cancel();
+      _stateSub?.cancel();
     });
 
-    connector.startScanning();
-
-    return PhoneConnectorState(
-      isConnected: connector.isConnected,
-      connectedTvName: connector.connectedTvName,
-    );
+    return const PhoneConnectorState();
   }
 
   void startScanning() {
-    ref.read(connectorServiceProvider).startScanning();
+    FlutterBackgroundService().invoke('startScanning');
   }
 
   void stopScanning() {
-    ref.read(connectorServiceProvider).stopScanning();
+    FlutterBackgroundService().invoke('stopScanning');
   }
 
-  Future<bool> startPairing(TVDevice device) {
-    return ref.read(connectorServiceProvider).startPairing(device);
+  Future<bool> startPairing(TVDevice device) async {
+    final service = FlutterBackgroundService();
+    final completer = Completer<bool>();
+    
+    StreamSubscription? sub;
+    sub = service.on('pairingResult').listen((event) {
+      if (event != null) {
+        completer.complete(event['success'] as bool? ?? false);
+      }
+      sub?.cancel();
+    });
+    
+    service.invoke('startPairing', device.toJson());
+    
+    return completer.future.timeout(const Duration(seconds: 10), onTimeout: () {
+      sub?.cancel();
+      return false;
+    });
   }
 
   Future<bool> confirmPairing(TVDevice device, String pin) async {
-    final success =
-        await ref.read(connectorServiceProvider).confirmPairing(device, pin);
-    if (success) {
-      state = state.copyWith(
-        isConnected: true,
-        connectedTvName: ref.read(connectorServiceProvider).connectedTvName,
-      );
-    }
-    return success;
+    final service = FlutterBackgroundService();
+    final completer = Completer<bool>();
+    
+    StreamSubscription? sub;
+    sub = service.on('pairingConfirmResult').listen((event) {
+      if (event != null) {
+        completer.complete(event['success'] as bool? ?? false);
+      }
+      sub?.cancel();
+    });
+    
+    service.invoke('confirmPairing', {
+      'device': device.toJson(),
+      'pin': pin,
+    });
+    
+    return completer.future.timeout(const Duration(seconds: 10), onTimeout: () {
+      sub?.cancel();
+      return false;
+    });
   }
 
   void disconnect() {
-    ref.read(connectorServiceProvider).disconnect();
-    state = state.copyWith(isConnected: false);
+    FlutterBackgroundService().invoke('disconnect');
   }
 
   void sendDndToggle(bool val) {
-    ref.read(connectorServiceProvider).sendDndToggle(val);
+    FlutterBackgroundService().invoke('sendDndToggle', {'enabled': val});
   }
 
-  void sendNotification(
-    NotificationItem item, {
-    String? base64Icon,
-    String? overlayPosition,
-    int? overlayDurationMs,
-  }) {
-    ref.read(connectorServiceProvider).sendNotification(
-          item,
-          base64Icon: base64Icon,
-          overlayPosition: overlayPosition,
-          overlayDurationMs: overlayDurationMs,
-        );
-  }
-
-  void sendNotificationRemoved(String id, String packageName) {
-    ref.read(connectorServiceProvider).sendNotificationRemoved(id, packageName);
+  void sendNotification(NotificationItem item) {
+    FlutterBackgroundService().invoke('sendTestNotification', item.toJson());
   }
 }
 
@@ -201,6 +206,7 @@ class Settings extends _$Settings {
         position: updated.overlayPosition,
         durationSeconds: updated.overlayDurationSeconds,
       );
+      FlutterBackgroundService().invoke('reloadSettings');
     } catch (e) {
       state = previousState;
       ref.read(appToastProvider.notifier).show('Error: $e');
@@ -290,6 +296,7 @@ class Filters extends _$Filters {
 
     try {
       await FilterService.saveFilter(packageName, value);
+      FlutterBackgroundService().invoke('reloadSettings');
     } catch (e) {
       state = previousState;
       ref.read(appToastProvider.notifier).show('Error: $e');
@@ -318,6 +325,7 @@ class Filters extends _$Filters {
 
     try {
       await FilterService.saveFilter(packageName, true);
+      FlutterBackgroundService().invoke('reloadSettings');
     } catch (e) {
       state = previousState;
       ref.read(appToastProvider.notifier).show('Error: $e');
@@ -329,64 +337,21 @@ class Filters extends _$Filters {
 
 @Riverpod(keepAlive: true)
 class History extends _$History {
-  StreamSubscription<NotificationItem>? _notifSub;
-  StreamSubscription<String>? _removedSub;
+  StreamSubscription? _notifSub;
 
   @override
   List<NotificationItem> build() {
-    final notifierService = ref.watch(notificationServiceProvider);
-    final connector = ref.read(connectorProvider.notifier);
+    final service = FlutterBackgroundService();
 
     _notifSub?.cancel();
-    _removedSub?.cancel();
-
-    _notifSub = notifierService.notificationStream.listen((item) {
-      final filtersState = ref.read(filtersProvider).value;
-      final settings = ref.read(settingsProvider).value;
-
-      if (filtersState == null || settings == null) return;
-
-      final filters = filtersState.appFilters;
-
-      final isBlockedByKw = MirrorFilterEvaluator.findMatchingBlockedKeyword(
-            item.title,
-            item.text,
-            settings.blockedKeywords,
-          ) !=
-          null;
-
-      final isBlockedByQuiet = settings.quietHoursEnabled &&
-          MirrorFilterEvaluator.isTimeInQuietHours(
-            settings.quietHoursStart,
-            settings.quietHoursEnd,
-            DateTime.now(),
-          );
-
-      final isAppAllowed = MirrorFilterEvaluator.isAppEnabled(
-        item.packageName,
-        filters,
-      );
-
-      if (!isBlockedByKw && !isBlockedByQuiet && isAppAllowed) {
-        addNotification(item);
-        final iconBytes = filtersState.iconCache[item.packageName];
-        final base64Icon = iconBytes != null ? base64Encode(iconBytes) : null;
-        connector.sendNotification(
-          item,
-          base64Icon: base64Icon,
-          overlayPosition: settings.overlayPosition,
-          overlayDurationMs: settings.overlayDurationSeconds * 1000,
-        );
-      }
-    });
-
-    _removedSub = notifierService.notificationRemovedStream.listen((id) {
-      connector.sendNotificationRemoved(id, '');
+    _notifSub = service.on('notificationSent').listen((event) {
+      if (event == null) return;
+      final item = NotificationItem.fromJson(Map<String, dynamic>.from(event));
+      addNotification(item);
     });
 
     ref.onDispose(() {
       _notifSub?.cancel();
-      _removedSub?.cancel();
     });
 
     return [];

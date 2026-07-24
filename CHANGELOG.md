@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.11] - 2026-07-24
+
+### Changed
+- **Workspace**: Refactored Dart workspace by moving `native_bridge` to the root directory for better monorepo cohesion and standardized package paths.
+- **Background Execution**: Re-architected both Phone and TV apps to adhere strictly to Android 14+ `FOREGROUND_SERVICE_CONNECTED_DEVICE` requirements.
+- **Background Execution (Phone)**: Decoupled UI state (`phone_providers.dart`) from background tasks; IPC is now exclusively managed via `flutter_background_service`.
+- **Background Execution (Phone)**: Ensured `PhoneApplication.onCreate` initializes the `phone_mirror_service_channel` channel before background tasks launch to prevent `CannotPostForegroundServiceNotificationException` crashes on boot.
+- **Native Bridge**: Addressed module compilation errors by substituting direct Kotlin class imports with intent string constants.
+- **Code Quality**: Performed extensive linting and resolved all 51 `dart analyze` warnings across the repository.
+
 ## [1.0.10] - 2026-07-24
 
 ### Changed

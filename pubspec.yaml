@@ -9,3 +9,4 @@ workspace:
   - phone
   - tv
   - shared
+  - native_bridge

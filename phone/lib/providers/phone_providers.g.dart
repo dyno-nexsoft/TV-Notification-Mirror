@@ -9,92 +9,6 @@ part of 'phone_providers.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
-@ProviderFor(connectorService)
-final connectorServiceProvider = ConnectorServiceProvider._();
-
-final class ConnectorServiceProvider extends $FunctionalProvider<
-    ConnectorService,
-    ConnectorService,
-    ConnectorService> with $Provider<ConnectorService> {
-  ConnectorServiceProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'connectorServiceProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
-
-  @override
-  String debugGetCreateSourceHash() => _$connectorServiceHash();
-
-  @$internal
-  @override
-  $ProviderElement<ConnectorService> $createElement($ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  ConnectorService create(Ref ref) {
-    return connectorService(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(ConnectorService value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<ConnectorService>(value),
-    );
-  }
-}
-
-String _$connectorServiceHash() => r'7341e9c8338192e6e7f79b5959a92811793a3b34';
-
-@ProviderFor(notificationService)
-final notificationServiceProvider = NotificationServiceProvider._();
-
-final class NotificationServiceProvider extends $FunctionalProvider<
-    NotificationService,
-    NotificationService,
-    NotificationService> with $Provider<NotificationService> {
-  NotificationServiceProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'notificationServiceProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
-
-  @override
-  String debugGetCreateSourceHash() => _$notificationServiceHash();
-
-  @$internal
-  @override
-  $ProviderElement<NotificationService> $createElement(
-          $ProviderPointer pointer) =>
-      $ProviderElement(pointer);
-
-  @override
-  NotificationService create(Ref ref) {
-    return notificationService(ref);
-  }
-
-  /// {@macro riverpod.override_with_value}
-  Override overrideWithValue(NotificationService value) {
-    return $ProviderOverride(
-      origin: this,
-      providerOverride: $SyncValueProvider<NotificationService>(value),
-    );
-  }
-}
-
-String _$notificationServiceHash() =>
-    r'58da87941dbfa08925105dcc4d74091ee38c8593';
-
 @ProviderFor(AppToast)
 final appToastProvider = AppToastProvider._();
 
@@ -168,7 +82,7 @@ final class PermissionProvider
   Permission create() => Permission();
 }
 
-String _$permissionHash() => r'60155c8448c22e6a79c9078e7236722e9cc4030f';
+String _$permissionHash() => r'f8058f00a160160f015f372f9e8f2b4e03b96c84';
 
 /// Manages Android notification listener permission state.
 
@@ -219,7 +133,7 @@ final class ConnectorProvider
   }
 }
 
-String _$connectorHash() => r'6c664d4be941a7e6a19fa60662ae14e95d369ca6';
+String _$connectorHash() => r'fe1a45b95f41b5047499c615f654a7518d36c17e';
 
 abstract class _$Connector extends $Notifier<PhoneConnectorState> {
   PhoneConnectorState build();
@@ -260,7 +174,7 @@ final class SettingsProvider
   Settings create() => Settings();
 }
 
-String _$settingsHash() => r'dfac0fc4136d48dc66e974f7de0f7c3f8304cae6';
+String _$settingsHash() => r'67008c6fba95c8f0a5f60747dd95fd38de4de1ea';
 
 abstract class _$Settings extends $AsyncNotifier<AppSettings> {
   FutureOr<AppSettings> build();
@@ -301,7 +215,7 @@ final class FiltersProvider
   Filters create() => Filters();
 }
 
-String _$filtersHash() => r'5a2e8259ea0d474a822e10222fdb3d1aa8238417';
+String _$filtersHash() => r'3569efb7e8798d9e66b997dd8b6341fd42abeda5';
 
 abstract class _$Filters extends $AsyncNotifier<PhoneFiltersState> {
   FutureOr<PhoneFiltersState> build();
@@ -351,7 +265,7 @@ final class HistoryProvider
   }
 }
 
-String _$historyHash() => r'1e7c67fec3ba96a6cf6f09ec2e2486458caa0d51';
+String _$historyHash() => r'd9a751fbaab3917d65b1b57131aa421e78ca0548';
 
 abstract class _$History extends $Notifier<List<NotificationItem>> {
   List<NotificationItem> build();

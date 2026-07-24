@@ -1,7 +1,7 @@
 name: phone
 description: "A new Flutter project."
 publish_to: "none"
-version: 1.0.10+10
+version: 1.0.11+11
 resolution: workspace
 
 environment:
@@ -24,6 +24,9 @@ dependencies:
   installed_apps: ^2.1.1
   flutter_riverpod: ^3.3.2
   riverpod_annotation: any
+  flutter_background_service: ^5.1.0
+  native_bridge:
+    path: ../native_bridge
 
 dev_dependencies:
   flutter_test:

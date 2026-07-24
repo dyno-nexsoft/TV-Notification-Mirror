@@ -1,11 +1,11 @@
 import 'package:shared/shared.dart';
-import '../services/notification_service.dart';
+import '../providers/phone_providers.dart';
 
 /// Banner shown at the top of the screen when notification access is missing.
 class PermissionBanner extends StatelessWidget {
   const PermissionBanner({super.key, required this.notifier});
 
-  final NotificationService notifier;
+  final Permission notifier;
 
   @override
   Widget build(BuildContext context) {

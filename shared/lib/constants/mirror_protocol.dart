@@ -3,34 +3,34 @@ class MirrorProtocol {
   MirrorProtocol._();
 
   /// mDNS service type registration string.
-  static const String mdnsType = '_tvmirror._tcp';
+  static const mdnsType = '_tvmirror._tcp';
 
   /// Default HTTP & WebSocket server port.
-  static const int defaultPort = 8080;
+  static const defaultPort = 8080;
 
   /// REST API endpoint for initiating pairing (POST).
-  static const String apiPair = '/api/pair';
+  static const apiPair = '/api/pair';
 
   /// REST API endpoint for confirming pairing PIN (POST).
-  static const String apiPairConfirm = '/api/pair/confirm';
+  static const apiPairConfirm = '/api/pair/confirm';
 
   /// WebSocket endpoint path.
-  static const String wsPath = '/ws';
+  static const wsPath = '/ws';
 
   // ── WebSocket Event Names ──────────────────────────────────────────────────
 
-  static const String eventPing = 'ping';
-  static const String eventPong = 'pong';
-  static const String eventDisconnect = 'disconnect';
-  static const String eventSetDnd = 'set_dnd';
-  static const String eventToggleDnd = 'toggle_dnd';
-  static const String eventNotificationNew = 'notification_new';
-  static const String eventNotificationRemoved = 'notification_removed';
+  static const eventPing = 'ping';
+  static const eventPong = 'pong';
+  static const eventDisconnect = 'disconnect';
+  static const eventSetDnd = 'set_dnd';
+  static const eventToggleDnd = 'toggle_dnd';
+  static const eventNotificationNew = 'notification_new';
+  static const eventNotificationRemoved = 'notification_removed';
 
   // ── Overlay Positions ──────────────────────────────────────────────────────
 
-  static const String overlayTopRight = 'top_right';
-  static const String overlayTopLeft = 'top_left';
-  static const String overlayBottomRight = 'bottom_right';
-  static const String overlayBottomLeft = 'bottom_left';
+  static const overlayTopRight = 'top_right';
+  static const overlayTopLeft = 'top_left';
+  static const overlayBottomRight = 'bottom_right';
+  static const overlayBottomLeft = 'bottom_left';
 }

@@ -24,7 +24,7 @@ class AppIconWidget extends StatefulWidget {
 }
 
 class _AppIconWidgetState extends State<AppIconWidget> {
-  bool _loading = false;
+  var _loading = false;
 
   @override
   void initState() {

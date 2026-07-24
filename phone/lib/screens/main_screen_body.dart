@@ -45,18 +45,16 @@ class _MainScreenBody extends ConsumerWidget {
           title: const Text('TV Mirror'),
           systemOverlayStyle: SystemUiOverlayStyle.light,
           actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 8.0),
-              child: IconButton(
-                icon: const Icon(YaruIcons.refresh),
-                onPressed: () {
-                  ref.read(permissionProvider.notifier).checkPermission();
-                  ref.read(connectorProvider.notifier).startScanning();
-                },
-                tooltip: 'Refresh / Scan',
-              ),
+            IconButton(
+              icon: const Icon(YaruIcons.refresh),
+              onPressed: () {
+                ref.read(permissionProvider.notifier).checkPermission();
+                ref.read(connectorProvider.notifier).startScanning();
+              },
+              tooltip: 'Refresh / Scan',
             ),
           ],
+          actionsPadding: const EdgeInsets.only(right: 8.0),
           bottom: const PreferredSize(
             preferredSize: Size.fromHeight(72),
             child: YaruTabBar(
@@ -73,7 +71,7 @@ class _MainScreenBody extends ConsumerWidget {
           children: [
             if (hasPermissionAsync.value == false)
               PermissionBanner(
-                notifier: ref.read(notificationServiceProvider),
+                notifier: ref.read(permissionProvider.notifier),
               ),
             Expanded(
               child: TabBarView(

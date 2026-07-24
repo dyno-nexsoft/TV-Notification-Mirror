@@ -4,8 +4,11 @@ import 'package:shared/shared.dart';
 
 import 'screens/main_screen.dart';
 
-void main() {
+import 'services/background_service.dart';
+
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await initializeBackgroundService();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,

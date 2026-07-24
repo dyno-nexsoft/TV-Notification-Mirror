@@ -1,38 +1,32 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/shared.dart';
-import '../../services/connector_service.dart';
-import '../../services/filter_service.dart';
+
+import '../../providers/phone_providers.dart';
 
 /// The connection status section shown at the top of the Connect tab.
 /// Displays current connection state, TV name, DND toggle, and action buttons using Yaru UI.
-class StatusCard extends StatelessWidget {
+class StatusCard extends ConsumerWidget {
   const StatusCard({
     super.key,
-    required this.isConnected,
-    required this.connectedTvName,
-    required this.tvDndEnabled,
-    required this.settings,
-    required this.connector,
-    required this.onScanAgain,
     required this.onSendTest,
-    required this.onDndChanged,
   });
-  final bool isConnected;
-  final String? connectedTvName;
-  final bool tvDndEnabled;
-  final AppSettings settings;
-  final ConnectorService connector;
-  final VoidCallback onScanAgain;
+
   final VoidCallback onSendTest;
-  final ValueChanged<bool> onDndChanged;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final connectorState = ref.watch(connectorProvider);
+    final asyncSettings = ref.watch(settingsProvider);
+    final isConnected = connectorState.isConnected;
+    final connectedTvName = connectorState.connectedTvName;
+    final tvDndEnabled = asyncSettings.value?.tvDndEnabled ?? false;
+
     return YaruSection(
       headline: Text(
         isConnected ? 'Connected to TV' : 'Not Connected',
-        style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       child: Column(
+        spacing: 16,
         children: [
           YaruListTile(
             leading: Icon(
@@ -42,7 +36,6 @@ class StatusCard extends StatelessWidget {
               isConnected
                   ? (connectedTvName ?? 'Connected')
                   : 'No Active TV Connection',
-              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
               isConnected
@@ -56,24 +49,24 @@ class StatusCard extends StatelessWidget {
               leading: Icon(
                 tvDndEnabled ? YaruIcons.error : YaruIcons.ok,
               ),
-              title: const Text(
-                'TV Do Not Disturb (DND)',
-                style: TextStyle(fontWeight: FontWeight.bold),
-              ),
+              title: const Text('TV Do Not Disturb (DND)'),
               subtitle: const Text('Mute all notification popups on TV'),
               trailing: YaruSwitch(
                 value: tvDndEnabled,
-                onChanged: onDndChanged,
+                onChanged: (val) {
+                  ref.read(settingsProvider.notifier).setTvDnd(val);
+                },
               ),
             ),
           ],
-          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               if (isConnected) ...[
                 OutlinedButton.icon(
-                  onPressed: () => connector.disconnect(),
+                  onPressed: () {
+                    ref.read(connectorProvider.notifier).disconnect();
+                  },
                   icon: const Icon(YaruIcons.power),
                   label: const Text('Disconnect'),
                 ),
@@ -84,14 +77,15 @@ class StatusCard extends StatelessWidget {
                 ),
               ] else ...[
                 ElevatedButton.icon(
-                  onPressed: onScanAgain,
+                  onPressed: () {
+                    ref.read(connectorProvider.notifier).startScanning();
+                  },
                   icon: const Icon(YaruIcons.search),
                   label: const Text('Scan Again'),
                 ),
               ],
             ],
           ),
-          const SizedBox(height: 8),
         ],
       ),
     );

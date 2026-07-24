@@ -140,7 +140,11 @@ git push origin vX.Y.Z
 - Use `///` doc comments on public functions/classes, focused on the **why**, not the how.
 - For any feature involving business logic or architecture, add or update a doc in `doc/` (this repo uses `doc/`, not `docs/`). Search `doc/` for an existing file covering the feature before creating a new one.
 - Follow null safety and idiomatic Dart/Flutter state-management practices throughout.
-- **Widget Styling**: Always use widget default sizes and colors (e.g. Yaru widgets, Icons). Avoid inline custom size/color overrides on individual widgets; all styling, colors, and sizing should be fully controlled by the app theme (`ThemeData` / `YaruAppTheme`).
+- **Type Annotations**: Always code according to `omit_local_variable_types` and `omit_obvious_property_types`. Omit type annotations on local variables and properties if they can be inferred.
+- **Widget Styling**: STRICT RULE - Always use the absolute default theme of widgets. DO NOT use ANY inline custom styles, colors, sizes, or font weights on individual widgets (e.g., no `style:` in `Text`, no `color:` in `Icon`, no `style:` in Buttons). All UI components must rely entirely on their default Material/Yaru appearance. If a styling change is absolutely necessary, it MUST be configured globally inside `theme/yaru_app_theme.dart`. This is to allow observing the pure default design of Yaru and Material.
+- **Theme Access**: ALWAYS extract `Theme.of(context)` (and optionally `theme.textTheme` / `theme.colorScheme`) into local variables at the top of the `build` method and use those variables throughout the widget instead of calling `Theme.of(...)` inline.
+- **Layout Spacing**: Use the `spacing:` parameter on `Column` and `Row` to define gaps between children. Do NOT use `SizedBox(height: ...)` or `SizedBox(width: ...)` inside `Column` or `Row` just for spacing purposes.
+- **Error Handling & UI Feedback**: Do not use `try-catch` blocks combined with `ScaffoldMessenger` in individual UI widgets. Instead, use a global Riverpod provider (e.g., `AppToast`) to manage error states from within the business logic (Notifiers), and use a single `ref.listen` at the top level of the app (e.g., `MainScreen`) to display `ScaffoldMessenger` notifications.
 
 ---
 

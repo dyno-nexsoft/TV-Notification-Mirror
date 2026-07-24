@@ -37,14 +37,8 @@ class AppFilterTile extends StatelessWidget {
             cache: iconCache,
           ),
         ),
-        title: Text(
-          appName,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Text(
-          packageName,
-          style: const TextStyle(fontSize: 12, color: Colors.grey),
-        ),
+        title: Text(appName),
+        subtitle: Text(packageName),
         trailing: YaruSwitch(
           value: isEnabled,
           onChanged: onToggle,

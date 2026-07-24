@@ -1,19 +1,14 @@
 part of 'main_screen.dart';
 
-/// Thin `showDialog(...)` callers for [_MainScreenState], kept separate so
-/// the state class doesn't carry the weight of each dialog's widget tree.
+/// Extension methods on [_MainScreenState] for launching dialogs.
 extension _DialogLauncher on _MainScreenState {
   void _showPairingDialog(TVDevice device) async {
-    final success = await _connector.startPairing(device);
+    final connectorNotifier = ref.read(connectorProvider.notifier);
+    final success = await connectorNotifier.startPairing(device);
     if (!success) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content:
-                Text('Failed to connect to TV. Make sure the TV app is open.'),
-          ),
-        );
-      }
+      ref
+          .read(appToastProvider.notifier)
+          .show('Invalid PIN or error occurred.');
       return;
     }
 
@@ -24,18 +19,13 @@ extension _DialogLauncher on _MainScreenState {
       barrierDismissible: false,
       builder: (dialogCtx) => _PairingDialog(
         device: device,
-        connector: _connector,
         onResult: (isPaired) {
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
+            ref.read(appToastProvider.notifier).show(
                   isPaired
                       ? 'Successfully paired with ${device.name}!'
                       : 'Incorrect PIN. Please try again.',
-                ),
-              ),
-            );
+                );
           }
         },
       ),
@@ -59,7 +49,7 @@ extension _DialogLauncher on _MainScreenState {
       context: context,
       builder: (dialogCtx) => _AddCustomAppDialog(
         onAdd: (pkg) {
-          _saveFilter(pkg, true);
+          ref.read(filtersProvider.notifier).addCustomAppPreset(pkg, pkg);
           Navigator.pop(dialogCtx);
         },
       ),

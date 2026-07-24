@@ -23,8 +23,7 @@ class NotificationService {
   static const _eventsChannel =
       EventChannel('com.dyno.tv_notification_mirror/events');
 
-  final StreamController<Map<String, dynamic>> _controller =
-      StreamController<Map<String, dynamic>>.broadcast();
+  final _controller = StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<Map<String, dynamic>> get rawStream => _controller.stream;
 

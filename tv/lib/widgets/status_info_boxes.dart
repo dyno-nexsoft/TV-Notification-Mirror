@@ -15,10 +15,7 @@ class PairingBox extends StatelessWidget {
       headline: const Text('New Pairing Request'),
       child: YaruListTile(
         leading: const Icon(YaruIcons.key),
-        title: const Text(
-          'Enter this PIN on your phone:',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Enter this PIN on your phone:'),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
           decoration: BoxDecoration(
@@ -27,12 +24,6 @@ class PairingBox extends StatelessWidget {
           ),
           child: Text(
             pin,
-            style: const TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 4,
-              color: Colors.white,
-            ),
           ),
         ),
       ),
@@ -50,10 +41,7 @@ class WaitingBox extends StatelessWidget {
       headline: Text('Waiting for Connection'),
       child: YaruListTile(
         leading: YaruCircularProgressIndicator(),
-        title: Text(
-          'Waiting for Phone Connection',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        title: Text('Waiting for Phone Connection'),
         subtitle: Text(
           'Open the TV Notification Mirror app on your phone to pair.',
         ),
@@ -89,10 +77,7 @@ class ConnectedBox extends StatelessWidget {
       headline: const Text('Connection Status'),
       child: YaruListTile(
         leading: const Icon(YaruIcons.ok_simple),
-        title: const Text(
-          'Phone Connected',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
+        title: const Text('Phone Connected'),
         subtitle: Text(connectedDevicesText),
       ),
     );
@@ -116,9 +101,9 @@ class ServerInfoCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return YaruSection(
       headline: Row(
+        spacing: 8,
         children: [
           const Icon(YaruIcons.network_wireless),
-          const SizedBox(width: 8),
           Text(isRunning ? 'Server Active' : 'Server Idle'),
         ],
       ),
@@ -133,11 +118,6 @@ class ServerInfoCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Text(
               'Status: ${isDnd ? "Do Not Disturb (Muted)" : "Listening for phone..."}',
-              style: TextStyle(
-                fontSize: 14,
-                color: isDnd ? Colors.redAccent : Colors.greenAccent,
-                fontWeight: FontWeight.bold,
-              ),
             ),
           ),
         ],
@@ -153,12 +133,11 @@ class OverlayWarningCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final errorColor = Theme.of(context).colorScheme.error;
     return YaruSection(
       headline: const Row(
+        spacing: 8,
         children: [
           Icon(YaruIcons.warning),
-          SizedBox(width: 8),
           Text('Permission Needed'),
         ],
       ),
@@ -166,15 +145,13 @@ class OverlayWarningCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 12,
           children: [
             const Text(
               'This application requires Overlay Permission to display notifications over other apps.',
-              style: TextStyle(fontSize: 14, color: Colors.white70),
             ),
-            const SizedBox(height: 12),
             TvButton(
               onPressed: () => OverlayService.requestPermission(),
-              color: errorColor,
               label: 'Grant Overlay Permission',
               icon: YaruIcons.external_link,
             ),
@@ -192,12 +169,11 @@ class NotificationWarningCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final errorColor = Theme.of(context).colorScheme.error;
     return YaruSection(
       headline: const Row(
+        spacing: 8,
         children: [
           Icon(YaruIcons.warning),
-          SizedBox(width: 8),
           Text('Permission Needed'),
         ],
       ),
@@ -205,15 +181,13 @@ class NotificationWarningCard extends StatelessWidget {
         padding: const EdgeInsets.all(12),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          spacing: 12,
           children: [
             const Text(
               'This application requires Notification Permission to run background connectivity.',
-              style: TextStyle(fontSize: 14, color: Colors.white70),
             ),
-            const SizedBox(height: 12),
             TvButton(
               onPressed: () => OverlayService.requestNotificationPermission(),
-              color: errorColor,
               label: 'Grant Notification Permission',
               icon: YaruIcons.notification,
             ),

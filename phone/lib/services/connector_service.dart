@@ -21,23 +21,21 @@ class ConnectorService {
 
   // mDNS Discovery
   BonsoirDiscovery? _discovery;
-  final StreamController<List<TVDevice>> _devicesController =
-      StreamController<List<TVDevice>>.broadcast();
-  final List<TVDevice> _discoveredDevices = [];
+  final _devicesController = StreamController<List<TVDevice>>.broadcast();
+  final _discoveredDevices = [];
 
   // WebSocket Connection
   WebSocketChannel? _wsChannel;
   Timer? _reconnectTimer;
   Timer? _pingTimer;
-  bool _isConnecting = false;
-  bool _isConnected = false;
+  var _isConnecting = false;
+  var _isConnected = false;
 
   String? _connectedTvIp;
   int? _connectedTvPort;
   String? _connectedTvName;
 
-  final StreamController<bool> _connectionStateController =
-      StreamController<bool>.broadcast();
+  final _connectionStateController = StreamController<bool>.broadcast();
 
   Stream<List<TVDevice>> get devicesStream => _devicesController.stream;
   Stream<bool> get connectionStateStream => _connectionStateController.stream;

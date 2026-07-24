@@ -22,7 +22,7 @@ typedef ConnectedClient = MirrorDevice;
 class ServerService {
   factory ServerService() => _instance;
   ServerService._internal();
-  static final ServerService _instance = ServerService._internal();
+  static final _instance = ServerService._internal();
 
   HttpServer? _server;
   BonsoirBroadcast? _broadcast;
@@ -35,15 +35,13 @@ class ServerService {
   final Set<String> _activeTokens = {};
   final Map<WebSocketChannel, String> _socketToToken = {};
 
-  final StreamController<String?> _pairingStateController =
-      StreamController<String?>.broadcast();
-  final StreamController<List<ConnectedClient>> _clientsController =
+  final _pairingStateController = StreamController<String?>.broadcast();
+  final _clientsController =
       StreamController<List<ConnectedClient>>.broadcast();
-  final StreamController<Map<String, dynamic>> _overlayController =
-      StreamController<Map<String, dynamic>>.broadcast();
+  final _overlayController = StreamController<Map<String, dynamic>>.broadcast();
 
-  bool _isRunning = false;
-  bool isDndEnabled = false;
+  var _isRunning = false;
+  var isDndEnabled = false;
   final List<NotificationItem> _notificationHistory = [];
 
   Stream<String?> get pairingPinStream => _pairingStateController.stream;
@@ -300,7 +298,8 @@ class ServerService {
       _notificationHistory.removeLast();
     }
 
-    debugPrint("Displaying notification: ${item.title} - ${item.text} from ${item.appName}");
+    debugPrint(
+        "Displaying notification: ${item.title} - ${item.text} from ${item.appName}");
     _overlayController.add({
       'action': 'show',
       'title': item.title,

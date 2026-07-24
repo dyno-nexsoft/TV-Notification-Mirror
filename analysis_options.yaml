@@ -10,6 +10,7 @@ linter:
     - combinators_ordering
     - directives_ordering
     - omit_local_variable_types
+    - omit_obvious_property_types
     - prefer_final_fields
     - prefer_final_in_for_each
     - prefer_final_locals

@@ -1,28 +1,22 @@
 part of 'main_screen.dart';
 
-/// PIN-entry dialog shown while pairing with a TV. Owns its own loading
-/// state and text controller since the pairing round-trip is asynchronous.
-class _PairingDialog extends StatefulWidget {
+/// PIN-entry dialog shown while pairing with a TV.
+class _PairingDialog extends ConsumerStatefulWidget {
   const _PairingDialog({
     required this.device,
-    required this.connector,
     required this.onResult,
   });
 
   final TVDevice device;
-  final ConnectorService connector;
-
-  /// Called after the dialog has popped itself, so the caller can show
-  /// feedback (e.g. a SnackBar) using its own, longer-lived BuildContext.
   final void Function(bool isPaired) onResult;
 
   @override
-  State<_PairingDialog> createState() => _PairingDialogState();
+  ConsumerState<_PairingDialog> createState() => _PairingDialogState();
 }
 
-class _PairingDialogState extends State<_PairingDialog> {
+class _PairingDialogState extends ConsumerState<_PairingDialog> {
   final _pinController = TextEditingController();
-  bool _isLoading = false;
+  var _isLoading = false;
 
   @override
   void dispose() {
@@ -35,7 +29,9 @@ class _PairingDialogState extends State<_PairingDialog> {
     if (pin.length != 4) return;
 
     setState(() => _isLoading = true);
-    final isPaired = await widget.connector.confirmPairing(widget.device, pin);
+    final isPaired = await ref
+        .read(connectorProvider.notifier)
+        .confirmPairing(widget.device, pin);
     if (!mounted) return;
     Navigator.pop(context);
     widget.onResult(isPaired);
@@ -56,47 +52,34 @@ class _PairingDialogState extends State<_PairingDialog> {
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              spacing: 16,
               children: [
                 if (_isLoading) ...[
                   const YaruCircularProgressIndicator(),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Connecting...',
-                    style: TextStyle(color: Colors.grey),
-                  ),
+                  const Text('Connecting...'),
                 ] else ...[
                   const Text(
                     'Enter the 4-digit PIN displayed on your TV screen:',
                   ),
-                  const SizedBox(height: 16),
-                  TextField(
+                  YaruSearchField(
                     controller: _pinController,
-                    autofocus: true,
-                    keyboardType: TextInputType.number,
-                    maxLength: 4,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 28,
-                      letterSpacing: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    decoration: const InputDecoration(
-                      counterText: '',
-                      border: OutlineInputBorder(),
-                      hintText: '0000',
-                    ),
+                    hintText: '0000',
+                    onChanged: (v) => setState(() {}),
+                    onClear: () {
+                      _pinController.clear();
+                      setState(() {});
+                    },
                   ),
                 ],
-                const SizedBox(height: 20),
                 if (!_isLoading)
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
+                    spacing: 8,
                     children: [
                       TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: const Text('Cancel'),
                       ),
-                      const SizedBox(width: 8),
                       ElevatedButton(
                         onPressed: _confirmPin,
                         child: const Text('Pair'),
@@ -112,8 +95,7 @@ class _PairingDialogState extends State<_PairingDialog> {
   }
 }
 
-/// Dialog for connecting to a TV by manually entering its IP address and
-/// port, used when mDNS discovery doesn't find it (e.g. emulator testing).
+/// Dialog for connecting to a TV by manually entering its IP address and port.
 class _ManualConnectDialog extends StatelessWidget {
   _ManualConnectDialog({required this.onConnect});
 
@@ -136,25 +118,38 @@ class _ManualConnectDialog extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              spacing: 12,
               children: [
-                YaruSearchField(
-                  controller: _ipController,
-                  hintText: 'TV IP Address (e.g. 192.168.1.50)',
+                StatefulBuilder(
+                  builder: (context, setState) => YaruSearchField(
+                    controller: _ipController,
+                    hintText: 'TV IP Address (e.g. 192.168.1.50)',
+                    onChanged: (v) => setState(() {}),
+                    onClear: () {
+                      _ipController.clear();
+                      setState(() {});
+                    },
+                  ),
                 ),
-                const SizedBox(height: 12),
-                YaruSearchField(
-                  controller: _portController,
-                  hintText: 'Port (e.g. 8080)',
+                StatefulBuilder(
+                  builder: (context, setState) => YaruSearchField(
+                    controller: _portController,
+                    hintText: 'Port (e.g. 8080)',
+                    onChanged: (v) => setState(() {}),
+                    onClear: () {
+                      _portController.clear();
+                      setState(() {});
+                    },
+                  ),
                 ),
-                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
+                  spacing: 8,
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Cancel'),
                     ),
-                    const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {
                         final ip = _ipController.text.trim();
@@ -175,8 +170,7 @@ class _ManualConnectDialog extends StatelessWidget {
   }
 }
 
-/// Dialog for adding a per-app notification filter by package name, for apps
-/// not yet in the installed-apps preset list.
+/// Dialog for adding a per-app notification filter by package name.
 class _AddCustomAppDialog extends StatelessWidget {
   _AddCustomAppDialog({required this.onAdd});
 
@@ -198,20 +192,27 @@ class _AddCustomAppDialog extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              spacing: 20,
               children: [
-                YaruSearchField(
-                  controller: _controller,
-                  hintText: 'App package name (e.g. com.spotify.music)',
+                StatefulBuilder(
+                  builder: (context, setState) => YaruSearchField(
+                    controller: _controller,
+                    hintText: 'App package name (e.g. com.spotify.music)',
+                    onChanged: (v) => setState(() {}),
+                    onClear: () {
+                      _controller.clear();
+                      setState(() {});
+                    },
+                  ),
                 ),
-                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
+                  spacing: 8,
                   children: [
                     TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Cancel'),
                     ),
-                    const SizedBox(width: 8),
                     ElevatedButton(
                       onPressed: () {
                         final pkg = _controller.text.trim();

@@ -15,26 +15,13 @@ class _RecentNotificationsPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 12,
       children: [
-        const Text(
-          'Recent Notifications',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white70,
-          ),
-        ),
-        const SizedBox(height: 12),
+        const Text('Recent Notifications'),
         Expanded(
           child: notificationHistory.isEmpty
               ? const Center(
-                  child: Text(
-                    'Chưa có thông báo nào.',
-                    style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
-                    ),
-                  ),
+                  child: Text('No notifications yet.'),
                 )
               : ListView.builder(
                   itemCount: notificationHistory.length,
@@ -96,28 +83,16 @@ class _NotificationHistoryTile extends StatelessWidget {
         ),
         title: Text(
           title,
-          style: const TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
-          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         subtitle: Text(
           text,
-          style: const TextStyle(
-            fontSize: 12,
-            color: Colors.white70,
-          ),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
         trailing: Text(
           _timeLabel,
-          style: const TextStyle(
-            fontSize: 10,
-            color: Colors.grey,
-          ),
         ),
       ),
     );

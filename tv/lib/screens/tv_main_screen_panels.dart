@@ -2,119 +2,119 @@ part of 'tv_main_screen.dart';
 
 /// Left panel of the TV dashboard: branding, permission warnings / server
 /// status, and the primary DND + test-overlay controls.
-class _LeftControlPanel extends StatelessWidget {
-  const _LeftControlPanel({
-    required this.hasOverlayPermission,
-    required this.hasNotificationPermission,
-    required this.isRunning,
-    required this.isDnd,
-    required this.tvIp,
-    required this.primaryColor,
-    required this.errorColor,
-    required this.onToggleDnd,
-    required this.onCheckPermission,
-    required this.onTestOverlay,
-  });
-
-  final bool hasOverlayPermission;
-  final bool hasNotificationPermission;
-  final bool isRunning;
-  final bool isDnd;
-  final String tvIp;
-  final Color primaryColor;
-  final Color errorColor;
-  final VoidCallback onToggleDnd;
-  final VoidCallback onCheckPermission;
-  final VoidCallback onTestOverlay;
-
-  bool get _hasAllPermissions =>
-      hasOverlayPermission && hasNotificationPermission;
+class _LeftControlPanel extends ConsumerWidget {
+  const _LeftControlPanel();
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'TV MIRROR',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 2,
-              color: primaryColor,
-            ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final permissionsAsync = ref.watch(tvPermissionsProvider);
+    final tvIpAsync = ref.watch(tvIpProvider);
+    final tvState = ref.watch(tvServiceStateProvider);
+
+    return permissionsAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, st) => Center(child: Text('Error: $e')),
+      data: (permissions) {
+        final hasOverlay = permissions.hasOverlayPermission;
+        final hasNotification = permissions.hasNotificationPermission;
+        final hasAllPermissions = permissions.isFullyGranted;
+        final isDnd = tvState.isDnd;
+        final isRunning = tvState.isRunning;
+        final tvIp = tvIpAsync.value ?? 'Loading IP...';
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 8,
+            children: [
+              const Text('TV MIRROR'),
+              const Text('Mirror phone notifications to TV'),
+              const Spacer(),
+              if (!hasOverlay) ...[
+                const OverlayWarningCard(),
+              ] else if (!hasNotification) ...[
+                const NotificationWarningCard(),
+              ] else ...[
+                ServerInfoCard(
+                  isRunning: isRunning,
+                  isDnd: isDnd,
+                  tvIp: tvIp,
+                ),
+              ],
+              const Spacer(),
+              TvButton(
+                onPressed: () {
+                  if (hasAllPermissions) {
+                    ref.read(tvServiceStateProvider.notifier).toggleDnd();
+                  } else {
+                    ref.read(tvPermissionsProvider.notifier).checkPermissions();
+                  }
+                },
+                label: hasAllPermissions
+                    ? (isDnd ? 'Turn DND OFF' : 'Turn DND ON')
+                    : 'Check Permission Again',
+                icon:
+                    isDnd ? Icons.do_not_disturb_on : Icons.do_not_disturb_off,
+              ),
+              if (hasAllPermissions) ...[
+                TvButton(
+                  onPressed: () {
+                    ref.read(tvServiceStateProvider.notifier).testOverlay();
+                  },
+                  label: 'Test Overlay Notification',
+                  icon: Icons.play_arrow,
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 8),
-          const Text(
-            'Gương thông báo điện thoại lên TV',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-          const Spacer(),
-          if (!hasOverlayPermission) ...[
-            const OverlayWarningCard(),
-          ] else if (!hasNotificationPermission) ...[
-            const NotificationWarningCard(),
-          ] else ...[
-            ServerInfoCard(
-              isRunning: isRunning,
-              isDnd: isDnd,
-              tvIp: tvIp,
-            ),
-          ],
-          const Spacer(),
-          TvButton(
-            onPressed: _hasAllPermissions ? onToggleDnd : onCheckPermission,
-            color: isDnd ? errorColor : primaryColor,
-            label: _hasAllPermissions
-                ? (isDnd ? 'Turn DND OFF' : 'Turn DND ON')
-                : 'Check Permission Again',
-            icon: isDnd ? Icons.do_not_disturb_on : Icons.do_not_disturb_off,
-          ),
-          const SizedBox(height: 16),
-          if (_hasAllPermissions) ...[
-            TvButton(
-              onPressed: onTestOverlay,
-              color: const Color(0xFF2E2A4A),
-              label: 'Test Overlay Notification',
-              icon: Icons.play_arrow,
-            ),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 }
 
 /// Right panel of the TV dashboard: pairing/connection status header plus
 /// the paired-devices and recent-notifications sub-columns.
-class _RightInfoPanel extends StatelessWidget {
-  const _RightInfoPanel({
-    required this.pairingPin,
-    required this.pairedClients,
-    required this.activeTokens,
-    required this.notificationHistory,
-    required this.primaryColor,
-    required this.onRemoveClient,
-  });
+class _RightInfoPanel extends ConsumerWidget {
+  const _RightInfoPanel();
 
-  final String? pairingPin;
-  final List<MirrorDevice> pairedClients;
-  final Set<String> activeTokens;
-  final List<NotificationItem> notificationHistory;
-  final Color primaryColor;
-  final void Function(String token, String deviceName) onRemoveClient;
+  void _confirmRemoveClient(
+    BuildContext context,
+    WidgetRef ref,
+    String token,
+    String deviceName,
+  ) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => _RemoveDeviceDialog(
+        deviceName: deviceName,
+        onConfirm: () {
+          Navigator.pop(dialogCtx);
+          ref.read(tvServiceStateProvider.notifier).removeClient(token);
+        },
+      ),
+    );
+  }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tvState = ref.watch(tvServiceStateProvider);
+    final pairingPin = tvState.pairingPin;
+    final pairedClients = tvState.pairedClients;
+    final activeTokens = tvState.activeTokens;
+    final notificationHistory = tvState.notificationHistory;
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 24,
         children: [
           if (pairingPin != null)
-            PairingBox(pin: pairingPin!)
+            PairingBox(pin: pairingPin)
           else if (activeTokens.isNotEmpty)
             ConnectedBox(
               pairedClients: pairedClients,
@@ -122,26 +122,27 @@ class _RightInfoPanel extends StatelessWidget {
             )
           else
             const WaitingBox(),
-          const SizedBox(height: 24),
           Expanded(
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 20,
               children: [
                 // Left sub-column: Paired Devices
                 Expanded(
                   child: _PairedDevicesPanel(
-                    pairedClients: pairedClients,
-                    activeTokens: activeTokens,
-                    onRemove: onRemoveClient,
+                    onRemove: (token, deviceName) => _confirmRemoveClient(
+                      context,
+                      ref,
+                      token,
+                      deviceName,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 20),
                 Container(
                   width: 1,
                   color: Colors.white10,
                   margin: const EdgeInsets.symmetric(vertical: 8),
                 ),
-                const SizedBox(width: 20),
                 // Right sub-column: Notifications history
                 Expanded(
                   child: _RecentNotificationsPanel(
@@ -160,31 +161,24 @@ class _RightInfoPanel extends StatelessWidget {
 
 /// Left sub-column of the TV dashboard: the list of paired phones with their
 /// online/offline state and a remove action for each.
-class _PairedDevicesPanel extends StatelessWidget {
+class _PairedDevicesPanel extends ConsumerWidget {
   const _PairedDevicesPanel({
-    required this.pairedClients,
-    required this.activeTokens,
     required this.onRemove,
   });
 
-  final List<MirrorDevice> pairedClients;
-  final Set<String> activeTokens;
   final void Function(String token, String deviceName) onRemove;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final tvState = ref.watch(tvServiceStateProvider);
+    final pairedClients = tvState.pairedClients;
+    final activeTokens = tvState.activeTokens;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 12,
       children: [
-        const Text(
-          'Paired Devices',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: Colors.white70,
-          ),
-        ),
-        const SizedBox(height: 12),
+        const Text('Paired Devices'),
         Expanded(
           child: pairedClients.isEmpty
               ? const _EmptyClientsCard()
@@ -216,13 +210,10 @@ class _EmptyClientsCard extends StatelessWidget {
     return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        spacing: 12,
         children: [
-          Icon(Icons.phone_android_outlined, size: 48, color: Colors.grey),
-          SizedBox(height: 12),
-          Text(
-            'No devices paired yet.',
-            style: TextStyle(color: Colors.grey, fontSize: 16),
-          ),
+          Icon(Icons.phone_android_outlined),
+          Text('No devices paired yet.'),
         ],
       ),
     );

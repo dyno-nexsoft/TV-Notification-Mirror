@@ -1,5 +1,7 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/shared.dart';
+
 import 'screens/main_screen.dart';
 
 void main() {
@@ -11,7 +13,11 @@ void main() {
       statusBarBrightness: Brightness.dark,
     ),
   );
-  runApp(const MyApp());
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
 
 /// Root application widget configured with Yaru UI theme.
@@ -26,7 +32,7 @@ class MyApp extends StatelessWidget {
           title: 'TV Notification Mirror',
           themeMode: ThemeMode.dark,
           theme: yaru.theme,
-          darkTheme: yaru.darkTheme,
+          darkTheme: YaruAppTheme.darkTheme,
           builder: (context, child) {
             return GestureDetector(
               onTap: () => FocusManager.instance.primaryFocus?.unfocus(),

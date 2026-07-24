@@ -87,7 +87,7 @@ Nếu thông báo trên điện thoại bị xóa hoặc đã đọc, TV cũng s
 ## 3. Lựa chọn Thư viện Flutter (Flutter Stack Selection)
 
 ### 3.1. Các thư viện dùng chung (Shared Packages)
-* `flutter_bloc` hoặc `provider`: Quản lý trạng thái (State Management).
+* `flutter_riverpod`: Quản lý trạng thái (State Management). Chi tiết xem [state_management.md](file:///e:/Projects/Dashboard%20Clock/doc/state_management.md).
 * `shared_preferences` hoặc `hive`: Lưu cấu hình cài đặt cục bộ.
 * `flutter_secure_storage`: Lưu trữ khóa token xác thực an toàn.
 

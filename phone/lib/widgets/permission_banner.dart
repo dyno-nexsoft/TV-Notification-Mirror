@@ -18,36 +18,26 @@ class PermissionBanner extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
+        spacing: 12,
         children: [
-          Icon(
+          const Icon(
             YaruIcons.warning,
-            color: theme.colorScheme.onErrorContainer,
           ),
-          const SizedBox(width: 12),
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
+              spacing: 2,
               children: [
                 Text(
-                  'Notification Access Required',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onErrorContainer,
-                  ),
+                  'Notification Access Missing',
                 ),
-                const SizedBox(height: 2),
                 Text(
-                  'Access required to mirror phone notifications to TV.',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.colorScheme.onErrorContainer,
-                  ),
+                  'Mirroring requires permission to read phone notifications.',
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
           ElevatedButton(
             onPressed: () => notifier.openSettings(),
             child: const Text('Enable Access'),

@@ -1,8 +1,7 @@
-import 'dart:typed_data';
-
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/shared.dart';
 
-import '../../services/filter_service.dart';
+import '../../providers/phone_providers.dart';
 import 'app_filter_tile.dart';
 import 'keyword_filter_card.dart';
 import 'overlay_settings_card.dart';
@@ -10,118 +9,114 @@ import 'quiet_hours_card.dart';
 
 /// The Filters tab — contains quiet hours, keyword blockers, overlay settings,
 /// and a searchable list of per-app notification toggles using Yaru UI.
-class FiltersTab extends StatefulWidget {
+class FiltersTab extends ConsumerStatefulWidget {
   const FiltersTab({
     super.key,
-    required this.settings,
-    required this.appFilters,
-    required this.installedPresets,
-    required this.iconCache,
-    required this.onSettingsChanged,
-    required this.onFilterChanged,
     required this.onAddCustomApp,
   });
-  final AppSettings settings;
-  final Map<String, bool> appFilters;
-  final List<AppPreset> installedPresets;
-  final Map<String, Uint8List?> iconCache;
-  final ValueChanged<AppSettings> onSettingsChanged;
-  final void Function(String pkg, bool value) onFilterChanged;
+
   final VoidCallback onAddCustomApp;
 
   @override
-  State<FiltersTab> createState() => _FiltersTabState();
+  ConsumerState<FiltersTab> createState() => _FiltersTabState();
 }
 
-class _FiltersTabState extends State<FiltersTab> {
-  String _searchQuery = '';
+class _FiltersTabState extends ConsumerState<FiltersTab> {
+  var _searchQuery = '';
 
   @override
   Widget build(BuildContext context) {
-    final customApps = widget.appFilters.keys
-        .where(
-            (pkg) => !widget.installedPresets.any((app) => app.pkg == pkg))
-        .map((pkg) => AppPreset(
-              pkg: pkg,
-              name: NotificationItem.getAppName(pkg),
-            ))
-        .toList();
+    final asyncFilters = ref.watch(filtersProvider);
 
-    final allApps = [...widget.installedPresets, ...customApps];
+    return asyncFilters.when(
+        loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: CircularProgressIndicator(),
+              ),
+            ),
+        error: (e, st) => Center(child: Text('Error loading filters: $e')),
+        data: (filtersState) {
+          final appFilters = filtersState.appFilters;
+          final installedPresets = filtersState.installedPresets;
+          final iconCache = filtersState.iconCache;
 
-    final filteredApps = allApps.where((app) {
-      final name = app.name.toLowerCase();
-      final pkg = app.pkg.toLowerCase();
-      return name.contains(_searchQuery) || pkg.contains(_searchQuery);
-    }).toList();
+          final customApps = appFilters.keys
+              .where((pkg) => !installedPresets.any((app) => app.pkg == pkg))
+              .map((pkg) => AppPreset(
+                    pkg: pkg,
+                    name: NotificationItem.getAppName(pkg),
+                  ))
+              .toList();
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          QuietHoursCard(
-            settings: widget.settings,
-            onChanged: widget.onSettingsChanged,
-          ),
-          KeywordFilterCard(
-            settings: widget.settings,
-            onChanged: widget.onSettingsChanged,
-          ),
-          OverlaySettingsCard(
-            settings: widget.settings,
-            onChanged: widget.onSettingsChanged,
-          ),
-          const SizedBox(height: 8),
-          const Divider(),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          final allApps = [...installedPresets, ...customApps];
+
+          final filteredApps = allApps.where((app) {
+            final name = app.name.toLowerCase();
+            final pkg = app.pkg.toLowerCase();
+            return name.contains(_searchQuery) || pkg.contains(_searchQuery);
+          }).toList();
+
+          return SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              spacing: 8,
               children: [
-                Text(
-                  'App Filters (${filteredApps.length})',
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                const QuietHoursCard(),
+                const KeywordFilterCard(),
+                const OverlaySettingsCard(),
+                const Divider(),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('App Filters (${filteredApps.length})'),
+                      OutlinedButton.icon(
+                        onPressed: widget.onAddCustomApp,
+                        icon: const Icon(YaruIcons.plus),
+                        label: const Text('Add Package'),
+                      ),
+                    ],
+                  ),
                 ),
-                OutlinedButton.icon(
-                  onPressed: widget.onAddCustomApp,
-                  icon: const Icon(YaruIcons.plus),
-                  label: const Text('Add Package'),
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: YaruSearchField(
+                    hintText: 'Search apps...',
+                    autofocus: false,
+                    onChanged: (val) {
+                      setState(() => _searchQuery = val.toLowerCase());
+                    },
+                  ),
+                ),
+                ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: filteredApps.length,
+                  itemBuilder: (context, index) {
+                    final app = filteredApps[index];
+                    final pkg = app.pkg;
+                    final name = app.name;
+                    final isEnabled = appFilters[pkg] ?? true;
+
+                    return AppFilterTile(
+                      packageName: pkg,
+                      appName: name,
+                      isEnabled: isEnabled,
+                      iconCache: iconCache,
+                      onToggle: (val) {
+                        ref.read(filtersProvider.notifier).saveFilter(pkg, val);
+                      },
+                    );
+                  },
                 ),
               ],
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: YaruSearchField(
-              hintText: 'Search apps...',
-              onChanged: (val) {
-                setState(() => _searchQuery = val.toLowerCase());
-              },
-            ),
-          ),
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: filteredApps.length,
-            itemBuilder: (context, index) {
-              final app = filteredApps[index];
-              final pkg = app.pkg;
-              final name = app.name;
-              final isEnabled = widget.appFilters[pkg] ?? true;
-
-              return AppFilterTile(
-                packageName: pkg,
-                appName: name,
-                isEnabled: isEnabled,
-                iconCache: widget.iconCache,
-                onToggle: (val) => widget.onFilterChanged(pkg, val),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-        ],
-      ),
-    );
+          );
+        });
   }
 }

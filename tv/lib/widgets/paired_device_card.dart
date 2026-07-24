@@ -17,7 +17,8 @@ class PairedDeviceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
+    final primaryColor = theme.colorScheme.primary;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -31,19 +32,14 @@ class PairedDeviceCard extends StatelessWidget {
           child: const Icon(YaruIcons.phone),
         ),
         title: Row(
+          spacing: 8,
           children: [
             Flexible(
               child: Text(
                 deviceName,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                  overflow: TextOverflow.ellipsis,
-                ),
                 maxLines: 1,
               ),
             ),
-            const SizedBox(width: 8),
             Container(
               width: 8,
               height: 8,
@@ -56,10 +52,6 @@ class PairedDeviceCard extends StatelessWidget {
         ),
         subtitle: Text(
           isOnline ? ip : 'Offline',
-          style: TextStyle(
-            color: isOnline ? Colors.grey : Colors.grey.shade600,
-            fontSize: 13,
-          ),
         ),
         trailing: IconButton(
           icon: const Icon(YaruIcons.trash),

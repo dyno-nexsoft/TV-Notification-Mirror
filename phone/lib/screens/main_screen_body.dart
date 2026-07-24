@@ -1,59 +1,45 @@
 part of 'main_screen.dart';
 
-/// Composes the navigation rail and the currently selected tab. Pulled out of
-/// [_MainScreenState] so the state class stays focused on lifecycle and data,
-/// with pure widget composition living here instead.
-class _MainScreenBody extends StatelessWidget {
+/// Composes the tab navigation bar and the active tab view.
+/// Consumes Riverpod state directly to avoid prop-drilling parameter lists.
+class _MainScreenBody extends ConsumerWidget {
   const _MainScreenBody({
-    required this.currentIndex,
-    required this.hasPermission,
-    required this.isConnected,
-    required this.discoveredDevices,
-    required this.history,
-    required this.appFilters,
-    required this.appIconCache,
-    required this.installedPresets,
-    required this.settings,
-    required this.connector,
-    required this.notifier,
-    required this.onTabSelected,
-    required this.onRefresh,
-    required this.onSendTest,
     required this.onManualConnect,
-    required this.onDndChanged,
     required this.onPairDevice,
-    required this.onSettingsChanged,
-    required this.onFilterChanged,
     required this.onAddCustomApp,
   });
 
-  final int currentIndex;
-  final bool hasPermission;
-  final bool isConnected;
-  final List<TVDevice> discoveredDevices;
-  final List<NotificationItem> history;
-  final Map<String, bool> appFilters;
-  final Map<String, Uint8List?> appIconCache;
-  final List<AppPreset> installedPresets;
-  final AppSettings settings;
-  final ConnectorService connector;
-  final NotificationService notifier;
-
-  final ValueChanged<int> onTabSelected;
-  final VoidCallback onRefresh;
-  final VoidCallback onSendTest;
   final VoidCallback onManualConnect;
-  final ValueChanged<bool> onDndChanged;
-  final void Function(TVDevice device) onPairDevice;
-  final ValueChanged<AppSettings> onSettingsChanged;
-  final void Function(String packageName, bool value) onFilterChanged;
+  final ValueChanged<TVDevice> onPairDevice;
   final VoidCallback onAddCustomApp;
 
+  void _sendTestNotification(WidgetRef ref) {
+    final testItem = NotificationItem(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      packageName: 'com.dyno.tv_notification_mirror.phone',
+      appName: 'TV Mirror',
+      title: 'Jane Doe',
+      text: 'Hello from your TV Mirror app! 📺✨',
+      postTime: DateTime.now().millisecondsSinceEpoch,
+    );
+    ref.read(historyProvider.notifier).addNotification(testItem);
+    ref.read(connectorProvider.notifier).sendNotification(testItem);
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasPermissionAsync = ref.watch(permissionProvider);
+
+    ref.listen<ToastData?>(appToastProvider, (prev, next) {
+      if (next != null) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(SnackBar(content: Text(next.message)));
+      }
+    });
+
     return DefaultTabController(
       length: 3,
-      initialIndex: currentIndex,
       child: Scaffold(
         appBar: AppBar(
           title: const Text('TV Mirror'),
@@ -63,7 +49,10 @@ class _MainScreenBody extends StatelessWidget {
               padding: const EdgeInsets.only(right: 8.0),
               child: IconButton(
                 icon: const Icon(YaruIcons.refresh),
-                onPressed: onRefresh,
+                onPressed: () {
+                  ref.read(permissionProvider.notifier).checkPermission();
+                  ref.read(connectorProvider.notifier).startScanning();
+                },
                 tooltip: 'Refresh / Scan',
               ),
             ),
@@ -78,70 +67,22 @@ class _MainScreenBody extends StatelessWidget {
         ),
         body: Column(
           children: [
-            if (!hasPermission) PermissionBanner(notifier: notifier),
+            if (hasPermissionAsync.value == false)
+              PermissionBanner(
+                notifier: ref.read(notificationServiceProvider),
+              ),
             Expanded(
               child: TabBarView(
                 children: [
-                  _TabContent(
-                    index: 0,
-                    isConnected: isConnected,
-                    discoveredDevices: discoveredDevices,
-                    connectedTvName: connector.connectedTvName,
-                    tvDndEnabled: settings.tvDndEnabled,
-                    settings: settings,
-                    connector: connector,
-                    appFilters: appFilters,
-                    installedPresets: installedPresets,
-                    appIconCache: appIconCache,
-                    history: history,
-                    onSendTest: onSendTest,
+                  ConnectTab(
+                    onSendTest: () => _sendTestNotification(ref),
                     onManualConnect: onManualConnect,
-                    onDndChanged: onDndChanged,
                     onPairDevice: onPairDevice,
-                    onSettingsChanged: onSettingsChanged,
-                    onFilterChanged: onFilterChanged,
+                  ),
+                  FiltersTab(
                     onAddCustomApp: onAddCustomApp,
                   ),
-                  _TabContent(
-                    index: 1,
-                    isConnected: isConnected,
-                    discoveredDevices: discoveredDevices,
-                    connectedTvName: connector.connectedTvName,
-                    tvDndEnabled: settings.tvDndEnabled,
-                    settings: settings,
-                    connector: connector,
-                    appFilters: appFilters,
-                    installedPresets: installedPresets,
-                    appIconCache: appIconCache,
-                    history: history,
-                    onSendTest: onSendTest,
-                    onManualConnect: onManualConnect,
-                    onDndChanged: onDndChanged,
-                    onPairDevice: onPairDevice,
-                    onSettingsChanged: onSettingsChanged,
-                    onFilterChanged: onFilterChanged,
-                    onAddCustomApp: onAddCustomApp,
-                  ),
-                  _TabContent(
-                    index: 2,
-                    isConnected: isConnected,
-                    discoveredDevices: discoveredDevices,
-                    connectedTvName: connector.connectedTvName,
-                    tvDndEnabled: settings.tvDndEnabled,
-                    settings: settings,
-                    connector: connector,
-                    appFilters: appFilters,
-                    installedPresets: installedPresets,
-                    appIconCache: appIconCache,
-                    history: history,
-                    onSendTest: onSendTest,
-                    onManualConnect: onManualConnect,
-                    onDndChanged: onDndChanged,
-                    onPairDevice: onPairDevice,
-                    onSettingsChanged: onSettingsChanged,
-                    onFilterChanged: onFilterChanged,
-                    onAddCustomApp: onAddCustomApp,
-                  ),
+                  const HistoryTab(),
                 ],
               ),
             ),
@@ -149,77 +90,5 @@ class _MainScreenBody extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-class _TabContent extends StatelessWidget {
-  const _TabContent({
-    required this.index,
-    required this.isConnected,
-    required this.discoveredDevices,
-    this.connectedTvName,
-    required this.tvDndEnabled,
-    required this.settings,
-    required this.connector,
-    required this.appFilters,
-    required this.installedPresets,
-    required this.appIconCache,
-    required this.history,
-    required this.onSendTest,
-    required this.onManualConnect,
-    required this.onDndChanged,
-    required this.onPairDevice,
-    required this.onSettingsChanged,
-    required this.onFilterChanged,
-    required this.onAddCustomApp,
-  });
-  final int index;
-  final bool isConnected;
-  final List<TVDevice> discoveredDevices;
-  final String? connectedTvName;
-  final bool tvDndEnabled;
-  final AppSettings settings;
-  final ConnectorService connector;
-  final Map<String, bool> appFilters;
-  final List<AppPreset> installedPresets;
-  final Map<String, Uint8List?> appIconCache;
-  final List<NotificationItem> history;
-  final VoidCallback onSendTest;
-  final VoidCallback onManualConnect;
-  final ValueChanged<bool> onDndChanged;
-  final void Function(TVDevice device) onPairDevice;
-  final ValueChanged<AppSettings> onSettingsChanged;
-  final void Function(String packageName, bool value) onFilterChanged;
-  final VoidCallback onAddCustomApp;
-
-  @override
-  Widget build(BuildContext context) {
-    return switch (index) {
-      0 => ConnectTab(
-          isConnected: isConnected,
-          discoveredDevices: discoveredDevices,
-          connectedTvName: connectedTvName,
-          tvDndEnabled: tvDndEnabled,
-          settings: settings,
-          connector: connector,
-          onSendTest: onSendTest,
-          onManualConnect: onManualConnect,
-          onDndChanged: onDndChanged,
-          onPairDevice: onPairDevice,
-        ),
-      1 => FiltersTab(
-          settings: settings,
-          appFilters: appFilters,
-          installedPresets: installedPresets,
-          iconCache: appIconCache,
-          onSettingsChanged: onSettingsChanged,
-          onFilterChanged: onFilterChanged,
-          onAddCustomApp: onAddCustomApp,
-        ),
-      _ => HistoryTab(
-          history: history,
-          iconCache: appIconCache,
-        ),
-    };
   }
 }

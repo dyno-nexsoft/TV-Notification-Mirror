@@ -13,7 +13,9 @@ class HistoryItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final primaryColor = Theme.of(context).colorScheme.primary;
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final primaryColor = colorScheme.primary;
     final timeStr = DateTime.fromMillisecondsSinceEpoch(item.postTime)
         .toLocal()
         .toString()
@@ -42,43 +44,23 @@ class HistoryItemCard extends StatelessWidget {
           children: [
             Text(
               item.appName,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
-                color: Colors.grey,
-              ),
             ),
             Text(
               timeStr,
-              style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 10,
-              ),
             ),
           ],
         ),
         subtitle: Column(
+          spacing: 2,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 2),
             Text(
               item.title,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-                color: Colors.white,
-              ),
             ),
-            if (item.text.isNotEmpty) ...[
-              const SizedBox(height: 2),
+            if (item.text.isNotEmpty)
               Text(
                 item.text,
-                style: const TextStyle(
-                  fontSize: 13,
-                  color: Colors.white70,
-                ),
               ),
-            ],
           ],
         ),
       ),

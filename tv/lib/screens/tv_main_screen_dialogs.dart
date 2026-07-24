@@ -25,24 +25,21 @@ class _RemoveDeviceDialog extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              spacing: 20,
               children: [
                 Text('Remove "$deviceName" from paired devices?'),
-                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
+                  spacing: 8,
                   children: [
                     TextButton(
                       autofocus: true,
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Cancel'),
                     ),
-                    const SizedBox(width: 8),
                     FilledButton(
                       onPressed: onConfirm,
-                      child: const Text(
-                        'Remove',
-                        style: TextStyle(color: Colors.redAccent),
-                      ),
+                      child: const Text('Remove'),
                     ),
                   ],
                 ),
@@ -74,21 +71,21 @@ class _ExitConfirmDialog extends StatelessWidget {
             padding: const EdgeInsets.all(20),
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              spacing: 20,
               children: [
                 const Text(
                   'Do you want to exit the app?\n'
                   'The WebSocket server will continue running in the background to mirror notifications.',
                 ),
-                const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
+                  spacing: 8,
                   children: [
                     TextButton(
                       autofocus: true,
                       onPressed: () => Navigator.pop(context, false),
                       child: const Text('Cancel'),
                     ),
-                    const SizedBox(width: 8),
                     FilledButton(
                       onPressed: () => Navigator.pop(context, true),
                       child: const Text('Exit'),

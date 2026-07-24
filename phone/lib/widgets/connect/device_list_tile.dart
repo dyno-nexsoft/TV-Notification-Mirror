@@ -17,10 +17,7 @@ class DeviceListTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 8),
       child: YaruListTile(
         leading: const Icon(YaruIcons.computer),
-        title: Text(
-          device.name,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: Text(device.name),
         subtitle: Text('${device.ip}:${device.port}'),
         trailing: ElevatedButton(
           onPressed: onPair,

@@ -1,42 +1,32 @@
-import 'dart:typed_data';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/shared.dart';
+
+import '../../providers/phone_providers.dart';
 import 'history_item_card.dart';
 
 /// The History tab — displays the last 50 received notifications.
-class HistoryTab extends StatelessWidget {
-  const HistoryTab({
-    super.key,
-    required this.history,
-    required this.iconCache,
-  });
-  final List<NotificationItem> history;
-  final Map<String, Uint8List?> iconCache;
+class HistoryTab extends ConsumerWidget {
+  const HistoryTab({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final history = ref.watch(historyProvider);
+    final iconCache = ref.watch(filtersProvider).value?.iconCache ?? {};
+
     if (history.isEmpty) {
-      final colorScheme = Theme.of(context).colorScheme;
-      return Center(
+      return const Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          spacing: 12,
           children: [
-            const Icon(
+            Icon(
               YaruIcons.history,
             ),
-            const SizedBox(height: 16),
             Text(
               'No notifications captured yet.',
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-              ),
             ),
-            const SizedBox(height: 8),
             Text(
               'New notifications will appear here.',
-              style: TextStyle(
-                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7)),
             ),
           ],
         ),

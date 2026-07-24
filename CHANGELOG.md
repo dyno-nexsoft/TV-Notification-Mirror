@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.14] - 2026-07-24
+
+### Fixed
+- **TV App**: Addressed the banner cropping issue completely. By explicitly ignoring system DPI scaling during image generation, the 1024x1024 icon is now perfectly centered pixel-for-pixel inside the 16:9 1024x576 banner.
+
 ## [1.0.13] - 2026-07-24
 
 ### Fixed

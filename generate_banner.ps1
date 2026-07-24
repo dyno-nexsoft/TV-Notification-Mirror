@@ -6,11 +6,13 @@ $bg = [System.Drawing.ColorTranslator]::FromHtml('#210A3E')
 $g.Clear($bg)
 $g.InterpolationMode = [System.Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
 
-# Scale icon to fit height (576x576)
-$iconSize = 500
+$iconSize = 576
 $x = (1024 - $iconSize) / 2
 $y = (576 - $iconSize) / 2
-$g.DrawImage($icon, $x, $y, $iconSize, $iconSize)
+
+$destRect = New-Object System.Drawing.Rectangle($x, $y, $iconSize, $iconSize)
+$srcRect = New-Object System.Drawing.Rectangle(0, 0, $icon.Width, $icon.Height)
+$g.DrawImage($icon, $destRect, $srcRect, [System.Drawing.GraphicsUnit]::Pixel)
 
 $g.Dispose()
 $icon.Dispose()

@@ -1,23 +1,13 @@
 import 'package:shared/shared.dart';
+
 import '../../services/connector_service.dart';
 import '../../services/filter_service.dart';
-import 'status_card.dart';
 import 'device_list_tile.dart';
+import 'status_card.dart';
 
 /// The Connect tab — shows connection status, discovered devices list,
 /// and manual IP connect option using Yaru UI elements.
 class ConnectTab extends StatelessWidget {
-  final bool isConnected;
-  final List<TVDevice> discoveredDevices;
-  final String? connectedTvName;
-  final bool tvDndEnabled;
-  final AppSettings settings;
-  final ConnectorService connector;
-  final VoidCallback onSendTest;
-  final VoidCallback onManualConnect;
-  final ValueChanged<bool> onDndChanged;
-  final ValueChanged<TVDevice> onPairDevice;
-
   const ConnectTab({
     super.key,
     required this.isConnected,
@@ -31,6 +21,16 @@ class ConnectTab extends StatelessWidget {
     required this.onDndChanged,
     required this.onPairDevice,
   });
+  final bool isConnected;
+  final List<TVDevice> discoveredDevices;
+  final String? connectedTvName;
+  final bool tvDndEnabled;
+  final AppSettings settings;
+  final ConnectorService connector;
+  final VoidCallback onSendTest;
+  final VoidCallback onManualConnect;
+  final ValueChanged<bool> onDndChanged;
+  final ValueChanged<TVDevice> onPairDevice;
 
   @override
   Widget build(BuildContext context) {
@@ -51,18 +51,12 @@ class ConnectTab extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           if (!isConnected) ...[
-            YaruOptionButton(
+            OutlinedButton.icon(
               onPressed: onManualConnect,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(YaruIcons.external_link, size: 18),
-                    const SizedBox(width: 8),
-                    const Text('Connect with IP Address'),
-                  ],
-                ),
+              icon: const Icon(YaruIcons.external_link),
+              label: const Text('Connect with IP Address'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 12),
               ),
             ),
             const SizedBox(height: 24),

@@ -34,7 +34,7 @@ class _MainScreenBody extends StatelessWidget {
   final List<NotificationItem> history;
   final Map<String, bool> appFilters;
   final Map<String, Uint8List?> appIconCache;
-  final List<Map<String, dynamic>> installedPresets;
+  final List<AppPreset> installedPresets;
   final AppSettings settings;
   final ConnectorService connector;
   final NotificationService notifier;
@@ -57,26 +57,27 @@ class _MainScreenBody extends StatelessWidget {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('TV Mirror'),
+          systemOverlayStyle: SystemUiOverlayStyle.light,
           actions: [
             Padding(
               padding: const EdgeInsets.only(right: 8.0),
-              child: YaruIconButton(
+              child: IconButton(
                 icon: const Icon(YaruIcons.refresh),
                 onPressed: onRefresh,
                 tooltip: 'Refresh / Scan',
               ),
             ),
           ],
+          bottom: const TabBar(
+            tabs: [
+              Tab(icon: Icon(YaruIcons.computer), text: 'Connect'),
+              Tab(icon: Icon(YaruIcons.pen), text: 'Apps'),
+              Tab(icon: Icon(YaruIcons.history), text: 'History'),
+            ],
+          ),
         ),
         body: Column(
           children: [
-            const YaruTabBar(
-              tabs: [
-                Tab(icon: Icon(YaruIcons.computer), text: 'Connect'),
-                Tab(icon: Icon(YaruIcons.pen), text: 'Apps'),
-                Tab(icon: Icon(YaruIcons.history), text: 'History'),
-              ],
-            ),
             if (!hasPermission) PermissionBanner(notifier: notifier),
             Expanded(
               child: TabBarView(
@@ -151,27 +152,7 @@ class _MainScreenBody extends StatelessWidget {
   }
 }
 
-
 class _TabContent extends StatelessWidget {
-  final int index;
-  final bool isConnected;
-  final List<TVDevice> discoveredDevices;
-  final String? connectedTvName;
-  final bool tvDndEnabled;
-  final AppSettings settings;
-  final ConnectorService connector;
-  final Map<String, bool> appFilters;
-  final List<Map<String, dynamic>> installedPresets;
-  final Map<String, Uint8List?> appIconCache;
-  final List<NotificationItem> history;
-  final VoidCallback onSendTest;
-  final VoidCallback onManualConnect;
-  final ValueChanged<bool> onDndChanged;
-  final void Function(TVDevice device) onPairDevice;
-  final ValueChanged<AppSettings> onSettingsChanged;
-  final void Function(String packageName, bool value) onFilterChanged;
-  final VoidCallback onAddCustomApp;
-
   const _TabContent({
     required this.index,
     required this.isConnected,
@@ -192,6 +173,24 @@ class _TabContent extends StatelessWidget {
     required this.onFilterChanged,
     required this.onAddCustomApp,
   });
+  final int index;
+  final bool isConnected;
+  final List<TVDevice> discoveredDevices;
+  final String? connectedTvName;
+  final bool tvDndEnabled;
+  final AppSettings settings;
+  final ConnectorService connector;
+  final Map<String, bool> appFilters;
+  final List<AppPreset> installedPresets;
+  final Map<String, Uint8List?> appIconCache;
+  final List<NotificationItem> history;
+  final VoidCallback onSendTest;
+  final VoidCallback onManualConnect;
+  final ValueChanged<bool> onDndChanged;
+  final void Function(TVDevice device) onPairDevice;
+  final ValueChanged<AppSettings> onSettingsChanged;
+  final void Function(String packageName, bool value) onFilterChanged;
+  final VoidCallback onAddCustomApp;
 
   @override
   Widget build(BuildContext context) {
@@ -224,4 +223,3 @@ class _TabContent extends StatelessWidget {
     };
   }
 }
-

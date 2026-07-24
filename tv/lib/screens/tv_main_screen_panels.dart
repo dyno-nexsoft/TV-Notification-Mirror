@@ -100,9 +100,9 @@ class _RightInfoPanel extends StatelessWidget {
   });
 
   final String? pairingPin;
-  final List<dynamic> pairedClients;
+  final List<MirrorDevice> pairedClients;
   final Set<String> activeTokens;
-  final List<dynamic> notificationHistory;
+  final List<NotificationItem> notificationHistory;
   final Color primaryColor;
   final void Function(String token, String deviceName) onRemoveClient;
 
@@ -129,7 +129,6 @@ class _RightInfoPanel extends StatelessWidget {
               children: [
                 // Left sub-column: Paired Devices
                 Expanded(
-                  flex: 1,
                   child: _PairedDevicesPanel(
                     pairedClients: pairedClients,
                     activeTokens: activeTokens,
@@ -145,7 +144,6 @@ class _RightInfoPanel extends StatelessWidget {
                 const SizedBox(width: 20),
                 // Right sub-column: Notifications history
                 Expanded(
-                  flex: 1,
                   child: _RecentNotificationsPanel(
                     notificationHistory: notificationHistory,
                     primaryColor: primaryColor,
@@ -169,7 +167,7 @@ class _PairedDevicesPanel extends StatelessWidget {
     required this.onRemove,
   });
 
-  final List<dynamic> pairedClients;
+  final List<MirrorDevice> pairedClients;
   final Set<String> activeTokens;
   final void Function(String token, String deviceName) onRemove;
 
@@ -194,11 +192,11 @@ class _PairedDevicesPanel extends StatelessWidget {
                   itemCount: pairedClients.length,
                   itemBuilder: (context, index) {
                     final client = pairedClients[index];
-                    final token = client['token'] as String? ?? '';
-                    final deviceName = client['deviceName'] ?? 'Unknown Phone';
+                    final token = client.token ?? '';
+                    final deviceName = client.name;
                     return PairedDeviceCard(
                       deviceName: deviceName,
-                      ip: client['ip'] ?? '',
+                      ip: client.ip,
                       isOnline: activeTokens.contains(token),
                       onRemove: () => onRemove(token, deviceName),
                     );
@@ -230,4 +228,3 @@ class _EmptyClientsCard extends StatelessWidget {
     );
   }
 }
-

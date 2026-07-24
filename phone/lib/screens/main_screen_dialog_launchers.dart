@@ -9,8 +9,8 @@ extension _DialogLauncher on _MainScreenState {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text(
-                'Failed to connect to TV. Make sure the TV app is open.'),
+            content:
+                Text('Failed to connect to TV. Make sure the TV app is open.'),
           ),
         );
       }

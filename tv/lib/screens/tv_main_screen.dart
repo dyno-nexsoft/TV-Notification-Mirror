@@ -24,7 +24,8 @@ class TvMainScreen extends StatefulWidget {
   State<TvMainScreen> createState() => _TvMainScreenState();
 }
 
-class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver {
+class _TvMainScreenState extends State<TvMainScreen>
+    with WidgetsBindingObserver {
   bool _hasOverlayPermission = false;
   bool _hasNotificationPermission = false;
   String _tvIp = 'Loading IP...';
@@ -33,9 +34,9 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
   String? _pairingPin;
   bool _isRunning = false;
   bool _isDnd = false;
-  List<dynamic> _pairedClients = [];
+  List<MirrorDevice> _pairedClients = [];
   Set<String> _activeTokens = {};
-  List<dynamic> _notificationHistory = [];
+  List<NotificationItem> _notificationHistory = [];
 
   StreamSubscription? _stateSub;
   StreamSubscription? _overlaySub;
@@ -49,13 +50,23 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
 
     _stateSub = FlutterBackgroundService().on('stateUpdate').listen((data) {
       if (data != null && mounted) {
+        final clientsList = (data['clients'] as List?)
+                ?.map((e) =>
+                    MirrorDevice.fromJson(Map<String, dynamic>.from(e as Map)))
+                .toList() ??
+            [];
+        final historyList = (data['history'] as List?)
+                ?.map((e) =>
+                    NotificationItem.fromJson(Map<String, dynamic>.from(e as Map)))
+                .toList() ??
+            [];
         setState(() {
           _pairingPin = data['pin'];
           _isRunning = data['isRunning'] ?? false;
           _isDnd = data['isDnd'] ?? false;
-          _pairedClients = data['clients'] ?? [];
+          _pairedClients = clientsList;
           _activeTokens = Set<String>.from(data['activeTokens'] ?? []);
-          _notificationHistory = data['history'] ?? [];
+          _notificationHistory = historyList;
         });
       }
     });
@@ -185,7 +196,6 @@ class _TvMainScreenState extends State<TvMainScreen> with WidgetsBindingObserver
           children: [
             // Left Panel
             Expanded(
-              flex: 1,
               child: _LeftControlPanel(
                 hasOverlayPermission: _hasOverlayPermission,
                 hasNotificationPermission: _hasNotificationPermission,

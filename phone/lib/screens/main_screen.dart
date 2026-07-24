@@ -1,23 +1,22 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
+import 'package:flutter/services.dart';
 import 'package:installed_apps/installed_apps.dart';
-import 'package:installed_apps/app_info.dart';
 import 'package:shared/shared.dart';
 
 import '../services/connector_service.dart';
 import '../services/filter_service.dart';
 import '../services/notification_service.dart';
-import '../widgets/permission_banner.dart';
 import '../widgets/connect/connect_tab.dart';
 import '../widgets/filters/filters_tab.dart';
 import '../widgets/history/history_tab.dart';
+import '../widgets/permission_banner.dart';
 
-part 'main_screen_dialogs.dart';
-part 'main_screen_dialog_launchers.dart';
-part 'main_screen_notifications.dart';
 part 'main_screen_body.dart';
+part 'main_screen_dialog_launchers.dart';
+part 'main_screen_dialogs.dart';
+part 'main_screen_notifications.dart';
 
 /// The root screen of the phone app. Handles only:
 /// - Tab navigation
@@ -44,7 +43,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   final List<NotificationItem> _history = [];
   Map<String, bool> _appFilters = {};
   final Map<String, Uint8List?> _appIconCache = {};
-  List<Map<String, dynamic>> _installedPresets = [];
+  List<AppPreset> _installedPresets = [];
 
   AppSettings _settings = const AppSettings(
     quietHoursEnabled: false,
@@ -79,7 +78,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       setState(() => _isConnected = state);
     });
 
-    _notificationSub = _notifier.notificationStream.listen(_handleNewNotification);
+    _notificationSub =
+        _notifier.notificationStream.listen(_handleNewNotification);
 
     _removedSub = _notifier.notificationRemovedStream.listen((id) {
       _connector.sendNotificationRemoved(id, '');
@@ -129,27 +129,24 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   Future<void> _loadInstalledApps() async {
     try {
-      final List<AppInfo> apps = await InstalledApps.getInstalledApps(
+      final apps = await InstalledApps.getInstalledApps(
         excludeSystemApps: false,
-        excludeNonLaunchableApps: true,
         withIcon: true,
       );
 
-      final loadedApps = <Map<String, dynamic>>[];
+      final loadedApps = <AppPreset>[];
       for (final app in apps) {
         final pkg = app.packageName;
         if (app.icon != null) _appIconCache[pkg] = app.icon;
-        loadedApps.add({
-          'pkg': pkg,
-          'name': app.name,
-          'color': Colors.transparent,
-        });
+        loadedApps.add(AppPreset(
+          pkg: pkg,
+          name: app.name,
+        ));
       }
 
-      loadedApps.sort((a, b) =>
-          (a['name'] as String).toLowerCase().compareTo(
-                (b['name'] as String).toLowerCase(),
-              ));
+      loadedApps.sort((a, b) => a.name.toLowerCase().compareTo(
+            b.name.toLowerCase(),
+          ));
 
       if (mounted) setState(() => _installedPresets = loadedApps);
     } catch (e) {

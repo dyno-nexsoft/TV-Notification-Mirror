@@ -1,22 +1,16 @@
 import 'dart:typed_data';
+
 import 'package:shared/shared.dart';
+
 import '../../services/filter_service.dart';
-import 'quiet_hours_card.dart';
+import 'app_filter_tile.dart';
 import 'keyword_filter_card.dart';
 import 'overlay_settings_card.dart';
-import 'app_filter_tile.dart';
+import 'quiet_hours_card.dart';
 
 /// The Filters tab — contains quiet hours, keyword blockers, overlay settings,
 /// and a searchable list of per-app notification toggles using Yaru UI.
 class FiltersTab extends StatefulWidget {
-  final AppSettings settings;
-  final Map<String, bool> appFilters;
-  final List<Map<String, dynamic>> installedPresets;
-  final Map<String, Uint8List?> iconCache;
-  final ValueChanged<AppSettings> onSettingsChanged;
-  final void Function(String pkg, bool value) onFilterChanged;
-  final VoidCallback onAddCustomApp;
-
   const FiltersTab({
     super.key,
     required this.settings,
@@ -27,6 +21,13 @@ class FiltersTab extends StatefulWidget {
     required this.onFilterChanged,
     required this.onAddCustomApp,
   });
+  final AppSettings settings;
+  final Map<String, bool> appFilters;
+  final List<AppPreset> installedPresets;
+  final Map<String, Uint8List?> iconCache;
+  final ValueChanged<AppSettings> onSettingsChanged;
+  final void Function(String pkg, bool value) onFilterChanged;
+  final VoidCallback onAddCustomApp;
 
   @override
   State<FiltersTab> createState() => _FiltersTabState();
@@ -37,21 +38,20 @@ class _FiltersTabState extends State<FiltersTab> {
 
   @override
   Widget build(BuildContext context) {
-    final dynamicApps = widget.appFilters.keys
-        .where((pkg) =>
-            !widget.installedPresets.any((app) => app['pkg'] == pkg))
-        .map((pkg) => {
-              'pkg': pkg,
-              'name': NotificationItem.getAppName(pkg),
-              'icon': YaruIcons.notification,
-            })
+    final customApps = widget.appFilters.keys
+        .where(
+            (pkg) => !widget.installedPresets.any((app) => app.pkg == pkg))
+        .map((pkg) => AppPreset(
+              pkg: pkg,
+              name: NotificationItem.getAppName(pkg),
+            ))
         .toList();
 
-    final allApps = [...widget.installedPresets, ...dynamicApps];
+    final allApps = [...widget.installedPresets, ...customApps];
 
     final filteredApps = allApps.where((app) {
-      final name = (app['name'] as String).toLowerCase();
-      final pkg = (app['pkg'] as String).toLowerCase();
+      final name = app.name.toLowerCase();
+      final pkg = app.pkg.toLowerCase();
       return name.contains(_searchQuery) || pkg.contains(_searchQuery);
     }).toList();
 
@@ -72,7 +72,7 @@ class _FiltersTabState extends State<FiltersTab> {
             onChanged: widget.onSettingsChanged,
           ),
           const SizedBox(height: 8),
-          const Divider(color: Colors.white10),
+          const Divider(),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
@@ -80,22 +80,12 @@ class _FiltersTabState extends State<FiltersTab> {
               children: [
                 Text(
                   'App Filters (${filteredApps.length})',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
-                YaruOptionButton(
+                OutlinedButton.icon(
                   onPressed: widget.onAddCustomApp,
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(YaruIcons.plus, size: 16),
-                      SizedBox(width: 4),
-                      Text('Add Package'),
-                    ],
-                  ),
+                  icon: const Icon(YaruIcons.plus),
+                  label: const Text('Add Package'),
                 ),
               ],
             ),
@@ -116,8 +106,8 @@ class _FiltersTabState extends State<FiltersTab> {
             itemCount: filteredApps.length,
             itemBuilder: (context, index) {
               final app = filteredApps[index];
-              final pkg = app['pkg'] as String;
-              final name = app['name'] as String;
+              final pkg = app.pkg;
+              final name = app.name;
               final isEnabled = widget.appFilters[pkg] ?? true;
 
               return AppFilterTile(

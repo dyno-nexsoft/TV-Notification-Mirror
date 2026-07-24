@@ -5,15 +5,6 @@ import '../../services/filter_service.dart';
 /// The connection status section shown at the top of the Connect tab.
 /// Displays current connection state, TV name, DND toggle, and action buttons using Yaru UI.
 class StatusCard extends StatelessWidget {
-  final bool isConnected;
-  final String? connectedTvName;
-  final bool tvDndEnabled;
-  final AppSettings settings;
-  final ConnectorService connector;
-  final VoidCallback onScanAgain;
-  final VoidCallback onSendTest;
-  final ValueChanged<bool> onDndChanged;
-
   const StatusCard({
     super.key,
     required this.isConnected,
@@ -25,25 +16,32 @@ class StatusCard extends StatelessWidget {
     required this.onSendTest,
     required this.onDndChanged,
   });
+  final bool isConnected;
+  final String? connectedTvName;
+  final bool tvDndEnabled;
+  final AppSettings settings;
+  final ConnectorService connector;
+  final VoidCallback onScanAgain;
+  final VoidCallback onSendTest;
+  final ValueChanged<bool> onDndChanged;
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     return YaruSection(
       headline: Text(
         isConnected ? 'Connected to TV' : 'Not Connected',
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        style: const TextStyle(fontWeight: FontWeight.bold),
       ),
       child: Column(
         children: [
           YaruListTile(
             leading: Icon(
               isConnected ? YaruIcons.ok_simple : YaruIcons.cloud,
-              size: 40,
-              color: isConnected ? colorScheme.primary : colorScheme.onSurfaceVariant,
             ),
             title: Text(
-              isConnected ? (connectedTvName ?? 'Connected') : 'No Active TV Connection',
+              isConnected
+                  ? (connectedTvName ?? 'Connected')
+                  : 'No Active TV Connection',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
@@ -53,11 +51,10 @@ class StatusCard extends StatelessWidget {
             ),
           ),
           if (isConnected) ...[
-            const Divider(color: Colors.white10),
+            const Divider(),
             YaruListTile(
               leading: Icon(
                 tvDndEnabled ? YaruIcons.error : YaruIcons.ok,
-                color: tvDndEnabled ? colorScheme.error : colorScheme.primary,
               ),
               title: const Text(
                 'TV Do Not Disturb (DND)',
@@ -75,39 +72,21 @@ class StatusCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
               if (isConnected) ...[
-                YaruOptionButton(
+                OutlinedButton.icon(
                   onPressed: () => connector.disconnect(),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(YaruIcons.power, color: colorScheme.error, size: 18),
-                      SizedBox(width: 6),
-                      Text('Disconnect', style: TextStyle(color: colorScheme.error)),
-                    ],
-                  ),
+                  icon: const Icon(YaruIcons.power),
+                  label: const Text('Disconnect'),
                 ),
-                YaruOptionButton(
+                ElevatedButton.icon(
                   onPressed: onSendTest,
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(YaruIcons.go_next, size: 18),
-                      SizedBox(width: 6),
-                      Text('Send Test'),
-                    ],
-                  ),
+                  icon: const Icon(YaruIcons.go_next),
+                  label: const Text('Send Test'),
                 ),
               ] else ...[
-                YaruOptionButton(
+                ElevatedButton.icon(
                   onPressed: onScanAgain,
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(YaruIcons.search, size: 18),
-                      SizedBox(width: 6),
-                      Text('Scan Again'),
-                    ],
-                  ),
+                  icon: const Icon(YaruIcons.search),
+                  label: const Text('Scan Again'),
                 ),
               ],
             ],

@@ -4,14 +4,13 @@ import '../../services/filter_service.dart';
 /// Card for configuring quiet hours (scheduled DND) using Yaru UI widgets.
 /// Uses [YaruTimeEntry] for inline, segmented time input — no dialog picker needed.
 class QuietHoursCard extends StatelessWidget {
-  final AppSettings settings;
-  final ValueChanged<AppSettings> onChanged;
-
   const QuietHoursCard({
     super.key,
     required this.settings,
     required this.onChanged,
   });
+  final AppSettings settings;
+  final ValueChanged<AppSettings> onChanged;
 
   void _saveTime({
     required bool enabled,
@@ -30,7 +29,7 @@ class QuietHoursCard extends StatelessWidget {
         child: Column(
           children: [
             YaruListTile(
-              leading: const Icon(YaruIcons.notification, color: Colors.greenAccent),
+              leading: const Icon(YaruIcons.notification),
               title: const Text(
                 'Quiet Hours Status',
                 style: TextStyle(fontWeight: FontWeight.bold),
@@ -52,7 +51,8 @@ class QuietHoursCard extends StatelessWidget {
             if (settings.quietHoursEnabled) ...[
               const Divider(color: Colors.white10),
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                 child: Row(
                   children: [
                     // Start time
@@ -70,7 +70,8 @@ class QuietHoursCard extends StatelessWidget {
                             force24HourFormat: true,
                             onChanged: (time) {
                               if (time == null) return;
-                              final updated = settings.copyWith(quietHoursStart: time);
+                              final updated =
+                                  settings.copyWith(quietHoursStart: time);
                               onChanged(updated);
                               _saveTime(
                                 enabled: updated.quietHoursEnabled,
@@ -84,7 +85,7 @@ class QuietHoursCard extends StatelessWidget {
                     ),
                     const Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
-                      child: Icon(YaruIcons.go_next, color: Colors.grey),
+                      child: Icon(YaruIcons.go_next),
                     ),
                     // End time
                     Expanded(
@@ -101,7 +102,8 @@ class QuietHoursCard extends StatelessWidget {
                             force24HourFormat: true,
                             onChanged: (time) {
                               if (time == null) return;
-                              final updated = settings.copyWith(quietHoursEnd: time);
+                              final updated =
+                                  settings.copyWith(quietHoursEnd: time);
                               onChanged(updated);
                               _saveTime(
                                 enabled: updated.quietHoursEnabled,

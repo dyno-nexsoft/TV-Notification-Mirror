@@ -14,6 +14,9 @@ typedef TVDevice = MirrorDevice;
 /// and the WebSocket connection (with auto-reconnect) used to relay
 /// notifications and settings to the paired TV.
 class ConnectorService {
+  ConnectorService() {
+    _loadSavedConnection();
+  }
   final _storage = const FlutterSecureStorage();
 
   // mDNS Discovery
@@ -35,10 +38,6 @@ class ConnectorService {
 
   final StreamController<bool> _connectionStateController =
       StreamController<bool>.broadcast();
-
-  ConnectorService() {
-    _loadSavedConnection();
-  }
 
   Stream<List<TVDevice>> get devicesStream => _devicesController.stream;
   Stream<bool> get connectionStateStream => _connectionStateController.stream;
@@ -72,7 +71,7 @@ class ConnectorService {
           event.service.resolve(_discovery!.serviceResolver);
         } else if (event is BonsoirDiscoveryServiceResolvedEvent) {
           final service = event.service;
-          final ip = service.host;
+          final ip = service.hostAddress;
           final port = service.port;
           final name = service.name;
 
@@ -115,7 +114,8 @@ class ConnectorService {
     try {
       final response = await http
           .post(
-            Uri.parse('http://${device.ip}:${device.port}${MirrorProtocol.apiPair}'),
+            Uri.parse(
+                'http://${device.ip}:${device.port}${MirrorProtocol.apiPair}'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'deviceName': 'Android Phone'}),
           )
@@ -133,7 +133,8 @@ class ConnectorService {
     try {
       final response = await http
           .post(
-            Uri.parse('http://${device.ip}:${device.port}${MirrorProtocol.apiPairConfirm}'),
+            Uri.parse(
+                'http://${device.ip}:${device.port}${MirrorProtocol.apiPairConfirm}'),
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'pin': pin, 'deviceName': 'Android Phone'}),
           )
@@ -178,7 +179,8 @@ class ConnectorService {
       return false;
     }
 
-    final wsUrl = 'ws://$_connectedTvIp:$_connectedTvPort${MirrorProtocol.wsPath}?token=$token';
+    final wsUrl =
+        'ws://$_connectedTvIp:$_connectedTvPort${MirrorProtocol.wsPath}?token=$token';
     debugPrint("Connecting WebSocket to $wsUrl");
 
     try {
@@ -266,10 +268,12 @@ class ConnectorService {
       return;
     }
 
-    final itemJson = item.toMap();
+    final itemJson = item.toJson();
     if (base64Icon != null) itemJson['appIcon'] = base64Icon;
     if (overlayPosition != null) itemJson['overlayPosition'] = overlayPosition;
-    if (overlayDurationMs != null) itemJson['overlayDuration'] = overlayDurationMs;
+    if (overlayDurationMs != null) {
+      itemJson['overlayDuration'] = overlayDurationMs;
+    }
 
     final payload = {
       'event': MirrorProtocol.eventNotificationNew,
@@ -319,7 +323,8 @@ class ConnectorService {
     _reconnectTimer?.cancel();
     if (_isConnected && _wsChannel != null) {
       try {
-        _wsChannel!.sink.add(jsonEncode({'event': MirrorProtocol.eventDisconnect, 'data': {}}));
+        _wsChannel!.sink.add(
+            jsonEncode({'event': MirrorProtocol.eventDisconnect, 'data': {}}));
       } catch (_) {}
     }
     _wsChannel?.sink.close();

@@ -9,8 +9,7 @@ class OverlayService {
 
   static Future<bool> checkPermission() async {
     try {
-      final bool hasPermission =
-          await _channel.invokeMethod('checkPermission');
+      final bool hasPermission = await _channel.invokeMethod('checkPermission');
       return hasPermission;
     } on PlatformException catch (e) {
       debugPrint("Failed to check overlay permission: ${e.message}");

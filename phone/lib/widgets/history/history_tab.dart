@@ -4,14 +4,13 @@ import 'history_item_card.dart';
 
 /// The History tab — displays the last 50 received notifications.
 class HistoryTab extends StatelessWidget {
-  final List<NotificationItem> history;
-  final Map<String, Uint8List?> iconCache;
-
   const HistoryTab({
     super.key,
     required this.history,
     required this.iconCache,
   });
+  final List<NotificationItem> history;
+  final Map<String, Uint8List?> iconCache;
 
   @override
   Widget build(BuildContext context) {
@@ -21,10 +20,8 @@ class HistoryTab extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               YaruIcons.history,
-              size: 64,
-              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(
@@ -38,7 +35,8 @@ class HistoryTab extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               'New notifications will appear here.',
-              style: TextStyle(color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7)),
+              style: TextStyle(
+                  color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7)),
             ),
           ],
         ),

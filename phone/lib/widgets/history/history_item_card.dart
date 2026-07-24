@@ -3,14 +3,13 @@ import 'package:shared/shared.dart';
 
 /// A single notification history item card using YaruTile.
 class HistoryItemCard extends StatelessWidget {
-  final NotificationItem item;
-  final Map<String, Uint8List?> iconCache;
-
   const HistoryItemCard({
     super.key,
     required this.item,
     required this.iconCache,
   });
+  final NotificationItem item;
+  final Map<String, Uint8List?> iconCache;
 
   @override
   Widget build(BuildContext context) {

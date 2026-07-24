@@ -6,14 +6,6 @@ import '../models/notification_item.dart';
 /// Bridges to the native `NotificationListenerService` via platform channels,
 /// exposing incoming/removed Android notifications as Dart streams.
 class NotificationService {
-  static const _methodsChannel =
-      MethodChannel('com.dyno.tv_notification_mirror/methods');
-  static const _eventsChannel =
-      EventChannel('com.dyno.tv_notification_mirror/events');
-
-  final StreamController<Map<String, dynamic>> _controller =
-      StreamController<Map<String, dynamic>>.broadcast();
-
   NotificationService() {
     _eventsChannel.receiveBroadcastStream().listen(
       (data) {
@@ -26,12 +18,19 @@ class NotificationService {
       },
     );
   }
+  static const _methodsChannel =
+      MethodChannel('com.dyno.tv_notification_mirror/methods');
+  static const _eventsChannel =
+      EventChannel('com.dyno.tv_notification_mirror/events');
+
+  final StreamController<Map<String, dynamic>> _controller =
+      StreamController<Map<String, dynamic>>.broadcast();
 
   Stream<Map<String, dynamic>> get rawStream => _controller.stream;
 
   Stream<NotificationItem> get notificationStream => _controller.stream
       .where((event) => event['event'] == 'notification_new')
-      .map((event) => NotificationItem.fromMap(event));
+      .map((event) => NotificationItem.fromJson(event));
 
   Stream<String> get notificationRemovedStream => _controller.stream
       .where((event) => event['event'] == 'notification_removed')

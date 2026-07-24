@@ -4,12 +4,6 @@ import 'package:installed_apps/installed_apps.dart';
 
 /// Shared widget for displaying application icons with lazy loading & caching.
 class AppIconWidget extends StatefulWidget {
-  final String packageName;
-  final IconData fallbackIcon;
-  final Color fallbackColor;
-  final double size;
-  final Map<String, Uint8List?> cache;
-
   const AppIconWidget({
     super.key,
     required this.packageName,
@@ -18,6 +12,12 @@ class AppIconWidget extends StatefulWidget {
     this.size = 24.0,
     required this.cache,
   });
+
+  final String packageName;
+  final IconData fallbackIcon;
+  final Color fallbackColor;
+  final double size;
+  final Map<String, Uint8List?> cache;
 
   @override
   State<AppIconWidget> createState() => _AppIconWidgetState();

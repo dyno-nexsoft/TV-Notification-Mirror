@@ -4,9 +4,9 @@ import 'tv_button.dart';
 
 /// Shown while a phone is mid-pairing, surfacing the PIN it must confirm.
 class PairingBox extends StatelessWidget {
-  final String pin;
-
   const PairingBox({super.key, required this.pin});
+
+  final String pin;
 
   @override
   Widget build(BuildContext context) {
@@ -14,7 +14,7 @@ class PairingBox extends StatelessWidget {
     return YaruSection(
       headline: const Text('New Pairing Request'),
       child: YaruListTile(
-        leading: Icon(YaruIcons.key, size: 36, color: primaryColor),
+        leading: const Icon(YaruIcons.key),
         title: const Text(
           'Enter this PIN on your phone:',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -64,22 +64,21 @@ class WaitingBox extends StatelessWidget {
 
 /// Shown once at least one paired phone has an active WebSocket connection.
 class ConnectedBox extends StatelessWidget {
-  final List<dynamic> pairedClients;
-  final Set<String> activeTokens;
-
   const ConnectedBox({
     super.key,
     required this.pairedClients,
     required this.activeTokens,
   });
+  final List<MirrorDevice> pairedClients;
+  final Set<String> activeTokens;
 
   @override
   Widget build(BuildContext context) {
-    String connectedDevicesText = 'Active connection established.';
+    var connectedDevicesText = 'Active connection established.';
     if (pairedClients.isNotEmpty && activeTokens.isNotEmpty) {
       final activeNames = pairedClients
-          .where((c) => activeTokens.contains(c['token']))
-          .map((c) => (c['deviceName'] ?? c['name'] ?? 'Unknown Phone').toString())
+          .where((c) => c.token != null && activeTokens.contains(c.token))
+          .map((c) => c.name)
           .toList();
       if (activeNames.isNotEmpty) {
         connectedDevicesText = 'Connected to: ${activeNames.join(", ")}';
@@ -89,7 +88,7 @@ class ConnectedBox extends StatelessWidget {
     return YaruSection(
       headline: const Text('Connection Status'),
       child: YaruListTile(
-        leading: const Icon(YaruIcons.ok_simple, size: 36, color: Colors.greenAccent),
+        leading: const Icon(YaruIcons.ok_simple),
         title: const Text(
           'Phone Connected',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -103,23 +102,22 @@ class ConnectedBox extends StatelessWidget {
 /// Summarizes the mirror server's running/DND state and the TV's local IP,
 /// shown once both required permissions have been granted.
 class ServerInfoCard extends StatelessWidget {
-  final bool isRunning;
-  final bool isDnd;
-  final String tvIp;
-
   const ServerInfoCard({
     super.key,
     required this.isRunning,
     required this.isDnd,
     required this.tvIp,
   });
+  final bool isRunning;
+  final bool isDnd;
+  final String tvIp;
 
   @override
   Widget build(BuildContext context) {
     return YaruSection(
       headline: Row(
         children: [
-          Icon(YaruIcons.network_wireless, color: isRunning ? Colors.greenAccent : Colors.grey),
+          const Icon(YaruIcons.network_wireless),
           const SizedBox(width: 8),
           Text(isRunning ? 'Server Active' : 'Server Idle'),
         ],
@@ -157,11 +155,11 @@ class OverlayWarningCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final errorColor = Theme.of(context).colorScheme.error;
     return YaruSection(
-      headline: Row(
+      headline: const Row(
         children: [
-          Icon(YaruIcons.warning, color: errorColor),
-          const SizedBox(width: 8),
-          const Text('Permission Needed'),
+          Icon(YaruIcons.warning),
+          SizedBox(width: 8),
+          Text('Permission Needed'),
         ],
       ),
       child: Padding(
@@ -196,11 +194,11 @@ class NotificationWarningCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final errorColor = Theme.of(context).colorScheme.error;
     return YaruSection(
-      headline: Row(
+      headline: const Row(
         children: [
-          Icon(YaruIcons.warning, color: errorColor),
-          const SizedBox(width: 8),
-          const Text('Permission Needed'),
+          Icon(YaruIcons.warning),
+          SizedBox(width: 8),
+          Text('Permission Needed'),
         ],
       ),
       child: Padding(

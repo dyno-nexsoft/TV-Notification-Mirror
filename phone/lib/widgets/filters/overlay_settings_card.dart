@@ -3,25 +3,24 @@ import '../../services/filter_service.dart';
 
 /// Card for configuring TV overlay notification popup position and duration using Yaru UI widgets.
 class OverlaySettingsCard extends StatelessWidget {
-  final AppSettings settings;
-  final ValueChanged<AppSettings> onChanged;
-
   const OverlaySettingsCard({
     super.key,
     required this.settings,
     required this.onChanged,
   });
+  final AppSettings settings;
+  final ValueChanged<AppSettings> onChanged;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: YaruSection(
-        headline: Row(
+        headline: const Row(
           children: [
             Icon(YaruIcons.computer),
-            const SizedBox(width: 8),
-            const Text('TV Overlay Settings'),
+            SizedBox(width: 8),
+            Text('TV Overlay Settings'),
           ],
         ),
         child: Column(

@@ -3,14 +3,13 @@ import '../../services/filter_service.dart';
 
 /// Card for managing blocked keywords using Yaru UI widgets.
 class KeywordFilterCard extends StatefulWidget {
-  final AppSettings settings;
-  final ValueChanged<AppSettings> onChanged;
-
   const KeywordFilterCard({
     super.key,
     required this.settings,
     required this.onChanged,
   });
+  final AppSettings settings;
+  final ValueChanged<AppSettings> onChanged;
 
   @override
   State<KeywordFilterCard> createState() => _KeywordFilterCardState();
@@ -49,11 +48,11 @@ class _KeywordFilterCardState extends State<KeywordFilterCard> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: YaruSection(
-        headline: Row(
+        headline: const Row(
           children: [
-            Icon(YaruIcons.pen, color: Colors.orange),
-            const SizedBox(width: 8),
-            const Text('Blocked Keywords'),
+            Icon(YaruIcons.pen),
+            SizedBox(width: 8),
+            Text('Blocked Keywords'),
           ],
         ),
         child: Padding(
@@ -63,7 +62,7 @@ class _KeywordFilterCardState extends State<KeywordFilterCard> {
             children: [
               const Text(
                 'Notifications containing these keywords will not be sent to TV.',
-                style: TextStyle(fontSize: 12, color: Colors.grey),
+                style: TextStyle(fontSize: 12),
               ),
               const SizedBox(height: 16),
               Row(
@@ -71,12 +70,9 @@ class _KeywordFilterCardState extends State<KeywordFilterCard> {
                   Expanded(
                     child: TextField(
                       controller: _controller,
-                      decoration: InputDecoration(
+                      decoration: const InputDecoration(
                         hintText: 'e.g., spam, discount, OTP',
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
+                        contentPadding: EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 8,
                         ),
@@ -85,7 +81,7 @@ class _KeywordFilterCardState extends State<KeywordFilterCard> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  YaruOptionButton(
+                  ElevatedButton(
                     onPressed: () => _addKeyword(_controller.text),
                     child: const Text('Add'),
                   ),
@@ -97,16 +93,10 @@ class _KeywordFilterCardState extends State<KeywordFilterCard> {
                   spacing: 8,
                   runSpacing: 8,
                   children: widget.settings.blockedKeywords.map((kw) {
-                    return YaruOptionButton(
-                      onPressed: () => _removeKeyword(kw),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(kw),
-                          const SizedBox(width: 4),
-                          Icon(YaruIcons.minus, size: 14),
-                        ],
-                      ),
+                    return InputChip(
+                      label: Text(kw),
+                      onDeleted: () => _removeKeyword(kw),
+                      deleteIcon: const Icon(YaruIcons.minus),
                     );
                   }).toList(),
                 ),

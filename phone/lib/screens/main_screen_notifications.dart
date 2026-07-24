@@ -53,8 +53,7 @@ extension _NotificationHandling on _MainScreenState {
           _settings.quietHoursEnd,
           DateTime.now(),
         )) {
-      debugPrint(
-          "Notification blocked by Quiet Hours schedule: ${item.title}");
+      debugPrint("Notification blocked by Quiet Hours schedule: ${item.title}");
       return true;
     }
     return false;

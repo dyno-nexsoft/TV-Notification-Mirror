@@ -11,7 +11,7 @@ class FilterService {
   static Future<Map<String, bool>> loadFilters() async {
     final prefs = await SharedPreferences.getInstance();
     final keys = prefs.getKeys().where((k) => k.startsWith('filter_'));
-    final Map<String, bool> filters = {};
+    final filters = <String, bool>{};
     for (final key in keys) {
       final pkg = key.replaceFirst('filter_', '');
       filters[pkg] = prefs.getBool(key) ?? true;
@@ -38,7 +38,8 @@ class FilterService {
       quietHoursStart: TimeOfDay(hour: startHour, minute: startMinute),
       quietHoursEnd: TimeOfDay(hour: endHour, minute: endMinute),
       blockedKeywords: prefs.getStringList('blocked_keywords') ?? [],
-      overlayPosition: prefs.getString('overlay_position') ?? MirrorProtocol.overlayTopRight,
+      overlayPosition:
+          prefs.getString('overlay_position') ?? MirrorProtocol.overlayTopRight,
       overlayDurationSeconds: prefs.getInt('overlay_duration_seconds') ?? 5,
       tvDndEnabled: prefs.getBool('tv_dnd_enabled') ?? false,
     );
@@ -89,14 +90,6 @@ class FilterService {
 
 /// Immutable value object holding all user-configurable app settings.
 class AppSettings {
-  final bool quietHoursEnabled;
-  final TimeOfDay quietHoursStart;
-  final TimeOfDay quietHoursEnd;
-  final List<String> blockedKeywords;
-  final String overlayPosition;
-  final int overlayDurationSeconds;
-  final bool tvDndEnabled;
-
   const AppSettings({
     required this.quietHoursEnabled,
     required this.quietHoursStart,
@@ -106,6 +99,13 @@ class AppSettings {
     required this.overlayDurationSeconds,
     required this.tvDndEnabled,
   });
+  final bool quietHoursEnabled;
+  final TimeOfDay quietHoursStart;
+  final TimeOfDay quietHoursEnd;
+  final List<String> blockedKeywords;
+  final String overlayPosition;
+  final int overlayDurationSeconds;
+  final bool tvDndEnabled;
 
   AppSettings copyWith({
     bool? quietHoursEnabled,

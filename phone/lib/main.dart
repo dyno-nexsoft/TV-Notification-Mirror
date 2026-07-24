@@ -1,8 +1,16 @@
+import 'package:flutter/services.dart';
 import 'package:shared/shared.dart';
-import 'app_theme.dart';
 import 'screens/main_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+    ),
+  );
   runApp(const MyApp());
 }
 
@@ -18,7 +26,7 @@ class MyApp extends StatelessWidget {
           title: 'TV Notification Mirror',
           themeMode: ThemeMode.dark,
           theme: yaru.theme,
-          darkTheme: AppTheme.darkTheme,
+          darkTheme: yaru.darkTheme,
           builder: (context, child) {
             return GestureDetector(
               onTap: () => FocusManager.instance.primaryFocus?.unfocus(),

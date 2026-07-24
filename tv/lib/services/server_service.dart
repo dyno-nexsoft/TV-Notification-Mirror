@@ -20,9 +20,9 @@ typedef ConnectedClient = MirrorDevice;
 /// notifications from paired phones. Singleton so the background isolate
 /// and UI isolate observe the same server state.
 class ServerService {
-  static final ServerService _instance = ServerService._internal();
   factory ServerService() => _instance;
   ServerService._internal();
+  static final ServerService _instance = ServerService._internal();
 
   HttpServer? _server;
   BonsoirBroadcast? _broadcast;
@@ -44,7 +44,7 @@ class ServerService {
 
   bool _isRunning = false;
   bool isDndEnabled = false;
-  final List<Map<String, dynamic>> _notificationHistory = [];
+  final List<NotificationItem> _notificationHistory = [];
 
   Stream<String?> get pairingPinStream => _pairingStateController.stream;
   Stream<List<ConnectedClient>> get pairedClientsStream =>
@@ -53,7 +53,7 @@ class ServerService {
   String? get currentPin => _currentPin;
   List<ConnectedClient> get pairedClients => _pairedClients;
   Set<String> get activeTokens => _activeTokens;
-  List<Map<String, dynamic>> get notificationHistory => _notificationHistory;
+  List<NotificationItem> get notificationHistory => _notificationHistory;
   Stream<Map<String, dynamic>> get overlayStream => _overlayController.stream;
 
   Future<void> init() async {
@@ -68,7 +68,8 @@ class ServerService {
         final List decoded = jsonDecode(jsonStr);
         _pairedClients.clear();
         for (final item in decoded) {
-          _pairedClients.add(MirrorDevice.fromMap(Map<String, dynamic>.from(item)));
+          _pairedClients
+              .add(MirrorDevice.fromJson(Map<String, dynamic>.from(item)));
         }
         _clientsController.add(List.from(_pairedClients));
       } catch (e) {
@@ -79,7 +80,7 @@ class ServerService {
 
   Future<void> _savePairedClients() async {
     final prefs = await SharedPreferences.getInstance();
-    final list = _pairedClients.map((c) => c.toMap()).toList();
+    final list = _pairedClients.map((c) => c.toJson()).toList();
     await prefs.setString('paired_clients', jsonEncode(list));
     _clientsController.add(List.from(_pairedClients));
   }
@@ -169,7 +170,8 @@ class ServerService {
       _pairingStateController.add(null);
 
       debugPrint("Client paired successfully: ${client.name} (${client.ip})");
-      return shelf.Response.ok(jsonEncode({'status': 'paired', 'token': token}));
+      return shelf.Response.ok(
+          jsonEncode({'status': 'paired', 'token': token}));
     } catch (e) {
       return shelf.Response.internalServerError(body: 'Invalid payload');
     }
@@ -281,45 +283,32 @@ class ServerService {
     debugPrint("DND mode toggled remotely to: $isDndEnabled");
   }
 
-  void _handleSetDnd(dynamic data) {
+  void _handleSetDnd(Map<String, dynamic> data) {
     isDndEnabled = data['enabled'] as bool? ?? false;
     debugPrint("DND mode set remotely to: $isDndEnabled");
   }
 
-  void _handleNewNotification(dynamic data) {
+  void _handleNewNotification(Map<String, dynamic> data) {
     if (isDndEnabled) {
       debugPrint("DND mode enabled, ignoring notification.");
       return;
     }
 
-    final title = data['title'] ?? '';
-    final text = data['text'] ?? '';
-    final appName = data['appName'] ?? 'Notification';
-    final base64Icon = data['appIcon'];
-    final overlayPosition = data['overlayPosition'];
-    final overlayDuration = data['overlayDuration'];
-
-    _notificationHistory.insert(0, {
-      'title': title,
-      'text': text,
-      'appName': appName,
-      'packageName': data['packageName'] ?? '',
-      'timestamp': data['postTime'] ?? DateTime.now().millisecondsSinceEpoch,
-      'appIcon': base64Icon,
-    });
+    final item = NotificationItem.fromJson(data);
+    _notificationHistory.insert(0, item);
     if (_notificationHistory.length > 15) {
       _notificationHistory.removeLast();
     }
 
-    debugPrint("Displaying notification: $title - $text from $appName");
+    debugPrint("Displaying notification: ${item.title} - ${item.text} from ${item.appName}");
     _overlayController.add({
       'action': 'show',
-      'title': title,
-      'text': text,
-      'appName': appName,
-      'base64Icon': base64Icon,
-      'overlayPosition': overlayPosition,
-      'overlayDuration': overlayDuration,
+      'title': item.title,
+      'text': item.text,
+      'appName': item.appName,
+      'base64Icon': item.appIcon,
+      'overlayPosition': item.overlayPosition,
+      'overlayDuration': item.overlayDuration,
     });
   }
 

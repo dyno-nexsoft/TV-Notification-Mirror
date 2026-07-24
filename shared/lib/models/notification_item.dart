@@ -1,65 +1,39 @@
-import 'dart:convert';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'notification_item.freezed.dart';
+part 'notification_item.g.dart';
+
+Object? _readId(Map map, String key) {
+  return map['id']?.toString() ??
+      DateTime.now().millisecondsSinceEpoch.toString();
+}
+
+Object? _readPostTime(Map map, String key) {
+  return map['postTime'] ??
+      map['timestamp'] ??
+      DateTime.now().millisecondsSinceEpoch;
+}
 
 /// Represents a single notification payload shared between Phone and TV apps.
-class NotificationItem {
-  final String id;
-  final String packageName;
-  final String appName;
-  final String title;
-  final String text;
-  final int postTime;
-  final String? appIcon;
-  final String? overlayPosition;
-  final int? overlayDuration;
+@freezed
+abstract class NotificationItem with _$NotificationItem {
+  const factory NotificationItem({
+    @JsonKey(readValue: _readId) required String id,
+    @Default('unknown') String packageName,
+    @Default('Notification') String appName,
+    @Default('Notification') String title,
+    @Default('') String text,
+    @JsonKey(readValue: _readPostTime) required int postTime,
+    String? appIcon,
+    String? overlayPosition,
+    int? overlayDuration,
+  }) = _NotificationItem;
 
-  NotificationItem({
-    required this.id,
-    required this.packageName,
-    required this.appName,
-    required this.title,
-    required this.text,
-    required this.postTime,
-    this.appIcon,
-    this.overlayPosition,
-    this.overlayDuration,
-  });
-
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'packageName': packageName,
-      'appName': appName,
-      'title': title,
-      'text': text,
-      'postTime': postTime,
-      if (appIcon != null) 'appIcon': appIcon,
-      if (overlayPosition != null) 'overlayPosition': overlayPosition,
-      if (overlayDuration != null) 'overlayDuration': overlayDuration,
-    };
-  }
-
-  factory NotificationItem.fromMap(Map<String, dynamic> map) {
-    return NotificationItem(
-      id: map['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      packageName: map['packageName'] as String? ?? 'unknown',
-      appName: map['appName'] as String? ?? getAppName(map['packageName'] as String? ?? ''),
-      title: map['title'] as String? ?? 'Notification',
-      text: map['text'] as String? ?? '',
-      postTime: map['postTime'] as int? ?? DateTime.now().millisecondsSinceEpoch,
-      appIcon: map['appIcon'] as String?,
-      overlayPosition: map['overlayPosition'] as String?,
-      overlayDuration: map['overlayDuration'] as int?,
-    );
-  }
-
-  String toJson() => jsonEncode(toMap());
-
-  factory NotificationItem.fromJson(String source) =>
-      NotificationItem.fromMap(jsonDecode(source));
+  factory NotificationItem.fromJson(Map<String, dynamic> json) =>
+      _$NotificationItemFromJson(json);
 
   static String getAppName(String packageName) {
     if (packageName.isEmpty) return 'Notification';
-
     final parts = packageName.split('.');
     if (parts.length > 1) {
       final name = parts.last;

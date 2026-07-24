@@ -1,50 +1,23 @@
-import 'dart:convert';
+import 'package:freezed_annotation/freezed_annotation.dart';
+
+part 'mirror_device.freezed.dart';
+part 'mirror_device.g.dart';
+
+Object? _readDeviceName(Map map, String key) {
+  return map['deviceName'] ?? map['name'] ?? 'Unknown Device';
+}
 
 /// Represents a TV or Phone device in the TV Notification Mirror network.
-class MirrorDevice {
-  final String name;
-  final String ip;
-  final int port;
-  final String? token;
+@freezed
+abstract class MirrorDevice with _$MirrorDevice {
+  const factory MirrorDevice({
+    @JsonKey(name: 'deviceName', readValue: _readDeviceName)
+    required String name,
+    @Default('') String ip,
+    @Default(8080) int port,
+    String? token,
+  }) = _MirrorDevice;
 
-  const MirrorDevice({
-    required this.name,
-    required this.ip,
-    required this.port,
-    this.token,
-  });
-
-  Map<String, dynamic> toMap() {
-    return {
-      'deviceName': name,
-      'ip': ip,
-      'port': port,
-      if (token != null) 'token': token,
-    };
-  }
-
-  factory MirrorDevice.fromMap(Map<String, dynamic> map) {
-    return MirrorDevice(
-      name: map['deviceName'] as String? ?? map['name'] as String? ?? 'Unknown Device',
-      ip: map['ip'] as String? ?? '',
-      port: map['port'] as int? ?? 8080,
-      token: map['token'] as String?,
-    );
-  }
-
-  String toJson() => jsonEncode(toMap());
-
-  factory MirrorDevice.fromJson(String source) =>
-      MirrorDevice.fromMap(jsonDecode(source));
-
-  @override
-  bool operator ==(Object other) =>
-      identical(this, other) ||
-      other is MirrorDevice &&
-          runtimeType == other.runtimeType &&
-          ip == other.ip &&
-          port == other.port;
-
-  @override
-  int get hashCode => ip.hashCode ^ port.hashCode;
+  factory MirrorDevice.fromJson(Map<String, dynamic> json) =>
+      _$MirrorDeviceFromJson(json);
 }

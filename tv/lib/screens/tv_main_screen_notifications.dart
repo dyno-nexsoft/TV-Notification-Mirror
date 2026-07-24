@@ -8,7 +8,7 @@ class _RecentNotificationsPanel extends StatelessWidget {
     required this.primaryColor,
   });
 
-  final List<dynamic> notificationHistory;
+  final List<NotificationItem> notificationHistory;
   final Color primaryColor;
 
   @override
@@ -56,21 +56,19 @@ class _NotificationHistoryTile extends StatelessWidget {
     required this.primaryColor,
   });
 
-  final dynamic item;
+  final NotificationItem item;
   final Color primaryColor;
 
   String get _timeLabel {
-    final timestamp = item['timestamp'] as int? ??
-        DateTime.now().millisecondsSinceEpoch;
-    final dt = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final dt = DateTime.fromMillisecondsSinceEpoch(item.postTime);
     return "${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}";
   }
 
   @override
   Widget build(BuildContext context) {
-    final title = item['title'] ?? '';
-    final text = item['text'] ?? '';
-    final appIconBase64 = item['appIcon'] as String?;
+    final title = item.title;
+    final text = item.text;
+    final appIconBase64 = item.appIcon;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -92,10 +90,8 @@ class _NotificationHistoryTile extends StatelessWidget {
                     fit: BoxFit.cover,
                   ),
                 )
-              : Icon(
+              : const Icon(
                   YaruIcons.notification,
-                  color: primaryColor,
-                  size: 22,
                 ),
         ),
         title: Text(

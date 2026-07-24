@@ -3,11 +3,6 @@ import 'package:yaru/yaru.dart';
 
 /// Shared status badge / card component using Yaru UI elements.
 class YaruStatusCard extends StatelessWidget {
-  final bool isConnected;
-  final String title;
-  final String? subtitle;
-  final Widget? action;
-
   const YaruStatusCard({
     super.key,
     required this.isConnected,
@@ -15,6 +10,11 @@ class YaruStatusCard extends StatelessWidget {
     this.subtitle,
     this.action,
   });
+
+  final bool isConnected;
+  final String title;
+  final String? subtitle;
+  final Widget? action;
 
   @override
   Widget build(BuildContext context) {
@@ -26,8 +26,6 @@ class YaruStatusCard extends StatelessWidget {
       child: YaruListTile(
         leading: Icon(
           isConnected ? YaruIcons.ok_simple : YaruIcons.error,
-          color: isConnected ? Colors.greenAccent : Colors.redAccent,
-          size: 32,
         ),
         title: Text(
           isConnected ? 'Connected' : 'Disconnected',

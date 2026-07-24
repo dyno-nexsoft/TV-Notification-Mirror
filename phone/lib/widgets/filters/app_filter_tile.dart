@@ -3,12 +3,6 @@ import 'package:shared/shared.dart';
 
 /// A single toggle row for one installed app in the App Filters list using Yaru UI.
 class AppFilterTile extends StatelessWidget {
-  final String packageName;
-  final String appName;
-  final bool isEnabled;
-  final Map<String, Uint8List?> iconCache;
-  final ValueChanged<bool> onToggle;
-
   const AppFilterTile({
     super.key,
     required this.packageName,
@@ -17,6 +11,11 @@ class AppFilterTile extends StatelessWidget {
     required this.iconCache,
     required this.onToggle,
   });
+  final String packageName;
+  final String appName;
+  final bool isEnabled;
+  final Map<String, Uint8List?> iconCache;
+  final ValueChanged<bool> onToggle;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +35,6 @@ class AppFilterTile extends StatelessWidget {
             fallbackIcon: YaruIcons.notification,
             fallbackColor: primaryColor,
             cache: iconCache,
-            size: 24,
           ),
         ),
         title: Text(

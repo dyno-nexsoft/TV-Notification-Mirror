@@ -31,15 +31,18 @@ class _RemoveDeviceDialog extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    YaruOptionButton(
+                    TextButton(
                       autofocus: true,
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 8),
-                    YaruOptionButton(
+                    FilledButton(
                       onPressed: onConfirm,
-                      child: const Text('Remove', style: TextStyle(color: Colors.redAccent)),
+                      child: const Text(
+                        'Remove',
+                        style: TextStyle(color: Colors.redAccent),
+                      ),
                     ),
                   ],
                 ),
@@ -80,13 +83,13 @@ class _ExitConfirmDialog extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    YaruOptionButton(
+                    TextButton(
                       autofocus: true,
                       onPressed: () => Navigator.pop(context, false),
                       child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 8),
-                    YaruOptionButton(
+                    FilledButton(
                       onPressed: () => Navigator.pop(context, true),
                       child: const Text('Exit'),
                     ),

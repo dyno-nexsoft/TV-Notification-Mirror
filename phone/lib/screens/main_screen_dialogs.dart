@@ -92,12 +92,12 @@ class _PairingDialogState extends State<_PairingDialog> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
-                      YaruOptionButton(
+                      TextButton(
                         onPressed: () => Navigator.pop(context),
                         child: const Text('Cancel'),
                       ),
                       const SizedBox(width: 8),
-                      YaruOptionButton(
+                      ElevatedButton(
                         onPressed: _confirmPin,
                         child: const Text('Pair'),
                       ),
@@ -139,7 +139,6 @@ class _ManualConnectDialog extends StatelessWidget {
               children: [
                 YaruSearchField(
                   controller: _ipController,
-                  autofocus: true,
                   hintText: 'TV IP Address (e.g. 192.168.1.50)',
                 ),
                 const SizedBox(height: 12),
@@ -151,12 +150,12 @@ class _ManualConnectDialog extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    YaruOptionButton(
+                    TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 8),
-                    YaruOptionButton(
+                    ElevatedButton(
                       onPressed: () {
                         final ip = _ipController.text.trim();
                         final port =
@@ -202,19 +201,18 @@ class _AddCustomAppDialog extends StatelessWidget {
               children: [
                 YaruSearchField(
                   controller: _controller,
-                  autofocus: true,
                   hintText: 'App package name (e.g. com.spotify.music)',
                 ),
                 const SizedBox(height: 20),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    YaruOptionButton(
+                    TextButton(
                       onPressed: () => Navigator.pop(context),
                       child: const Text('Cancel'),
                     ),
                     const SizedBox(width: 8),
-                    YaruOptionButton(
+                    ElevatedButton(
                       onPressed: () {
                         final pkg = _controller.text.trim();
                         if (pkg.isNotEmpty) onAdd(pkg);

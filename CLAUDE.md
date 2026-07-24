@@ -140,6 +140,7 @@ git push origin vX.Y.Z
 - Use `///` doc comments on public functions/classes, focused on the **why**, not the how.
 - For any feature involving business logic or architecture, add or update a doc in `doc/` (this repo uses `doc/`, not `docs/`). Search `doc/` for an existing file covering the feature before creating a new one.
 - Follow null safety and idiomatic Dart/Flutter state-management practices throughout.
+- **Widget Styling**: Always use widget default sizes and colors (e.g. Yaru widgets, Icons). Avoid inline custom size/color overrides on individual widgets; all styling, colors, and sizing should be fully controlled by the app theme (`ThemeData` / `YaruAppTheme`).
 
 ---
 

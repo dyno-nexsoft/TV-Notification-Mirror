@@ -149,6 +149,9 @@ class _RightInfoPanel extends ConsumerWidget {
                   child: _RecentNotificationsPanel(
                     notificationHistory: notificationHistory,
                     primaryColor: primaryColor,
+                    onClear: () {
+                      ref.read(tvServiceStateProvider.notifier).clearHistory();
+                    },
                   ),
                 ),
               ],

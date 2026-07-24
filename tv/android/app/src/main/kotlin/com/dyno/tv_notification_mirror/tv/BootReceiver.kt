@@ -15,7 +15,7 @@ class BootReceiver : BroadcastReceiver() {
             try {
                 // Start flutter_background_service's native service component
                 val serviceIntent = Intent().apply {
-                    setClassName(context.packageName, "com.pravera.flutter_background_service.BackgroundService")
+                    setClassName(context.packageName, "id.flutter.flutter_background_service.BackgroundService")
                 }
                 
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {

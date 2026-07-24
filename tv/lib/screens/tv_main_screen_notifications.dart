@@ -6,10 +6,12 @@ class _RecentNotificationsPanel extends StatelessWidget {
   const _RecentNotificationsPanel({
     required this.notificationHistory,
     required this.primaryColor,
+    this.onClear,
   });
 
   final List<NotificationItem> notificationHistory;
   final Color primaryColor;
+  final VoidCallback? onClear;
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +19,17 @@ class _RecentNotificationsPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: 12,
       children: [
-        const Text('Recent Notifications'),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            const Text('Recent Notifications'),
+            if (notificationHistory.isNotEmpty)
+              TextButton(
+                onPressed: onClear,
+                child: const Text('Clear All'),
+              ),
+          ],
+        ),
         Expanded(
           child: notificationHistory.isEmpty
               ? const Center(

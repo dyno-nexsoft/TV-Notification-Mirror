@@ -242,6 +242,10 @@ class MainActivity : FlutterActivity() {
                 windowManager?.addView(overlayView, layoutParams)
                 Log.d(TAG, "Overlay displayed: $title")
 
+                // Add fade-in animation
+                overlayView?.alpha = 0f
+                overlayView?.animate()?.alpha(1f)?.setDuration(300)?.start()
+
                 removeRunnable = Runnable {
                     hideNotificationOverlay()
                 }
@@ -254,15 +258,28 @@ class MainActivity : FlutterActivity() {
 
     private fun hideNotificationOverlay() {
         if (overlayView != null && windowManager != null) {
+            val viewToRemove = overlayView
+            val wm = windowManager
+            overlayView = null
+            removeRunnable?.let { handler.removeCallbacks(it) }
+            removeRunnable = null
+
             try {
-                windowManager?.removeView(overlayView)
-                Log.d(TAG, "Overlay removed.")
+                viewToRemove?.animate()?.alpha(0f)?.setDuration(300)?.withEndAction {
+                    try {
+                        wm?.removeView(viewToRemove)
+                        Log.d(TAG, "Overlay removed.")
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Failed to remove overlay view: ${e.message}")
+                    }
+                }?.start()
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to remove overlay view: ${e.message}")
-            } finally {
-                overlayView = null
-                removeRunnable?.let { handler.removeCallbacks(it) }
-                removeRunnable = null
+                Log.e(TAG, "Failed to animate overlay removal: ${e.message}")
+                try {
+                    wm?.removeView(viewToRemove)
+                } catch (e2: Exception) {
+                    // Ignore
+                }
             }
         }
     }

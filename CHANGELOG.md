@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.12] - 2026-07-24
+
+### Fixed
+- **TV App**: Fixed critical auto-start issue on TV boot by correcting the `flutter_background_service` package name in `BootReceiver.kt`.
+- **TV App**: Eliminated UI flickering in the Recent Notifications feed by applying `gaplessPlayback: true` to `Image.memory`.
+- **Both Apps**: Enforced optimistic UI state by utilizing `skipLoadingOnReload: true` across all Riverpod `.when()` UI builders.
+
+### Added
+- **TV App**: Implemented smooth fade-in and fade-out animations (`AlphaAnimation`) for the native Android notification popup overlay.
+- **TV App**: Added a "Clear All" button to manually clear notification history directly from the TV screen.
+
+
 ## [1.0.11] - 2026-07-24
 
 ### Changed

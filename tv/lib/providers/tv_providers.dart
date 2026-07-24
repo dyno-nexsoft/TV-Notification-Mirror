@@ -184,6 +184,10 @@ class TvServiceState extends _$TvServiceState {
     FlutterBackgroundService().invoke('removeClient', {'token': token});
   }
 
+  void clearHistory() {
+    FlutterBackgroundService().invoke('clearHistory');
+  }
+
   void testOverlay() {
     OverlayService.showOverlay(
       title: 'Test Notification',

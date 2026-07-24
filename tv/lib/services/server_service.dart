@@ -317,6 +317,11 @@ class ServerService {
     _overlayController.add({'action': 'hide'});
   }
 
+  void clearHistory() {
+    _notificationHistory.clear();
+    debugPrint("Notification history cleared.");
+  }
+
   Future<void> stopServer() async {
     for (final socket in _activeSockets) {
       socket.sink.close();

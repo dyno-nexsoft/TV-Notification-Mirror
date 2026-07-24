@@ -93,6 +93,10 @@ void onStart(ServiceInstance service) async {
     }
   });
 
+  service.on('clearHistory').listen((event) {
+    server.clearHistory();
+  });
+
   service.on('stopService').listen((event) async {
     await server.stopServer();
     service.stopSelf();

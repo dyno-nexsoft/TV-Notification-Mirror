@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.13] - 2026-07-24
+
+### Fixed
+- **TV App**: Fixed TV launcher banner image (`tv_banner.png`) cropping issue. Properly scaled and centered the app icon on a 16:9 canvas with the correct background color so the icon isn't cut off on the Android TV home screen.
+
 ## [1.0.12] - 2026-07-24
 
 ### Fixed

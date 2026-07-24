@@ -12,6 +12,7 @@ class _LeftControlPanel extends ConsumerWidget {
     final tvState = ref.watch(tvServiceStateProvider);
 
     return permissionsAsync.when(
+      skipLoadingOnReload: true,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, st) => Center(child: Text('Error: $e')),
       data: (permissions) {

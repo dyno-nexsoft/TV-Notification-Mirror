@@ -75,6 +75,7 @@ class _AppIconWidgetState extends State<AppIconWidget> {
           width: widget.size,
           height: widget.size,
           fit: BoxFit.cover,
+          gaplessPlayback: true,
         ),
       );
     }

@@ -50,6 +50,7 @@ class _KeywordFilterCardState extends ConsumerState<KeywordFilterCard> {
     final asyncSettings = ref.watch(settingsProvider);
 
     return asyncSettings.when(
+      skipLoadingOnReload: true,
       loading: () => const Center(
         child: Padding(
           padding: EdgeInsets.all(16.0),

@@ -29,6 +29,7 @@ class _FiltersTabState extends ConsumerState<FiltersTab> {
     final asyncFilters = ref.watch(filtersProvider);
 
     return asyncFilters.when(
+        skipLoadingOnReload: true,
         loading: () => const Center(
               child: Padding(
                 padding: EdgeInsets.all(32.0),

@@ -13,6 +13,7 @@ class QuietHoursCard extends ConsumerWidget {
     final asyncSettings = ref.watch(settingsProvider);
 
     return asyncSettings.when(
+      skipLoadingOnReload: true,
       loading: () => const Center(
         child: Padding(
           padding: EdgeInsets.all(16.0),

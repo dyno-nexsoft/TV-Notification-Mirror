@@ -75,6 +75,7 @@ class _NotificationHistoryTile extends StatelessWidget {
                     width: 40,
                     height: 40,
                     fit: BoxFit.cover,
+                    gaplessPlayback: true,
                   ),
                 )
               : const Icon(

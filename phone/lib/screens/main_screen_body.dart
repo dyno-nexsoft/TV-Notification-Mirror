@@ -57,12 +57,16 @@ class _MainScreenBody extends ConsumerWidget {
               ),
             ),
           ],
-          bottom: const TabBar(
-            tabs: [
-              Tab(icon: Icon(YaruIcons.computer), text: 'Connect'),
-              Tab(icon: Icon(YaruIcons.pen), text: 'Apps'),
-              Tab(icon: Icon(YaruIcons.history), text: 'History'),
-            ],
+          bottom: const PreferredSize(
+            preferredSize: Size.fromHeight(72),
+            child: YaruTabBar(
+              height: 72,
+              tabs: [
+                Tab(icon: Icon(YaruIcons.computer), text: 'Connect'),
+                Tab(icon: Icon(YaruIcons.pen), text: 'Apps'),
+                Tab(icon: Icon(YaruIcons.history), text: 'History'),
+              ],
+            ),
           ),
         ),
         body: Column(

@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.10] - 2026-07-24
+
+### Changed
+- **Both Apps**: Enforced `omit_obvious_property_types` linting rule.
+- **Both Apps**: Translated all remaining hardcoded Vietnamese UI text strings and error logs to English for full localization consistency.
+- **Phone App**: Migrated standard `TextField` widgets to `YaruSearchField` across all dialogs and filter tabs for a consistent UI experience with built-in 'clear' functionality.
+- **Phone App**: Replaced the text-based "Add" button in the keyword filter settings with a cleaner `IconButton.filled` utilizing a plus icon.
+
 ## [1.0.9] - 2026-07-21
 
 ### Fixed

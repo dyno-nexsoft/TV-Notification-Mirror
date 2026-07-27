@@ -47,3 +47,5 @@ Thumbs.db
 
 # FVM Version Cache
 .fvm/
+
+doc/design/stitch/**

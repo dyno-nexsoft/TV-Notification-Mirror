@@ -7,6 +7,8 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.PixelFormat
+import android.graphics.drawable.GradientDrawable
+import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -20,6 +22,7 @@ import android.graphics.BitmapFactory
 import android.util.Base64
 import android.view.View
 import android.view.WindowManager
+import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.annotation.NonNull
@@ -32,6 +35,7 @@ class MainActivity : FlutterActivity() {
     companion object {
         private const val TAG = "MainActivityTV"
         private const val CHANNEL = "com.dyno.tv_notification_mirror/overlay"
+        private const val REQUEST_PICK_ALERT_SOUND = 4201
         const val ACTION_SHOW_OVERLAY = "com.dyno.tv_notification_mirror.SHOW_OVERLAY"
     }
 
@@ -40,6 +44,7 @@ class MainActivity : FlutterActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var removeRunnable: Runnable? = null
     private var overlayReceiver: BroadcastReceiver? = null
+    private var pendingAlertSoundResult: MethodChannel.Result? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,8 +76,14 @@ class MainActivity : FlutterActivity() {
                     val base64Icon = intent.getStringExtra("base64Icon")
                     val overlayPosition = intent.getStringExtra("overlayPosition")
                     val duration = intent.getIntExtra("duration", 5000)
-                    
-                    showNotificationOverlay(title, text, appName, base64Icon, overlayPosition, duration)
+                    val category = intent.getStringExtra("category") ?: "generic"
+                    val opacity = intent.getDoubleExtra("overlayOpacity", 0.95)
+                    val alertSoundUri = intent.getStringExtra("alertSoundUri")
+
+                    showNotificationOverlay(
+                        title, text, appName, base64Icon, overlayPosition, duration,
+                        category, opacity, alertSoundUri
+                    )
                 }
             }
         }
@@ -118,13 +129,22 @@ class MainActivity : FlutterActivity() {
                     val base64Icon = call.argument<String>("base64Icon")
                     val overlayPosition = call.argument<String>("overlayPosition")
                     val duration = call.argument<Int>("duration") ?: 5000
-                    
-                    showNotificationOverlay(title, text, appName, base64Icon, overlayPosition, duration)
+                    val category = call.argument<String>("category") ?: "generic"
+                    val opacity = call.argument<Double>("overlayOpacity") ?: 0.95
+                    val alertSoundUri = call.argument<String>("alertSoundUri")
+
+                    showNotificationOverlay(
+                        title, text, appName, base64Icon, overlayPosition, duration,
+                        category, opacity, alertSoundUri
+                    )
                     result.success(true)
                 }
                 "hideOverlay" -> {
                     hideNotificationOverlay()
                     result.success(true)
+                }
+                "pickAlertSound" -> {
+                    pickAlertSound(result)
                 }
                 else -> {
                     result.notImplemented()
@@ -173,7 +193,84 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun showNotificationOverlay(title: String, text: String, appName: String, base64Icon: String?, overlayPosition: String?, duration: Int) {
+    /// Opens the system ringtone picker (includes a built-in "Silent" entry).
+    /// The result comes back asynchronously via onActivityResult, so we stash
+    /// the pending MethodChannel.Result until then.
+    private fun pickAlertSound(result: MethodChannel.Result) {
+        pendingAlertSoundResult = result
+        val intent = Intent(RingtoneManager.ACTION_RINGTONE_PICKER).apply {
+            putExtra(RingtoneManager.EXTRA_RINGTONE_TYPE, RingtoneManager.TYPE_NOTIFICATION)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_SILENT, true)
+            putExtra(RingtoneManager.EXTRA_RINGTONE_SHOW_DEFAULT, true)
+            putExtra(
+                RingtoneManager.EXTRA_RINGTONE_DEFAULT_URI,
+                RingtoneManager.getActualDefaultRingtoneUri(this@MainActivity, RingtoneManager.TYPE_NOTIFICATION)
+            )
+        }
+        try {
+            startActivityForResult(intent, REQUEST_PICK_ALERT_SOUND)
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to open ringtone picker: ${e.message}")
+            pendingAlertSoundResult = null
+            result.success(null)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQUEST_PICK_ALERT_SOUND) return
+
+        val pending = pendingAlertSoundResult
+        pendingAlertSoundResult = null
+
+        // RESULT_CANCELED means the user backed out without choosing anything
+        // (including e.g. no ringtone-picker app being available) — leave the
+        // setting unchanged rather than treating it as an explicit "Silent" pick.
+        if (resultCode != RESULT_OK) {
+            pending?.success(null)
+            return
+        }
+        val uri = data?.getParcelableExtra<Uri>(RingtoneManager.EXTRA_RINGTONE_PICKED_URI)
+        pending?.success(uri?.toString() ?: "silent")
+    }
+
+    private fun playAlertSound(alertSoundUri: String?) {
+        if (alertSoundUri == "silent") return
+        try {
+            val uri = if (alertSoundUri != null) {
+                Uri.parse(alertSoundUri)
+            } else {
+                RingtoneManager.getActualDefaultRingtoneUri(this, RingtoneManager.TYPE_NOTIFICATION)
+            }
+            RingtoneManager.getRingtone(this, uri)?.play()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to play alert sound: ${e.message}")
+        }
+    }
+
+    /// Builds the overlay's rounded background at runtime so [opacity] (0..1)
+    /// is adjustable — replaces the old static `overlay_background` drawable.
+    private fun buildOverlayBackground(opacity: Double): GradientDrawable {
+        val alpha = (opacity.coerceIn(0.0, 1.0) * 255).toInt()
+        return GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 16f * resources.displayMetrics.density
+            setColor(android.graphics.Color.argb(alpha, 0x20, 0x21, 0x24))
+            setStroke((1f * resources.displayMetrics.density).toInt(), 0x1AFFFFFF)
+        }
+    }
+
+    private fun showNotificationOverlay(
+        title: String,
+        text: String,
+        appName: String,
+        base64Icon: String?,
+        overlayPosition: String?,
+        duration: Int,
+        category: String,
+        opacity: Double,
+        alertSoundUri: String?
+    ) {
         handler.post {
             hideNotificationOverlay()
 
@@ -185,15 +282,43 @@ class MainActivity : FlutterActivity() {
             try {
                 windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
                 val inflater = getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-                
-                overlayView = inflater.inflate(R.layout.notification_overlay_layout, null)
-                
-                overlayView?.findViewById<TextView>(R.id.appNameText)?.text = appName
-                overlayView?.findViewById<TextView>(R.id.titleText)?.text = title
-                overlayView?.findViewById<TextView>(R.id.bodyText)?.text = text
 
-                val appIconImage = overlayView?.findViewById<ImageView>(R.id.appIconImage)
-                val fallbackIndicator = overlayView?.findViewById<View>(R.id.fallbackIndicator)
+                val view = inflater.inflate(R.layout.notification_overlay_layout, null)
+                overlayView = view
+
+                view.findViewById<View>(R.id.overlayRoot)?.background = buildOverlayBackground(opacity)
+                view.findViewById<TextView>(R.id.titleText)?.text = title
+                view.findViewById<TextView>(R.id.bodyText)?.text = text
+                view.findViewById<TextView>(R.id.timeText)?.text = "Just now"
+
+                val isCall = category == "voice_call" || category == "video_call"
+                val isMessage = category == "message"
+
+                val appNameText = view.findViewById<TextView>(R.id.appNameText)
+                val timeGroup = view.findViewById<View>(R.id.timeGroup)
+                when (category) {
+                    "voice_call" -> {
+                        appNameText?.text = "INCOMING CALL"
+                        timeGroup?.visibility = View.GONE
+                    }
+                    "video_call" -> {
+                        appNameText?.text = "INCOMING VIDEO CALL"
+                        timeGroup?.visibility = View.GONE
+                    }
+                    else -> {
+                        appNameText?.text = appName
+                        timeGroup?.visibility = View.VISIBLE
+                    }
+                }
+
+                val fallbackGlyph = view.findViewById<ImageView>(R.id.fallbackGlyph)
+                fallbackGlyph?.setImageResource(
+                    if (isCall || isMessage) R.drawable.ic_person_placeholder
+                    else R.drawable.ic_notification_bell
+                )
+
+                val appIconImage = view.findViewById<ImageView>(R.id.appIconImage)
+                val fallbackIndicator = view.findViewById<View>(R.id.fallbackIndicator)
 
                 if (base64Icon != null && base64Icon.isNotEmpty()) {
                     try {
@@ -217,15 +342,51 @@ class MainActivity : FlutterActivity() {
                     fallbackIndicator?.visibility = View.VISIBLE
                 }
 
+                // Action row + remote-key hints, driven by category. Both buttons
+                // only dismiss the overlay early — there is no relay of a real
+                // Accept/Answer action back to the phone (out of scope).
+                val actionRow = view.findViewById<View>(R.id.actionRow)
+                val primaryButton = view.findViewById<Button>(R.id.primaryActionButton)
+                val secondaryButton = view.findViewById<Button>(R.id.secondaryActionButton)
+                val remoteHintRow = view.findViewById<View>(R.id.remoteHintRow)
+
+                when (category) {
+                    "voice_call" -> {
+                        actionRow?.visibility = View.VISIBLE
+                        primaryButton?.text = "Accept"
+                        secondaryButton?.text = "Decline"
+                    }
+                    "video_call" -> {
+                        actionRow?.visibility = View.VISIBLE
+                        primaryButton?.text = "Answer"
+                        secondaryButton?.text = "Dismiss"
+                    }
+                    "message" -> {
+                        actionRow?.visibility = View.VISIBLE
+                        primaryButton?.text = "Read More"
+                        secondaryButton?.text = "Dismiss"
+                    }
+                    else -> {
+                        actionRow?.visibility = View.GONE
+                    }
+                }
+                remoteHintRow?.visibility = if (isMessage) View.VISIBLE else View.GONE
+                primaryButton?.setOnClickListener { hideNotificationOverlay() }
+                secondaryButton?.setOnClickListener { hideNotificationOverlay() }
+
                 val layoutParams = WindowManager.LayoutParams(
                     WindowManager.LayoutParams.WRAP_CONTENT,
                     WindowManager.LayoutParams.WRAP_CONTENT,
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) 
-                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY 
-                    else 
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+                        WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY
+                    else
                         WindowManager.LayoutParams.TYPE_SYSTEM_ALERT,
-                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or 
-                    WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                    // Touchable (not FLAG_NOT_TOUCHABLE) so the dismiss buttons work,
+                    // but still FLAG_NOT_FOCUSABLE so the overlay never steals D-pad/
+                    // keyboard focus from whatever the user is doing underneath.
+                    // Known limitation: this makes the buttons mouse/touch-only —
+                    // there's no real D-pad remote key handling (out of scope).
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
                     WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON,
                     PixelFormat.TRANSLUCENT
                 )
@@ -241,6 +402,7 @@ class MainActivity : FlutterActivity() {
 
                 windowManager?.addView(overlayView, layoutParams)
                 Log.d(TAG, "Overlay displayed: $title")
+                playAlertSound(alertSoundUri)
 
                 // Add fade-in animation
                 overlayView?.alpha = 0f

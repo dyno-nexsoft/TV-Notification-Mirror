@@ -1,19 +1,35 @@
-import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/shared.dart';
 
+import '../providers/tv_nav_provider.dart';
 import '../providers/tv_providers.dart';
-import '../widgets/paired_device_card.dart';
-import '../widgets/status_info_boxes.dart';
-import '../widgets/tv_button.dart';
+import '../widgets/app_rail.dart';
+import 'history/tv_history_screen.dart';
+import 'home/tv_home_screen.dart';
+import 'manage_devices/tv_manage_devices_screen.dart';
+import 'pair_device/tv_pair_device_screen.dart';
+import 'settings/tv_settings_screen.dart';
 
 part 'tv_main_screen_dialogs.dart';
-part 'tv_main_screen_panels.dart';
-part 'tv_main_screen_notifications.dart';
 
-/// TV main dashboard screen — uses Riverpod to monitor permissions and background
-/// service state with D-pad friendly UI.
+const _navItems = [
+  (page: TvNavPage.home, icon: YaruIcons.home, label: 'Home'),
+  (page: TvNavPage.history, icon: YaruIcons.history, label: 'History'),
+  (
+    page: TvNavPage.manageDevices,
+    icon: YaruIcons.smartphone,
+    label: 'Manage Devices'
+  ),
+  (page: TvNavPage.pairDevice, icon: YaruIcons.scanner, label: 'Pair Device'),
+  (page: TvNavPage.settings, icon: YaruIcons.settings, label: 'Settings'),
+];
+
+/// TV app shell: a nav rail on the left switching between the 5 top-level
+/// pages, plus the exit-confirmation dialog since the background mirror
+/// server keeps running after the UI closes.
 class TvMainScreen extends ConsumerStatefulWidget {
   const TvMainScreen({super.key});
 
@@ -50,8 +66,30 @@ class _TvMainScreenState extends ConsumerState<TvMainScreen>
     return result ?? false;
   }
 
+  Widget _buildPage(TvNavPage page) {
+    return switch (page) {
+      TvNavPage.home => const TvHomeScreen(),
+      TvNavPage.history => const TvHistoryScreen(),
+      TvNavPage.manageDevices => const TvManageDevicesScreen(),
+      TvNavPage.pairDevice => const TvPairDeviceScreen(),
+      TvNavPage.settings => const TvSettingsScreen(),
+    };
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen(appToastProvider, (previous, next) {
+      if (next == null || next == previous) return;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(content: Text(next.message)));
+    });
+
+    final selectedPage = ref.watch(tvNavIndexProvider);
+    final selectedIndex =
+        _navItems.indexWhere((item) => item.page == selectedPage);
+    final isServerRunning = ref.watch(tvServiceStateProvider).isRunning;
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
@@ -61,16 +99,35 @@ class _TvMainScreenState extends ConsumerState<TvMainScreen>
           await SystemNavigator.pop();
         }
       },
-      child: const Scaffold(
+      child: Scaffold(
         body: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Expanded(
-              child: _LeftControlPanel(),
+            SizedBox(
+              width: 250,
+              child: YaruNavigationRail(
+                length: _navItems.length,
+                selectedIndex: selectedIndex,
+                onDestinationSelected: (index) => ref
+                    .read(tvNavIndexProvider.notifier)
+                    .select(_navItems[index].page),
+                leading: AppRailHeader(isActive: isServerRunning),
+                trailing: RailDeviceFooter(
+                  deviceLabel: Platform.operatingSystemVersion,
+                ),
+                itemBuilder: (context, index, selected) {
+                  final item = _navItems[index];
+                  return YaruNavigationRailItem(
+                    style: YaruNavigationRailStyle.labelledExtended,
+                    selected: selected,
+                    icon: Icon(item.icon),
+                    label: Text(item.label),
+                  );
+                },
+              ),
             ),
-            Expanded(
-              flex: 2,
-              child: _RightInfoPanel(),
-            ),
+            const VerticalDivider(width: 1),
+            Expanded(child: _buildPage(selectedPage)),
           ],
         ),
       ),

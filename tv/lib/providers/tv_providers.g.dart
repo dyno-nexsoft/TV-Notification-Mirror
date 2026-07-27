@@ -9,6 +9,51 @@ part of 'tv_providers.dart';
 // GENERATED CODE - DO NOT MODIFY BY HAND
 // ignore_for_file: type=lint, type=warning
 
+@ProviderFor(AppToast)
+final appToastProvider = AppToastProvider._();
+
+final class AppToastProvider extends $NotifierProvider<AppToast, ToastData?> {
+  AppToastProvider._()
+      : super(
+          from: null,
+          argument: null,
+          retry: null,
+          name: r'appToastProvider',
+          isAutoDispose: false,
+          dependencies: null,
+          $allTransitiveDependencies: null,
+        );
+
+  @override
+  String debugGetCreateSourceHash() => _$appToastHash();
+
+  @$internal
+  @override
+  AppToast create() => AppToast();
+
+  /// {@macro riverpod.override_with_value}
+  Override overrideWithValue(ToastData? value) {
+    return $ProviderOverride(
+      origin: this,
+      providerOverride: $SyncValueProvider<ToastData?>(value),
+    );
+  }
+}
+
+String _$appToastHash() => r'77643a14decf1f50be32f677ac19d810c39ce727';
+
+abstract class _$AppToast extends $Notifier<ToastData?> {
+  ToastData? build();
+  @$mustCallSuper
+  @override
+  WhenComplete runBuild() {
+    final ref = this.ref as $Ref<ToastData?, ToastData?>;
+    final element = ref.element as $ClassProviderElement<
+        AnyNotifier<ToastData?, ToastData?>, ToastData?, Object?, Object?>;
+    return element.handleCreate(ref, build);
+  }
+}
+
 @ProviderFor(TvPermissions)
 final tvPermissionsProvider = TvPermissionsProvider._();
 
@@ -33,7 +78,7 @@ final class TvPermissionsProvider
   TvPermissions create() => TvPermissions();
 }
 
-String _$tvPermissionsHash() => r'ee82df60cba3862ca3f6903531f1fd6f1842d890';
+String _$tvPermissionsHash() => r'106591485fc284f5129c46bd78958a6bfad08d79';
 
 abstract class _$TvPermissions extends $AsyncNotifier<TvPermissionsState> {
   FutureOr<TvPermissionsState> build();
@@ -116,7 +161,7 @@ final class TvServiceStateProvider
   }
 }
 
-String _$tvServiceStateHash() => r'846ee2e85ce6cf016ae298e3dd080043ac7f39df';
+String _$tvServiceStateHash() => r'2dd88534d586d9c70573981b0144318461a687ae';
 
 abstract class _$TvServiceState extends $Notifier<TvServiceData> {
   TvServiceData build();

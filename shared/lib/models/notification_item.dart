@@ -1,5 +1,7 @@
 import 'package:freezed_annotation/freezed_annotation.dart';
 
+import 'notification_category.dart';
+
 part 'notification_item.freezed.dart';
 part 'notification_item.g.dart';
 
@@ -27,6 +29,7 @@ abstract class NotificationItem with _$NotificationItem {
     String? appIcon,
     String? overlayPosition,
     int? overlayDuration,
+    @Default(NotificationCategory.generic) NotificationCategory category,
   }) = _NotificationItem;
 
   factory NotificationItem.fromJson(Map<String, dynamic> json) =>

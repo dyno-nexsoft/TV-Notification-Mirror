@@ -12,6 +12,7 @@ _MirrorDevice _$MirrorDeviceFromJson(Map<String, dynamic> json) =>
       ip: json['ip'] as String? ?? '',
       port: (json['port'] as num?)?.toInt() ?? 8080,
       token: json['token'] as String?,
+      lastSyncedAt: (json['lastSyncedAt'] as num?)?.toInt(),
     );
 
 Map<String, dynamic> _$MirrorDeviceToJson(_MirrorDevice instance) =>
@@ -20,4 +21,5 @@ Map<String, dynamic> _$MirrorDeviceToJson(_MirrorDevice instance) =>
       'ip': instance.ip,
       'port': instance.port,
       'token': instance.token,
+      'lastSyncedAt': instance.lastSyncedAt,
     };

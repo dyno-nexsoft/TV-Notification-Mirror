@@ -1,62 +1,94 @@
 import 'package:shared/shared.dart';
 
-/// A TV-optimised paired device card using Yaru UI widgets.
+/// A TV-optimised paired device card using Yaru UI widgets: online status,
+/// last-synced time, and Rename/Remove actions.
 class PairedDeviceCard extends StatelessWidget {
   const PairedDeviceCard({
     super.key,
     required this.deviceName,
-    required this.ip,
     required this.isOnline,
+    required this.lastSyncedAt,
+    required this.onRename,
     required this.onRemove,
   });
 
   final String deviceName;
-  final String ip;
   final bool isOnline;
+  final int? lastSyncedAt;
+  final VoidCallback onRename;
   final VoidCallback onRemove;
+
+  String get _lastSyncedLabel {
+    if (lastSyncedAt == null) return 'Never synced';
+    final diff = DateTime.now()
+        .difference(DateTime.fromMillisecondsSinceEpoch(lastSyncedAt!));
+    if (diff.inMinutes < 1) return 'Last synced: Just now';
+    if (diff.inMinutes < 60) {
+      return 'Last synced: ${diff.inMinutes} minutes ago';
+    }
+    if (diff.inHours < 24) return 'Last synced: ${diff.inHours} hours ago';
+    return 'Last synced: ${diff.inDays} days ago';
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final primaryColor = theme.colorScheme.primary;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: YaruListTile(
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: primaryColor.withValues(alpha: 0.15),
-            borderRadius: BorderRadius.circular(12),
+    return YaruSection(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: 12,
+        children: [
+          Row(
+            spacing: 12,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(YaruIcons.phone),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      spacing: 6,
+                      children: [
+                        Flexible(
+                          child: Text(
+                            deviceName,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        StatusDot(isOnline: isOnline),
+                        Text(isOnline ? 'Connected' : 'Offline'),
+                      ],
+                    ),
+                    Text(_lastSyncedLabel),
+                  ],
+                ),
+              ),
+            ],
           ),
-          child: const Icon(YaruIcons.phone),
-        ),
-        title: Row(
-          spacing: 8,
-          children: [
-            Flexible(
-              child: Text(
-                deviceName,
-                maxLines: 1,
+          Row(
+            spacing: 8,
+            children: [
+              OutlinedButton(
+                onPressed: onRename,
+                child: const Text('Rename'),
               ),
-            ),
-            Container(
-              width: 8,
-              height: 8,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isOnline ? Colors.greenAccent : Colors.grey,
+              OutlinedButton.icon(
+                onPressed: onRemove,
+                icon: const Icon(YaruIcons.trash),
+                label: const Text('Remove'),
               ),
-            ),
-          ],
-        ),
-        subtitle: Text(
-          isOnline ? ip : 'Offline',
-        ),
-        trailing: IconButton(
-          icon: const Icon(YaruIcons.trash),
-          onPressed: onRemove,
-        ),
+            ],
+          ),
+        ],
       ),
     );
   }

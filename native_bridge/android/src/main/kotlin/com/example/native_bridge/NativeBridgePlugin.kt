@@ -67,6 +67,7 @@ class NativeBridgePlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stream
                         map["title"] = intent.getStringExtra("title") ?: ""
                         map["text"] = intent.getStringExtra("text") ?: ""
                         map["postTime"] = intent.getLongExtra("postTime", 0L)
+                        map["category"] = intent.getStringExtra("category") ?: "generic"
                     } else if (action == ACTION_REMOVED_NOTIFICATION) {
                         map["event"] = "notification_removed"
                     }

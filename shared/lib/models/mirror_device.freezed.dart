@@ -20,6 +20,10 @@ mixin _$MirrorDevice {
   int get port;
   String? get token;
 
+  /// Epoch milliseconds of the last time this device's WebSocket
+  /// connected, or `null` if it has never connected since pairing.
+  int? get lastSyncedAt;
+
   /// Create a copy of MirrorDevice
   /// with the given fields replaced by the non-null parameter values.
   @JsonKey(includeFromJson: false, includeToJson: false)
@@ -39,16 +43,19 @@ mixin _$MirrorDevice {
             (identical(other.name, name) || other.name == name) &&
             (identical(other.ip, ip) || other.ip == ip) &&
             (identical(other.port, port) || other.port == port) &&
-            (identical(other.token, token) || other.token == token));
+            (identical(other.token, token) || other.token == token) &&
+            (identical(other.lastSyncedAt, lastSyncedAt) ||
+                other.lastSyncedAt == lastSyncedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, name, ip, port, token);
+  int get hashCode =>
+      Object.hash(runtimeType, name, ip, port, token, lastSyncedAt);
 
   @override
   String toString() {
-    return 'MirrorDevice(name: $name, ip: $ip, port: $port, token: $token)';
+    return 'MirrorDevice(name: $name, ip: $ip, port: $port, token: $token, lastSyncedAt: $lastSyncedAt)';
   }
 }
 
@@ -62,7 +69,8 @@ abstract mixin class $MirrorDeviceCopyWith<$Res> {
       {@JsonKey(name: 'deviceName', readValue: _readDeviceName) String name,
       String ip,
       int port,
-      String? token});
+      String? token,
+      int? lastSyncedAt});
 }
 
 /// @nodoc
@@ -81,6 +89,7 @@ class _$MirrorDeviceCopyWithImpl<$Res> implements $MirrorDeviceCopyWith<$Res> {
     Object? ip = null,
     Object? port = null,
     Object? token = freezed,
+    Object? lastSyncedAt = freezed,
   }) {
     return _then(_self.copyWith(
       name: null == name
@@ -99,6 +108,10 @@ class _$MirrorDeviceCopyWithImpl<$Res> implements $MirrorDeviceCopyWith<$Res> {
           ? _self.token
           : token // ignore: cast_nullable_to_non_nullable
               as String?,
+      lastSyncedAt: freezed == lastSyncedAt
+          ? _self.lastSyncedAt
+          : lastSyncedAt // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }
@@ -201,14 +214,16 @@ extension MirrorDevicePatterns on MirrorDevice {
             String name,
             String ip,
             int port,
-            String? token)?
+            String? token,
+            int? lastSyncedAt)?
         $default, {
     required TResult orElse(),
   }) {
     final _that = this;
     switch (_that) {
       case _MirrorDevice() when $default != null:
-        return $default(_that.name, _that.ip, _that.port, _that.token);
+        return $default(
+            _that.name, _that.ip, _that.port, _that.token, _that.lastSyncedAt);
       case _:
         return orElse();
     }
@@ -234,13 +249,15 @@ extension MirrorDevicePatterns on MirrorDevice {
             String name,
             String ip,
             int port,
-            String? token)
+            String? token,
+            int? lastSyncedAt)
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _MirrorDevice():
-        return $default(_that.name, _that.ip, _that.port, _that.token);
+        return $default(
+            _that.name, _that.ip, _that.port, _that.token, _that.lastSyncedAt);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -265,13 +282,15 @@ extension MirrorDevicePatterns on MirrorDevice {
             String name,
             String ip,
             int port,
-            String? token)?
+            String? token,
+            int? lastSyncedAt)?
         $default,
   ) {
     final _that = this;
     switch (_that) {
       case _MirrorDevice() when $default != null:
-        return $default(_that.name, _that.ip, _that.port, _that.token);
+        return $default(
+            _that.name, _that.ip, _that.port, _that.token, _that.lastSyncedAt);
       case _:
         return null;
     }
@@ -286,7 +305,8 @@ class _MirrorDevice implements MirrorDevice {
       required this.name,
       this.ip = '',
       this.port = 8080,
-      this.token});
+      this.token,
+      this.lastSyncedAt});
   factory _MirrorDevice.fromJson(Map<String, dynamic> json) =>
       _$MirrorDeviceFromJson(json);
 
@@ -301,6 +321,11 @@ class _MirrorDevice implements MirrorDevice {
   final int port;
   @override
   final String? token;
+
+  /// Epoch milliseconds of the last time this device's WebSocket
+  /// connected, or `null` if it has never connected since pairing.
+  @override
+  final int? lastSyncedAt;
 
   /// Create a copy of MirrorDevice
   /// with the given fields replaced by the non-null parameter values.
@@ -325,16 +350,19 @@ class _MirrorDevice implements MirrorDevice {
             (identical(other.name, name) || other.name == name) &&
             (identical(other.ip, ip) || other.ip == ip) &&
             (identical(other.port, port) || other.port == port) &&
-            (identical(other.token, token) || other.token == token));
+            (identical(other.token, token) || other.token == token) &&
+            (identical(other.lastSyncedAt, lastSyncedAt) ||
+                other.lastSyncedAt == lastSyncedAt));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
-  int get hashCode => Object.hash(runtimeType, name, ip, port, token);
+  int get hashCode =>
+      Object.hash(runtimeType, name, ip, port, token, lastSyncedAt);
 
   @override
   String toString() {
-    return 'MirrorDevice(name: $name, ip: $ip, port: $port, token: $token)';
+    return 'MirrorDevice(name: $name, ip: $ip, port: $port, token: $token, lastSyncedAt: $lastSyncedAt)';
   }
 }
 
@@ -350,7 +378,8 @@ abstract mixin class _$MirrorDeviceCopyWith<$Res>
       {@JsonKey(name: 'deviceName', readValue: _readDeviceName) String name,
       String ip,
       int port,
-      String? token});
+      String? token,
+      int? lastSyncedAt});
 }
 
 /// @nodoc
@@ -370,6 +399,7 @@ class __$MirrorDeviceCopyWithImpl<$Res>
     Object? ip = null,
     Object? port = null,
     Object? token = freezed,
+    Object? lastSyncedAt = freezed,
   }) {
     return _then(_MirrorDevice(
       name: null == name
@@ -388,6 +418,10 @@ class __$MirrorDeviceCopyWithImpl<$Res>
           ? _self.token
           : token // ignore: cast_nullable_to_non_nullable
               as String?,
+      lastSyncedAt: freezed == lastSyncedAt
+          ? _self.lastSyncedAt
+          : lastSyncedAt // ignore: cast_nullable_to_non_nullable
+              as int?,
     ));
   }
 }

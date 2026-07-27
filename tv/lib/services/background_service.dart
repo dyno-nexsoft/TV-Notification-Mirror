@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'server_service.dart';
+import 'tv_settings_service.dart';
 
 /// Registers the `flutter_background_service` configuration so the mirror
 /// server can keep running as a foreground service after the UI is backgrounded.
@@ -38,7 +39,24 @@ void onStart(ServiceInstance service) async {
   await server.init();
   await server.startServer('Android TV Server', 8080);
 
-  // Listen for overlay messages from ServerService and forward them to the UI isolate
+  var tvSettings = await TvSettingsService.load();
+  server.updateSettings(tvSettings);
+
+  Future<void> reloadTvSettings() async {
+    tvSettings = await TvSettingsService.load();
+    server.updateSettings(tvSettings);
+  }
+
+  if (service is AndroidServiceInstance) {
+    service.on('reloadSettings').listen((event) async {
+      await reloadTvSettings();
+      debugPrint("TV background isolate: settings reloaded");
+    });
+  }
+
+  // Listen for overlay messages from ServerService and forward them to the UI isolate.
+  // The TV always overrides the incoming anchor/duration with its own local
+  // settings, since it — not the phone — owns what its own screen looks like.
   server.overlayStream.listen((event) {
     if (service is AndroidServiceInstance) {
       if (event['action'] == 'show') {
@@ -47,8 +65,11 @@ void onStart(ServiceInstance service) async {
           'text': event['text'],
           'appName': event['appName'],
           'base64Icon': event['base64Icon'],
-          'overlayPosition': event['overlayPosition'],
-          'overlayDuration': event['overlayDuration'],
+          'overlayPosition': tvSettings.anchorPosition,
+          'overlayDuration': tvSettings.overlayDurationSeconds * 1000,
+          'overlayOpacity': tvSettings.overlayOpacity,
+          'alertSoundUri': tvSettings.alertSoundUri,
+          'category': event['category'],
         });
       } else if (event['action'] == 'hide') {
         service.invoke('hideOverlay');
@@ -58,6 +79,7 @@ void onStart(ServiceInstance service) async {
 
   // Periodically send state updates to the UI
   Timer.periodic(const Duration(seconds: 1), (timer) {
+    server.checkDndExpiry();
     if (service is AndroidServiceInstance) {
       service.invoke('stateUpdate', {
         'pin': server.currentPin,
@@ -68,6 +90,7 @@ void onStart(ServiceInstance service) async {
                   'deviceName': c.name,
                   'ip': c.ip,
                   'token': c.token,
+                  'lastSyncedAt': c.lastSyncedAt,
                 })
             .toList(),
         // Which tokens currently have an active WebSocket connection.
@@ -79,8 +102,15 @@ void onStart(ServiceInstance service) async {
 
   // Listen for actions from the UI
   service.on('toggleDnd').listen((event) {
-    server.isDndEnabled = !server.isDndEnabled;
+    server.toggleDndIndefinite();
     debugPrint("DND mode toggled to: ${server.isDndEnabled}");
+  });
+
+  service.on('setDndForDuration').listen((event) {
+    final minutes = event?['minutes'] as int?;
+    if (minutes != null) {
+      server.setDndForDuration(Duration(minutes: minutes));
+    }
   });
 
   service.on('removeClient').listen((event) {
@@ -90,6 +120,14 @@ void onStart(ServiceInstance service) async {
           server.pairedClients.firstWhere((c) => c.token == token);
       server.removeClient(clientToRemove);
       debugPrint("Removed client: ${clientToRemove.name}");
+    }
+  });
+
+  service.on('renameClient').listen((event) async {
+    if (event != null && event['token'] != null && event['newName'] != null) {
+      await server.renameClient(
+          event['token'] as String, event['newName'] as String);
+      debugPrint("Renamed client ${event['token']} to ${event['newName']}");
     }
   });
 

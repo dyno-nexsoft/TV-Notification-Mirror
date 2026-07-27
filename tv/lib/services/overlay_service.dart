@@ -51,6 +51,9 @@ class OverlayService {
     String? base64Icon,
     String? overlayPosition,
     int? overlayDurationMs,
+    String category = 'generic',
+    double overlayOpacity = 0.95,
+    String? alertSoundUri,
   }) async {
     try {
       await _channel.invokeMethod('showOverlay', {
@@ -60,6 +63,9 @@ class OverlayService {
         'base64Icon': base64Icon,
         'overlayPosition': overlayPosition,
         'duration': overlayDurationMs ?? 5000,
+        'category': category,
+        'overlayOpacity': overlayOpacity,
+        'alertSoundUri': alertSoundUri,
       });
     } on PlatformException catch (e) {
       debugPrint("Failed to show overlay: ${e.message}");
@@ -71,6 +77,18 @@ class OverlayService {
       await _channel.invokeMethod('hideOverlay');
     } on PlatformException catch (e) {
       debugPrint("Failed to hide overlay: ${e.message}");
+    }
+  }
+
+  /// Opens the native `RingtoneManager` picker (includes a "Silent" option)
+  /// and returns the picked sound's URI string, `'silent'`, or `null` if the
+  /// user cancelled.
+  static Future<String?> pickAlertSound() async {
+    try {
+      return await _channel.invokeMethod<String>('pickAlertSound');
+    } catch (e) {
+      debugPrint("Failed to pick alert sound: $e");
+      return null;
     }
   }
 }

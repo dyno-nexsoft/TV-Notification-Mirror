@@ -9,6 +9,24 @@ import '../services/overlay_service.dart';
 
 part 'tv_providers.g.dart';
 
+// ── App Toast Provider ────────────────────────────────────────────────────
+
+class ToastData {
+  const ToastData(this.message, this.timestamp);
+  final String message;
+  final DateTime timestamp;
+}
+
+@Riverpod(keepAlive: true)
+class AppToast extends _$AppToast {
+  @override
+  ToastData? build() => null;
+
+  void show(String message) {
+    state = ToastData(message, DateTime.now());
+  }
+}
+
 // ── Permissions Provider ───────────────────────────────────────────────────
 
 class TvPermissionsState {
@@ -159,6 +177,9 @@ class TvServiceState extends _$TvServiceState {
           base64Icon: data['base64Icon'],
           overlayPosition: data['overlayPosition'],
           overlayDurationMs: data['overlayDuration'],
+          category: data['category'] ?? 'generic',
+          overlayOpacity: (data['overlayOpacity'] as num?)?.toDouble() ?? 0.95,
+          alertSoundUri: data['alertSoundUri'],
         );
       }
     });
@@ -180,8 +201,18 @@ class TvServiceState extends _$TvServiceState {
     FlutterBackgroundService().invoke('toggleDnd');
   }
 
+  void setDndForDuration(Duration duration) {
+    FlutterBackgroundService()
+        .invoke('setDndForDuration', {'minutes': duration.inMinutes});
+  }
+
   void removeClient(String token) {
     FlutterBackgroundService().invoke('removeClient', {'token': token});
+  }
+
+  void renameClient(String token, String newName) {
+    FlutterBackgroundService()
+        .invoke('renameClient', {'token': token, 'newName': newName});
   }
 
   void clearHistory() {

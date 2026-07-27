@@ -17,6 +17,9 @@ _NotificationItem _$NotificationItemFromJson(Map<String, dynamic> json) =>
       appIcon: json['appIcon'] as String?,
       overlayPosition: json['overlayPosition'] as String?,
       overlayDuration: (json['overlayDuration'] as num?)?.toInt(),
+      category: $enumDecodeNullable(
+              _$NotificationCategoryEnumMap, json['category']) ??
+          NotificationCategory.generic,
     );
 
 Map<String, dynamic> _$NotificationItemToJson(_NotificationItem instance) =>
@@ -30,4 +33,12 @@ Map<String, dynamic> _$NotificationItemToJson(_NotificationItem instance) =>
       'appIcon': instance.appIcon,
       'overlayPosition': instance.overlayPosition,
       'overlayDuration': instance.overlayDuration,
+      'category': _$NotificationCategoryEnumMap[instance.category]!,
     };
+
+const _$NotificationCategoryEnumMap = {
+  NotificationCategory.voiceCall: 'voice_call',
+  NotificationCategory.videoCall: 'video_call',
+  NotificationCategory.message: 'message',
+  NotificationCategory.generic: 'generic',
+};

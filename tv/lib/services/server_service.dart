@@ -12,6 +12,8 @@ import 'package:shelf_web_socket/shelf_web_socket.dart';
 import 'package:uuid/uuid.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
+import 'tv_settings_service.dart';
+
 /// A phone paired with (and optionally currently connected to) this TV.
 typedef ConnectedClient = MirrorDevice;
 
@@ -42,7 +44,43 @@ class ServerService {
 
   var _isRunning = false;
   var isDndEnabled = false;
+  int? _dndUntilEpochMs;
+  var _settings = const TvSettings();
   final List<NotificationItem> _notificationHistory = [];
+
+  /// Called by the background isolate whenever TV settings change, so
+  /// per-category filtering and image-preview stripping stay current.
+  void updateSettings(TvSettings settings) {
+    _settings = settings;
+  }
+
+  /// Plain indefinite DND toggle (Home screen's "Notification Receiving" /
+  /// "Do Not Disturb" switches). Clears any timed session so a later timed
+  /// expiry can't unexpectedly re-disable a manually-enabled DND.
+  void toggleDndIndefinite() {
+    isDndEnabled = !isDndEnabled;
+    _dndUntilEpochMs = null;
+  }
+
+  /// Enables DND for [duration], auto-clearing once it elapses (checked from
+  /// the background isolate's periodic tick via [checkDndExpiry]).
+  void setDndForDuration(Duration duration) {
+    isDndEnabled = true;
+    _dndUntilEpochMs = DateTime.now().add(duration).millisecondsSinceEpoch;
+    debugPrint("DND enabled for $duration");
+  }
+
+  /// Auto-clears a timed DND session once its expiry has passed. No-op for
+  /// an indefinite (manually toggled) DND session, since that has no expiry.
+  void checkDndExpiry() {
+    final until = _dndUntilEpochMs;
+    if (until == null) return;
+    if (DateTime.now().millisecondsSinceEpoch >= until) {
+      isDndEnabled = false;
+      _dndUntilEpochMs = null;
+      debugPrint("Timed DND session expired, notifications resumed.");
+    }
+  }
 
   Stream<String?> get pairingPinStream => _pairingStateController.stream;
   Stream<List<ConnectedClient>> get pairedClientsStream =>
@@ -216,6 +254,7 @@ class ServerService {
       _activeSockets.add(socket);
       _activeTokens.add(token!);
       _socketToToken[socket] = token;
+      _touchLastSynced(token);
       debugPrint("WebSocket client connected. Token: $token");
 
       socket.stream.listen(
@@ -228,6 +267,24 @@ class ServerService {
 
       socket.sink.add(jsonEncode({'status': 'connected'}));
     }).call(request);
+  }
+
+  /// Stamps the paired client owning [token] with the current time, so the
+  /// Manage Devices screen can show "Last synced: ...".
+  void _touchLastSynced(String token) {
+    final index = _pairedClients.indexWhere((c) => c.token == token);
+    if (index == -1) return;
+    _pairedClients[index] = _pairedClients[index]
+        .copyWith(lastSyncedAt: DateTime.now().millisecondsSinceEpoch);
+    _savePairedClients();
+  }
+
+  /// Renames a paired client (Manage Devices screen action).
+  Future<void> renameClient(String token, String newName) async {
+    final index = _pairedClients.indexWhere((c) => c.token == token);
+    if (index == -1) return;
+    _pairedClients[index] = _pairedClients[index].copyWith(name: newName);
+    await _savePairedClients();
   }
 
   void _handleSocketClosed(WebSocketChannel socket, String reason) {
@@ -292,7 +349,24 @@ class ServerService {
       return;
     }
 
-    final item = NotificationItem.fromJson(data);
+    var item = NotificationItem.fromJson(data);
+
+    final isCall = item.category == NotificationCategory.voiceCall ||
+        item.category == NotificationCategory.videoCall;
+    final isMessage = item.category == NotificationCategory.message;
+    if (isCall && !_settings.callNotificationsEnabled) {
+      debugPrint("Call notifications disabled, ignoring notification.");
+      return;
+    }
+    if (isMessage && !_settings.textNotificationsEnabled) {
+      debugPrint("Text notifications disabled, ignoring notification.");
+      return;
+    }
+
+    if (!_settings.imagePreviewsEnabled) {
+      item = item.copyWith(appIcon: null);
+    }
+
     _notificationHistory.insert(0, item);
     if (_notificationHistory.length > 15) {
       _notificationHistory.removeLast();
@@ -308,6 +382,7 @@ class ServerService {
       'base64Icon': item.appIcon,
       'overlayPosition': item.overlayPosition,
       'overlayDuration': item.overlayDuration,
+      'category': item.toJson()['category'],
     });
   }
 

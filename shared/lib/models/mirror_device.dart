@@ -16,6 +16,10 @@ abstract class MirrorDevice with _$MirrorDevice {
     @Default('') String ip,
     @Default(8080) int port,
     String? token,
+
+    /// Epoch milliseconds of the last time this device's WebSocket
+    /// connected, or `null` if it has never connected since pairing.
+    int? lastSyncedAt,
   }) = _MirrorDevice;
 
   factory MirrorDevice.fromJson(Map<String, dynamic> json) =>

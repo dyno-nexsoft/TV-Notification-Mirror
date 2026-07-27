@@ -25,6 +25,7 @@ mixin _$NotificationItem {
   String? get appIcon;
   String? get overlayPosition;
   int? get overlayDuration;
+  NotificationCategory get category;
 
   /// Create a copy of NotificationItem
   /// with the given fields replaced by the non-null parameter values.
@@ -54,17 +55,19 @@ mixin _$NotificationItem {
             (identical(other.overlayPosition, overlayPosition) ||
                 other.overlayPosition == overlayPosition) &&
             (identical(other.overlayDuration, overlayDuration) ||
-                other.overlayDuration == overlayDuration));
+                other.overlayDuration == overlayDuration) &&
+            (identical(other.category, category) ||
+                other.category == category));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, packageName, appName, title,
-      text, postTime, appIcon, overlayPosition, overlayDuration);
+      text, postTime, appIcon, overlayPosition, overlayDuration, category);
 
   @override
   String toString() {
-    return 'NotificationItem(id: $id, packageName: $packageName, appName: $appName, title: $title, text: $text, postTime: $postTime, appIcon: $appIcon, overlayPosition: $overlayPosition, overlayDuration: $overlayDuration)';
+    return 'NotificationItem(id: $id, packageName: $packageName, appName: $appName, title: $title, text: $text, postTime: $postTime, appIcon: $appIcon, overlayPosition: $overlayPosition, overlayDuration: $overlayDuration, category: $category)';
   }
 }
 
@@ -83,7 +86,8 @@ abstract mixin class $NotificationItemCopyWith<$Res> {
       @JsonKey(readValue: _readPostTime) int postTime,
       String? appIcon,
       String? overlayPosition,
-      int? overlayDuration});
+      int? overlayDuration,
+      NotificationCategory category});
 }
 
 /// @nodoc
@@ -108,6 +112,7 @@ class _$NotificationItemCopyWithImpl<$Res>
     Object? appIcon = freezed,
     Object? overlayPosition = freezed,
     Object? overlayDuration = freezed,
+    Object? category = null,
   }) {
     return _then(_self.copyWith(
       id: null == id
@@ -146,6 +151,10 @@ class _$NotificationItemCopyWithImpl<$Res>
           ? _self.overlayDuration
           : overlayDuration // ignore: cast_nullable_to_non_nullable
               as int?,
+      category: null == category
+          ? _self.category
+          : category // ignore: cast_nullable_to_non_nullable
+              as NotificationCategory,
     ));
   }
 }
@@ -252,7 +261,8 @@ extension NotificationItemPatterns on NotificationItem {
             @JsonKey(readValue: _readPostTime) int postTime,
             String? appIcon,
             String? overlayPosition,
-            int? overlayDuration)?
+            int? overlayDuration,
+            NotificationCategory category)?
         $default, {
     required TResult orElse(),
   }) {
@@ -268,7 +278,8 @@ extension NotificationItemPatterns on NotificationItem {
             _that.postTime,
             _that.appIcon,
             _that.overlayPosition,
-            _that.overlayDuration);
+            _that.overlayDuration,
+            _that.category);
       case _:
         return orElse();
     }
@@ -298,7 +309,8 @@ extension NotificationItemPatterns on NotificationItem {
             @JsonKey(readValue: _readPostTime) int postTime,
             String? appIcon,
             String? overlayPosition,
-            int? overlayDuration)
+            int? overlayDuration,
+            NotificationCategory category)
         $default,
   ) {
     final _that = this;
@@ -313,7 +325,8 @@ extension NotificationItemPatterns on NotificationItem {
             _that.postTime,
             _that.appIcon,
             _that.overlayPosition,
-            _that.overlayDuration);
+            _that.overlayDuration,
+            _that.category);
       case _:
         throw StateError('Unexpected subclass');
     }
@@ -342,7 +355,8 @@ extension NotificationItemPatterns on NotificationItem {
             @JsonKey(readValue: _readPostTime) int postTime,
             String? appIcon,
             String? overlayPosition,
-            int? overlayDuration)?
+            int? overlayDuration,
+            NotificationCategory category)?
         $default,
   ) {
     final _that = this;
@@ -357,7 +371,8 @@ extension NotificationItemPatterns on NotificationItem {
             _that.postTime,
             _that.appIcon,
             _that.overlayPosition,
-            _that.overlayDuration);
+            _that.overlayDuration,
+            _that.category);
       case _:
         return null;
     }
@@ -376,7 +391,8 @@ class _NotificationItem implements NotificationItem {
       @JsonKey(readValue: _readPostTime) required this.postTime,
       this.appIcon,
       this.overlayPosition,
-      this.overlayDuration});
+      this.overlayDuration,
+      this.category = NotificationCategory.generic});
   factory _NotificationItem.fromJson(Map<String, dynamic> json) =>
       _$NotificationItemFromJson(json);
 
@@ -404,6 +420,9 @@ class _NotificationItem implements NotificationItem {
   final String? overlayPosition;
   @override
   final int? overlayDuration;
+  @override
+  @JsonKey()
+  final NotificationCategory category;
 
   /// Create a copy of NotificationItem
   /// with the given fields replaced by the non-null parameter values.
@@ -437,17 +456,19 @@ class _NotificationItem implements NotificationItem {
             (identical(other.overlayPosition, overlayPosition) ||
                 other.overlayPosition == overlayPosition) &&
             (identical(other.overlayDuration, overlayDuration) ||
-                other.overlayDuration == overlayDuration));
+                other.overlayDuration == overlayDuration) &&
+            (identical(other.category, category) ||
+                other.category == category));
   }
 
   @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, packageName, appName, title,
-      text, postTime, appIcon, overlayPosition, overlayDuration);
+      text, postTime, appIcon, overlayPosition, overlayDuration, category);
 
   @override
   String toString() {
-    return 'NotificationItem(id: $id, packageName: $packageName, appName: $appName, title: $title, text: $text, postTime: $postTime, appIcon: $appIcon, overlayPosition: $overlayPosition, overlayDuration: $overlayDuration)';
+    return 'NotificationItem(id: $id, packageName: $packageName, appName: $appName, title: $title, text: $text, postTime: $postTime, appIcon: $appIcon, overlayPosition: $overlayPosition, overlayDuration: $overlayDuration, category: $category)';
   }
 }
 
@@ -468,7 +489,8 @@ abstract mixin class _$NotificationItemCopyWith<$Res>
       @JsonKey(readValue: _readPostTime) int postTime,
       String? appIcon,
       String? overlayPosition,
-      int? overlayDuration});
+      int? overlayDuration,
+      NotificationCategory category});
 }
 
 /// @nodoc
@@ -493,6 +515,7 @@ class __$NotificationItemCopyWithImpl<$Res>
     Object? appIcon = freezed,
     Object? overlayPosition = freezed,
     Object? overlayDuration = freezed,
+    Object? category = null,
   }) {
     return _then(_NotificationItem(
       id: null == id
@@ -531,6 +554,10 @@ class __$NotificationItemCopyWithImpl<$Res>
           ? _self.overlayDuration
           : overlayDuration // ignore: cast_nullable_to_non_nullable
               as int?,
+      category: null == category
+          ? _self.category
+          : category // ignore: cast_nullable_to_non_nullable
+              as NotificationCategory,
     ));
   }
 }

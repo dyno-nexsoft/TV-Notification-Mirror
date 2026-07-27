@@ -76,12 +76,13 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: BETA
+          name: BETA Release
           files: |
             release-assets/noti-mirror-phone-${{ github.ref_name }}.apk
             release-assets/noti-mirror-tv-${{ github.ref_name }}.apk
-          name: Release ${{ github.ref_name }}
           body: |
-            ## TV Notification Mirror Release ${{ github.ref_name }}
+            ## TV Notification Mirror BETA Release (Version ${{ github.ref_name }})
             
             ${{ steps.tag_message.outputs.tag_msg }}
             
@@ -89,6 +90,6 @@ jobs:
             * **[Điện thoại]** `noti-mirror-phone-${{ github.ref_name }}.apk`: Cài đặt trên Điện thoại Android.
             * **[TV]** `noti-mirror-tv-${{ github.ref_name }}.apk`: Cài đặt trên Android TV / Google TV.
           draft: false
-          prerelease: false
+          prerelease: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -14,7 +14,7 @@ class _AccountSection extends StatelessWidget {
         children: [
           YaruListTile(
             leading: Icon(YaruIcons.user),
-            title: Text('admin@notifytv.com'),
+            title: Text('admin@notifymirror.com'),
             subtitle: Text('Premium Plan'),
             enabled: false,
           ),

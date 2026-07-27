@@ -30,7 +30,7 @@ class AppRailHeader extends StatelessWidget {
                   color: theme.colorScheme.onPrimary,
                 ),
               ),
-              const Text('NotifyTV'),
+              const Text('NotifyMirror'),
             ],
           ),
           Row(

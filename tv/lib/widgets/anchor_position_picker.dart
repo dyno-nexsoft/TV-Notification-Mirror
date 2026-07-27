@@ -3,6 +3,11 @@ import 'package:shared/shared.dart';
 /// 2x2 grid to pick which screen corner the overlay toast anchors to.
 /// Only 4 positions exist in [MirrorProtocol] (the real anchors the overlay
 /// supports) — no fake center/edge cells that wouldn't do anything.
+///
+/// Each cell draws a small "mini screen" outline with a dot placed at the
+/// corresponding corner, so the option is legible on sight — a single
+/// generic icon repeated in every cell (the first version of this widget)
+/// looked identical everywhere and gave no clue which corner was which.
 class AnchorPositionPicker extends StatelessWidget {
   const AnchorPositionPicker({
     super.key,
@@ -34,18 +39,13 @@ class AnchorPositionPicker extends StatelessWidget {
               for (final position in _positions.skip(row * 2).take(2))
                 SizedBox(
                   width: 72,
-                  height: 40,
+                  height: 44,
                   child: YaruSelectableContainer(
                     selected: value == position,
                     onTap: () => onChanged(position),
-                    child: Align(
-                      alignment: _alignmentFor(position),
-                      child: Icon(
-                        value == position
-                            ? YaruIcons.ok_filled
-                            : YaruIcons.window,
-                        size: 16,
-                      ),
+                    child: _MiniScreen(
+                      dotAt: _alignmentFor(position),
+                      selected: value == position,
                     ),
                   ),
                 ),
@@ -63,5 +63,42 @@ class AnchorPositionPicker extends StatelessWidget {
       MirrorProtocol.overlayBottomRight => Alignment.bottomRight,
       _ => Alignment.center,
     };
+  }
+}
+
+/// A tiny screen-shaped outline with a dot marking one corner.
+class _MiniScreen extends StatelessWidget {
+  const _MiniScreen({required this.dotAt, required this.selected});
+
+  final Alignment dotAt;
+  final bool selected;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final lineColor =
+        selected ? theme.colorScheme.onPrimary : theme.colorScheme.outline;
+
+    return Padding(
+      padding: const EdgeInsets.all(6),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: lineColor, width: 1.5),
+        ),
+        padding: const EdgeInsets.all(4),
+        child: Align(
+          alignment: dotAt,
+          child: Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: lineColor,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

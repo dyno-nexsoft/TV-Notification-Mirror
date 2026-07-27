@@ -81,13 +81,17 @@ class _NotificationsSection extends ConsumerWidget {
                     'Display Duration: ${settings.overlayDurationSeconds} seconds',
                   ),
                 ),
-                Slider(
-                  value: settings.overlayDurationSeconds.toDouble(),
-                  min: 3,
-                  max: 15,
-                  divisions: 12,
-                  onChanged: (v) =>
-                      notifier.setOverlayDurationSeconds(v.round()),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: ValueStepper(
+                    label: '${settings.overlayDurationSeconds}s',
+                    value: settings.overlayDurationSeconds.toDouble(),
+                    min: 3,
+                    max: 15,
+                    step: 1,
+                    onChanged: (v) =>
+                        notifier.setOverlayDurationSeconds(v.round()),
+                  ),
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 16),

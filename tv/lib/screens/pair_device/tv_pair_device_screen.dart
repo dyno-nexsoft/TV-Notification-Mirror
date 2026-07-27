@@ -72,7 +72,7 @@ class _QrCard extends StatelessWidget {
               ),
             const Text('Scan this code with your phone'),
             const Text(
-              "Open your phone's camera or the NotifyTV mobile app to "
+              "Open your phone's camera or the NotifyMirror mobile app to "
               'pair it with this television instantly.',
             ),
           ],
@@ -107,7 +107,7 @@ class _ManualPinCard extends StatelessWidget {
               leading: Icon(YaruIcons.information),
               title: Text('Need help?'),
               subtitle: Text(
-                'Open the NotifyTV mobile app and choose "Enter code '
+                'Open the NotifyMirror mobile app and choose "Enter code '
                 'manually" from the pairing screen.',
               ),
             ),

@@ -48,17 +48,20 @@ class _DisplaySection extends ConsumerWidget {
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Expanded(child: Text('Overlay Opacity')),
-                Text('${(settings.overlayOpacity * 100).round()}%'),
+                const Text('Overlay Opacity'),
+                ValueStepper(
+                  label: '${(settings.overlayOpacity * 100).round()}%',
+                  value: settings.overlayOpacity,
+                  min: 0.5,
+                  max: 1.0,
+                  step: 0.05,
+                  onChanged: notifier.setOverlayOpacity,
+                ),
               ],
             ),
-          ),
-          Slider(
-            value: settings.overlayOpacity,
-            min: 0.5,
-            onChanged: notifier.setOverlayOpacity,
           ),
         ],
       ),

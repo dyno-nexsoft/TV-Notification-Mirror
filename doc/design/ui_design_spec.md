@@ -34,7 +34,7 @@ Tất cả màn "full app" đều là **master–detail**: nav rail trái cố �
 
 ```
 ┌──────────────┬─────────────────────────────────────────────┐
-│  [logo] NotifyTV                                           │
+│  [logo] NotifyMirror                                          │
 │  ● Standby   │   <Tiêu đề trang>                           │
 │              │   <Phụ đề trang>                            │
 │  ▸ Home      │                                             │
@@ -63,7 +63,7 @@ Tất cả màn "full app" đều là **master–detail**: nav rail trái cố �
 
 ---
 
-## 2. Màn Home (`01-notifytv-home.png`)
+## 2. Màn Home (`01-notifymirror-home.png`)
 
 ```
 Home
@@ -101,7 +101,7 @@ Bố cục 2 cột, nhóm theo section: GENERAL · DISPLAY · NOTIFICATIONS · A
 
 ```
 Settings
-Configure how NotifyTV behaves on your screen.
+Configure how NotifyMirror behaves on your screen.
 
 GENERAL                         DISPLAY
 ┌ Language        English(US) ┐  ┌ Appearance  [Dark][Light][Auto] ┐
@@ -115,7 +115,7 @@ NOTIFICATIONS                                    Master Switch [●──○]
 └───────────────────────┘ └────────────────────┘ │  ▢ ▢            │
                                                   └─────────────────┘
 ACCOUNT & DEVICE                 SUPPORT
-┌ 👤 admin@notifytv.com       ┐  ┌ Setup Guide          › ┐
+┌ 👤 admin@notifymirror.com       ┐  ┌ Setup Guide          › ┐
 │    Premium · [Sign Out][Mng]│  │ FAQs                 › │
 │ Cloud Sync [●]   v4.2.0     │  │ Contact Support      › │
 └─────────────────────────────┘  └────────────────────────┘

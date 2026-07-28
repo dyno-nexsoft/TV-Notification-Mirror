@@ -78,17 +78,18 @@ jobs:
         with:
           tag_name: BETA
           name: BETA Release
+          fail_on_unmatched_files: true
           files: |
-            release-assets/noti-mirror-phone-${{ github.ref_name }}.apk
-            release-assets/noti-mirror-tv-${{ github.ref_name }}.apk
+            release-assets/notify-mirror-phone-${{ github.ref_name }}.apk
+            release-assets/notify-mirror-tv-${{ github.ref_name }}.apk
           body: |
             ## TV Notification Mirror BETA Release (Version ${{ github.ref_name }})
             
             ${{ steps.tag_message.outputs.tag_msg }}
             
             ### Danh sách tệp tải về:
-            * **[Điện thoại]** `noti-mirror-phone-${{ github.ref_name }}.apk`: Cài đặt trên Điện thoại Android.
-            * **[TV]** `noti-mirror-tv-${{ github.ref_name }}.apk`: Cài đặt trên Android TV / Google TV.
+            * **[Điện thoại]** `notify-mirror-phone-${{ github.ref_name }}.apk`: Cài đặt trên Điện thoại Android.
+            * **[TV]** `notify-mirror-tv-${{ github.ref_name }}.apk`: Cài đặt trên Android TV / Google TV.
           draft: false
           prerelease: true
         env:

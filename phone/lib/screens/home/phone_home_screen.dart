@@ -59,29 +59,28 @@ class PhoneHomeScreen extends ConsumerWidget {
           ),
           YaruSection(
             headline: const Text('Quick Actions'),
-            child: Column(
+            child: Row(
+              spacing: 12,
               children: [
-                YaruSwitchListTile(
-                  title: const Text('Mirror Phone Notifications'),
-                  subtitle: const Text('Turn off to pause mirroring entirely'),
-                  value: masterMirrorEnabled,
-                  onChanged: (val) {
-                    ref.read(settingsProvider.notifier).setMasterMirrorEnabled(val);
-                  },
+                Expanded(
+                  child: _QuickActionCard(
+                    icon: YaruIcons.go_next,
+                    label: 'Send Test\nNotification',
+                    onTap: () => _sendTestNotification(ref),
+                  ),
                 ),
-                const Divider(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: ElevatedButton.icon(
-                          onPressed: () => _sendTestNotification(ref),
-                          icon: const Icon(YaruIcons.go_next),
-                          label: const Text('Send Test Notification'),
-                        ),
-                      ),
-                    ],
+                Expanded(
+                  child: _QuickActionCard(
+                    icon: YaruIcons.notification,
+                    label: 'Mirror Phone\nNotifications',
+                    trailing: YaruSwitch(
+                      value: masterMirrorEnabled,
+                      onChanged: (val) {
+                        ref
+                            .read(settingsProvider.notifier)
+                            .setMasterMirrorEnabled(val);
+                      },
+                    ),
                   ),
                 ),
               ],
@@ -113,6 +112,48 @@ class PhoneHomeScreen extends ConsumerWidget {
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// A single square quick-action tile shown in a 2-column grid on Home,
+/// matching the mockup's "Quick Actions" layout.
+class _QuickActionCard extends StatelessWidget {
+  const _QuickActionCard({
+    required this.icon,
+    required this.label,
+    this.onTap,
+    this.trailing,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 8,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Icon(icon),
+                  if (trailing != null) trailing!,
+                ],
+              ),
+              Text(label),
+            ],
+          ),
+        ),
       ),
     );
   }

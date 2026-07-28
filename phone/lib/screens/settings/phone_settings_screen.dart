@@ -29,6 +29,7 @@ class PhoneSettingsScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 16,
         children: [
+          const _AccountSection(),
           YaruSection(
             headline: const Text('NOTIFICATION PREFERENCES'),
             child: YaruSwitchListTile(
@@ -58,7 +59,6 @@ class PhoneSettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const _AccountSection(),
           const _SupportSection(),
         ],
       ),

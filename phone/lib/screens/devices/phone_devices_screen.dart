@@ -36,16 +36,6 @@ class PhoneDevicesScreen extends ConsumerWidget {
         children: [
           StatusCard(onSendTest: onSendTest),
           if (!isConnected) ...[
-            OutlinedButton.icon(
-              onPressed: onScanQr,
-              icon: const Icon(YaruIcons.scanner),
-              label: const Text('Scan QR to Pair'),
-            ),
-            OutlinedButton.icon(
-              onPressed: onManualConnect,
-              icon: const Icon(YaruIcons.external_link),
-              label: const Text('Connect with IP Address'),
-            ),
             YaruSection(
               headline: Text('Available TVs (${discoveredDevices.length})'),
               child: discoveredDevices.isEmpty
@@ -62,6 +52,16 @@ class PhoneDevicesScreen extends ConsumerWidget {
                         );
                       },
                     ),
+            ),
+            OutlinedButton.icon(
+              onPressed: onScanQr,
+              icon: const Icon(YaruIcons.scanner),
+              label: const Text('Scan QR to Pair'),
+            ),
+            OutlinedButton.icon(
+              onPressed: onManualConnect,
+              icon: const Icon(YaruIcons.external_link),
+              label: const Text('Connect with IP Address'),
             ),
           ],
         ],

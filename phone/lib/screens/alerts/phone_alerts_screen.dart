@@ -33,23 +33,29 @@ class _PhoneAlertsScreenState extends ConsumerState<PhoneAlertsScreen> {
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            spacing: 8,
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            spacing: 12,
             children: [
-              Expanded(
-                child: YaruSearchField(
-                  hintText: 'Search alerts...',
-                  autofocus: false,
-                  onChanged: (val) => setState(() => _searchQuery = val),
-                ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Recent Alerts'),
+                  if (history.isNotEmpty)
+                    TextButton.icon(
+                      onPressed: () =>
+                          ref.read(historyProvider.notifier).clearHistory(),
+                      icon: const Icon(YaruIcons.edit_clear),
+                      label: const Text('Clear All'),
+                    ),
+                ],
               ),
-              if (history.isNotEmpty)
-                OutlinedButton.icon(
-                  onPressed: () => ref.read(historyProvider.notifier).clearHistory(),
-                  icon: const Icon(YaruIcons.edit_clear),
-                  label: const Text('Clear All'),
-                ),
+              YaruSearchField(
+                hintText: 'Search alerts...',
+                autofocus: false,
+                onChanged: (val) => setState(() => _searchQuery = val),
+              ),
             ],
           ),
         ),

@@ -31,60 +31,39 @@ class PhoneSettingsScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 16,
         children: [
-          YaruSection(
-            headline: const Text('NOTIFICATION PREFERENCES'),
-            child: Column(
-              children: [
-                YaruSwitchListTile(
-                  title: const Text('Mirror Phone Notifications'),
-                  subtitle: const Text('Master switch for all TV mirroring'),
-                  value: settings?.masterMirrorEnabled ?? true,
-                  onChanged: notifier.setMasterMirrorEnabled,
-                ),
-                const Divider(),
-                NotificationCategoryToggles(
-                  callEnabled: settings?.callNotificationsEnabled ?? true,
-                  onCallChanged: notifier.setCallNotificationsEnabled,
-                  textEnabled: settings?.textNotificationsEnabled ?? true,
-                  onTextChanged: notifier.setTextNotificationsEnabled,
-                  imagePreviewsEnabled:
-                      settings?.imagePreviewsEnabled ?? true,
-                  onImagePreviewsChanged: notifier.setImagePreviewsEnabled,
-                  alertSoundLabel:
-                      settings?.alertSoundUri == 'silent'
-                          ? 'Silent'
-                          : 'Standard Ping',
-                  onPickAlertSound: () => _pickAlertSound(ref),
-                ),
-              ],
+          NotificationPreferencesCard(
+            leading: YaruSwitchListTile(
+              title: const Text('Mirror Phone Notifications'),
+              subtitle: const Text('Master switch for all TV mirroring'),
+              value: settings?.masterMirrorEnabled ?? true,
+              onChanged: notifier.setMasterMirrorEnabled,
             ),
+            callEnabled: settings?.callNotificationsEnabled ?? true,
+            onCallChanged: notifier.setCallNotificationsEnabled,
+            textEnabled: settings?.textNotificationsEnabled ?? true,
+            onTextChanged: notifier.setTextNotificationsEnabled,
+            imagePreviewsEnabled: settings?.imagePreviewsEnabled ?? true,
+            onImagePreviewsChanged: notifier.setImagePreviewsEnabled,
+            alertSoundLabel:
+                settings?.alertSoundUri == 'silent'
+                    ? 'Silent'
+                    : 'Standard Ping',
+            onPickAlertSound: () => _pickAlertSound(ref),
           ),
-          YaruSection(
-            headline: const Row(
-              spacing: 8,
-              children: [
-                Icon(YaruIcons.computer),
-                Text('TV Overlay Settings'),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: OverlayPositionDurationSettings(
-                position: settings?.overlayPosition ?? MirrorProtocol.overlayTopRight,
-                onPositionChanged: (val) {
-                  if (settings == null) return;
-                  notifier.updateSettings(settings.copyWith(overlayPosition: val));
-                },
-                durationSeconds: settings?.overlayDurationSeconds ?? 5,
-                onDurationChanged: (val) {
-                  if (settings == null) return;
-                  notifier.updateSettings(
-                    settings.copyWith(overlayDurationSeconds: val),
-                  );
-                },
-                durationMin: 2,
-              ),
-            ),
+          TvOverlaySettingsCard(
+            position: settings?.overlayPosition ?? MirrorProtocol.overlayTopRight,
+            onPositionChanged: (val) {
+              if (settings == null) return;
+              notifier.updateSettings(settings.copyWith(overlayPosition: val));
+            },
+            durationSeconds: settings?.overlayDurationSeconds ?? 5,
+            onDurationChanged: (val) {
+              if (settings == null) return;
+              notifier.updateSettings(
+                settings.copyWith(overlayDurationSeconds: val),
+              );
+            },
+            durationMin: 2,
           ),
           YaruSection(
             headline: const Text('APP FILTERS'),

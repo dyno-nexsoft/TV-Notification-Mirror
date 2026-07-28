@@ -8,15 +8,17 @@ import '../../widgets/page_header.dart';
 
 part 'tv_settings_general.dart';
 part 'tv_settings_display.dart';
-part 'tv_settings_notifications.dart';
 
-/// Settings page: General/Display/Notifications/Support sections.
+/// Settings page: General/Display/Notification Preferences/TV Overlay/
+/// Support sections. The notification preferences and overlay settings
+/// cards are shared, identical widgets with the Phone app's own settings.
 class TvSettingsScreen extends ConsumerWidget {
   const TvSettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(tvSettingsProvider);
+    final notifier = ref.read(tvSettingsProvider.notifier);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
@@ -37,7 +39,40 @@ class TvSettingsScreen extends ConsumerWidget {
               Expanded(child: _DisplaySection(settings: settings)),
             ],
           ),
-          _NotificationsSection(settings: settings),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 20,
+            children: [
+              Expanded(
+                child: NotificationPreferencesCard(
+                  callEnabled: settings.callNotificationsEnabled,
+                  onCallChanged: notifier.setCallNotificationsEnabled,
+                  textEnabled: settings.textNotificationsEnabled,
+                  onTextChanged: notifier.setTextNotificationsEnabled,
+                  imagePreviewsEnabled: settings.imagePreviewsEnabled,
+                  onImagePreviewsChanged: notifier.setImagePreviewsEnabled,
+                  alertSoundLabel:
+                      settings.alertSoundUri == 'silent'
+                          ? 'Silent'
+                          : 'Standard Ping',
+                  onPickAlertSound: () async {
+                    final uri = await OverlayService.pickAlertSound();
+                    if (uri != null) {
+                      await notifier.setAlertSoundUri(uri);
+                    }
+                  },
+                ),
+              ),
+              Expanded(
+                child: TvOverlaySettingsCard(
+                  position: settings.anchorPosition,
+                  onPositionChanged: notifier.setAnchorPosition,
+                  durationSeconds: settings.overlayDurationSeconds,
+                  onDurationChanged: notifier.setOverlayDurationSeconds,
+                ),
+              ),
+            ],
+          ),
           const SupportSection(),
         ],
       ),

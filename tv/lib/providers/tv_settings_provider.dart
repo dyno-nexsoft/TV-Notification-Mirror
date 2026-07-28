@@ -64,13 +64,4 @@ class TvSettingsNotifier extends _$TvSettingsNotifier {
 
   Future<void> setImagePreviewsEnabled(bool enabled) =>
       _update(state.copyWith(imagePreviewsEnabled: enabled));
-
-  /// Bulk toggle for the NOTIFICATIONS section's master switch.
-  Future<void> setAllNotificationTypes(bool enabled) => _update(
-    state.copyWith(
-      callNotificationsEnabled: enabled,
-      textNotificationsEnabled: enabled,
-      imagePreviewsEnabled: enabled,
-    ),
-  );
 }

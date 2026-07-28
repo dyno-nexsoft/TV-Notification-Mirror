@@ -11,7 +11,7 @@ class _HomeActionCardsRow extends ConsumerWidget {
       spacing: 16,
       children: [
         Expanded(
-          child: _HomeActionCard(
+          child: BorderedActionCard(
             icon: Icons.qr_code_scanner,
             title: 'Pair New Device',
             subtitle: 'Scan QR to connect',
@@ -21,7 +21,7 @@ class _HomeActionCardsRow extends ConsumerWidget {
           ),
         ),
         Expanded(
-          child: _HomeActionCard(
+          child: BorderedActionCard(
             icon: YaruIcons.phone,
             title: 'Manage Devices',
             subtitle: 'View connected devices',
@@ -31,35 +31,6 @@ class _HomeActionCardsRow extends ConsumerWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _HomeActionCard extends StatelessWidget {
-  const _HomeActionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    // YaruBanner always requests height: double.infinity internally, so it
-    // needs a bounded-height ancestor — Row/Expanded alone won't provide one.
-    return SizedBox(
-      height: 96,
-      child: YaruBanner.tile(
-        onTap: onTap,
-        icon: Icon(icon),
-        title: Text(title),
-        subtitle: Text(subtitle),
-      ),
     );
   }
 }

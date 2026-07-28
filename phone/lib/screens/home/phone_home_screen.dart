@@ -69,16 +69,16 @@ class PhoneHomeScreen extends ConsumerWidget {
                 spacing: 12,
                 children: [
                   Expanded(
-                    child: _QuickActionCard(
+                    child: BorderedActionCard(
                       icon: YaruIcons.send,
-                      label: 'Send Test\nNotification',
+                      title: 'Send Test\nNotification',
                       onTap: () => _sendTestNotification(ref),
                     ),
                   ),
                   Expanded(
-                    child: _QuickActionCard(
+                    child: BorderedActionCard(
                       icon: YaruIcons.notification,
-                      label: 'Mirror Phone\nNotifications',
+                      title: 'Mirror Phone\nNotifications',
                       trailing: YaruSwitch(
                         value: masterMirrorEnabled,
                         onChanged: (val) {
@@ -120,48 +120,6 @@ class PhoneHomeScreen extends ConsumerWidget {
                   ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// A single square quick-action tile shown in a 2-column grid on Home,
-/// matching the mockup's "Quick Actions" layout.
-class _QuickActionCard extends StatelessWidget {
-  const _QuickActionCard({
-    required this.icon,
-    required this.label,
-    this.onTap,
-    this.trailing,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback? onTap;
-  final Widget? trailing;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 8,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Icon(icon),
-                  if (trailing != null) trailing!,
-                ],
-              ),
-              Text(label),
-            ],
-          ),
-        ),
       ),
     );
   }

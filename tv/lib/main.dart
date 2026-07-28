@@ -27,7 +27,7 @@ class MyApp extends ConsumerWidget {
         return MaterialApp(
           title: 'TV Notification Receiver',
           themeMode: themeMode,
-          theme: yaru.theme,
+          theme: YaruAppTheme.lightTheme,
           darkTheme: YaruAppTheme.darkTheme,
           home: const TvAutoScrollRoot(child: TvMainScreen()),
         );

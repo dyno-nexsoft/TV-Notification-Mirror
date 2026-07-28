@@ -3,6 +3,7 @@ import 'package:shared/shared.dart';
 
 import '../../providers/phone_nav_provider.dart';
 import '../../providers/phone_providers.dart';
+import '../../services/alert_sound_service.dart';
 import '../../widgets/history/history_item_card.dart';
 
 /// The Home page — connection summary, quick actions, and a preview of the
@@ -21,6 +22,9 @@ class PhoneHomeScreen extends ConsumerWidget {
     );
     ref.read(historyProvider.notifier).addNotification(testItem);
     ref.read(connectorProvider.notifier).sendNotification(testItem);
+    AlertSoundService.playAlertSound(
+      ref.read(settingsProvider).value?.alertSoundUri,
+    );
   }
 
   @override

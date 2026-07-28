@@ -112,11 +112,23 @@ void onStart(ServiceInstance service) async {
     }
   });
 
-  service.on('sendTestNotification').listen((event) {
+  service.on('sendTestNotification').listen((event) async {
     if (event == null) return;
     final item = NotificationItem.fromJson(Map<String, dynamic>.from(event));
+    String? base64Icon;
+    if (appSettings.imagePreviewsEnabled) {
+      try {
+        final appInfo = await InstalledApps.getAppInfo(item.packageName);
+        if (appInfo != null && appInfo.icon != null) {
+          base64Icon = base64Encode(appInfo.icon!);
+        }
+      } catch (e) {
+        debugPrint("Failed to load icon for test notification: $e");
+      }
+    }
     connector.sendNotification(
       item,
+      base64Icon: base64Icon,
       overlayPosition: appSettings.overlayPosition,
       overlayDurationMs: appSettings.overlayDurationSeconds * 1000,
     );

@@ -12,7 +12,7 @@ class _HomeActionCardsRow extends ConsumerWidget {
       children: [
         Expanded(
           child: _HomeActionCard(
-            icon: YaruIcons.scanner,
+            icon: Icons.qr_code_scanner,
             title: 'Pair New Device',
             subtitle: 'Scan QR to connect',
             onTap: () => ref

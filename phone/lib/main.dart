@@ -34,7 +34,7 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           title: MirrorProtocol.appName,
           themeMode: ThemeMode.dark,
-          theme: yaru.theme,
+          theme: YaruAppTheme.lightTheme,
           darkTheme: YaruAppTheme.darkTheme,
           builder: (context, child) {
             return GestureDetector(

@@ -26,6 +26,9 @@ class _MainScreenBody extends ConsumerWidget {
     );
     ref.read(historyProvider.notifier).addNotification(testItem);
     ref.read(connectorProvider.notifier).sendNotification(testItem);
+    AlertSoundService.playAlertSound(
+      ref.read(settingsProvider).value?.alertSoundUri,
+    );
   }
 
   @override

@@ -2,7 +2,9 @@ part of 'tv_settings_screen.dart';
 
 /// NOTIFICATIONS section: per-type filters (real — enforced server-side by
 /// category), alert sound, anchor position, and display duration (all real,
-/// applied by the TV regardless of what the phone sends).
+/// applied by the TV regardless of what the phone sends). The toggles/alert
+/// sound and the position/duration controls are shared, identical widgets
+/// with the Phone app's own Notification Preferences / TV Overlay Settings.
 class _NotificationsSection extends ConsumerWidget {
   const _NotificationsSection({required this.settings});
 
@@ -33,76 +35,34 @@ class _NotificationsSection extends ConsumerWidget {
         spacing: 16,
         children: [
           Expanded(
-            child: Column(
-              children: [
-                YaruSwitchListTile(
-                  title: const Text('Call Notifications'),
-                  value: settings.callNotificationsEnabled,
-                  onChanged: (v) => notifier.setCallNotificationsEnabled(v),
-                ),
-                YaruSwitchListTile(
-                  title: const Text('Text Messages'),
-                  value: settings.textNotificationsEnabled,
-                  onChanged: (v) => notifier.setTextNotificationsEnabled(v),
-                ),
-                YaruSwitchListTile(
-                  title: const Text('Image Previews'),
-                  value: settings.imagePreviewsEnabled,
-                  onChanged: (v) => notifier.setImagePreviewsEnabled(v),
-                ),
-                YaruListTile(
-                  leading: const Icon(YaruIcons.notification),
-                  title: const Text('Alert Sound'),
-                  trailing: Text(
-                    settings.alertSoundUri == 'silent'
-                        ? 'Silent'
-                        : 'Standard Ping',
-                  ),
-                  onTap: () async {
-                    final uri = await OverlayService.pickAlertSound();
-                    if (uri != null) {
-                      await notifier.setAlertSoundUri(uri);
-                    }
-                  },
-                ),
-              ],
+            child: NotificationCategoryToggles(
+              callEnabled: settings.callNotificationsEnabled,
+              onCallChanged: notifier.setCallNotificationsEnabled,
+              textEnabled: settings.textNotificationsEnabled,
+              onTextChanged: notifier.setTextNotificationsEnabled,
+              imagePreviewsEnabled: settings.imagePreviewsEnabled,
+              onImagePreviewsChanged: notifier.setImagePreviewsEnabled,
+              alertSoundLabel:
+                  settings.alertSoundUri == 'silent'
+                      ? 'Silent'
+                      : 'Standard Ping',
+              onPickAlertSound: () async {
+                final uri = await OverlayService.pickAlertSound();
+                if (uri != null) {
+                  await notifier.setAlertSoundUri(uri);
+                }
+              },
             ),
           ),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 8,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    'Display Duration: ${settings.overlayDurationSeconds} seconds',
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: ValueStepper(
-                    label: '${settings.overlayDurationSeconds}s',
-                    value: settings.overlayDurationSeconds.toDouble(),
-                    min: 3,
-                    max: 15,
-                    step: 1,
-                    onChanged: (v) =>
-                        notifier.setOverlayDurationSeconds(v.round()),
-                  ),
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text('Anchor Position'),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: AnchorPositionPicker(
-                    value: settings.anchorPosition,
-                    onChanged: notifier.setAnchorPosition,
-                  ),
-                ),
-              ],
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: OverlayPositionDurationSettings(
+                position: settings.anchorPosition,
+                onPositionChanged: notifier.setAnchorPosition,
+                durationSeconds: settings.overlayDurationSeconds,
+                onDurationChanged: notifier.setOverlayDurationSeconds,
+              ),
             ),
           ),
         ],

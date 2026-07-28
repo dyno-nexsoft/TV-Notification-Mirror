@@ -60,28 +60,34 @@ class StatusCard extends ConsumerWidget {
             ),
           ],
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            spacing: 12,
             children: [
               if (isConnected) ...[
-                OutlinedButton.icon(
-                  onPressed: () {
-                    ref.read(connectorProvider.notifier).disconnect();
-                  },
-                  icon: const Icon(YaruIcons.power),
-                  label: const Text('Disconnect'),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      ref.read(connectorProvider.notifier).disconnect();
+                    },
+                    icon: const Icon(YaruIcons.power),
+                    label: const Text('Disconnect'),
+                  ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: onSendTest,
-                  icon: const Icon(YaruIcons.go_next),
-                  label: const Text('Send Test'),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: onSendTest,
+                    icon: const Icon(YaruIcons.send),
+                    label: const Text('Send Test'),
+                  ),
                 ),
               ] else ...[
-                ElevatedButton.icon(
-                  onPressed: () {
-                    ref.read(connectorProvider.notifier).startScanning();
-                  },
-                  icon: const Icon(YaruIcons.search),
-                  label: const Text('Scan Again'),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      ref.read(connectorProvider.notifier).startScanning();
+                    },
+                    icon: const Icon(YaruIcons.search),
+                    label: const Text('Scan Again'),
+                  ),
                 ),
               ],
             ],

@@ -21,80 +21,77 @@ class QuietHoursCard extends ConsumerWidget {
         ),
       ),
       error: (e, st) => Center(child: Text('Error: $e')),
-      data: (settings) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: YaruSection(
-          headline: const Text('Quiet Hours (DND Schedule)'),
-          child: Column(
-            children: [
-              YaruListTile(
-                leading: const Icon(YaruIcons.notification),
-                title: const Text('Quiet Hours Status'),
-                subtitle:
-                    const Text('Silence TV notifications during set hours'),
-                trailing: YaruSwitch(
-                  value: settings.quietHoursEnabled,
-                  onChanged: (val) {
-                    final updated = settings.copyWith(quietHoursEnabled: val);
-                    ref.read(settingsProvider.notifier).updateSettings(updated);
-                  },
+      data: (settings) => YaruSection(
+        headline: const Text('Quiet Hours (DND Schedule)'),
+        child: Column(
+          children: [
+            YaruListTile(
+              leading: const Icon(YaruIcons.notification),
+              title: const Text('Quiet Hours Status'),
+              subtitle:
+                  const Text('Silence TV notifications during set hours'),
+              trailing: YaruSwitch(
+                value: settings.quietHoursEnabled,
+                onChanged: (val) {
+                  final updated = settings.copyWith(quietHoursEnabled: val);
+                  ref.read(settingsProvider.notifier).updateSettings(updated);
+                },
+              ),
+            ),
+            if (settings.quietHoursEnabled) ...[
+              const Divider(),
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: 16,
+                  children: [
+                    // Start time
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 4,
+                      children: [
+                        const Text('Start'),
+                        YaruTimeEntry(
+                          initialTimeOfDay: settings.quietHoursStart,
+                          force24HourFormat: true,
+                          onChanged: (time) {
+                            if (time == null) return;
+                            final updated =
+                                settings.copyWith(quietHoursStart: time);
+                            ref
+                                .read(settingsProvider.notifier)
+                                .updateSettings(updated);
+                          },
+                        ),
+                      ],
+                    ),
+                    // End time
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      spacing: 4,
+                      children: [
+                        const Text('End'),
+                        YaruTimeEntry(
+                          initialTimeOfDay: settings.quietHoursEnd,
+                          force24HourFormat: true,
+                          onChanged: (time) {
+                            if (time == null) return;
+                            final updated =
+                                settings.copyWith(quietHoursEnd: time);
+                            ref
+                                .read(settingsProvider.notifier)
+                                .updateSettings(updated);
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              if (settings.quietHoursEnabled) ...[
-                const Divider(),
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 16,
-                    children: [
-                      // Start time
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 4,
-                        children: [
-                          const Text('Start'),
-                          YaruTimeEntry(
-                            initialTimeOfDay: settings.quietHoursStart,
-                            force24HourFormat: true,
-                            onChanged: (time) {
-                              if (time == null) return;
-                              final updated =
-                                  settings.copyWith(quietHoursStart: time);
-                              ref
-                                  .read(settingsProvider.notifier)
-                                  .updateSettings(updated);
-                            },
-                          ),
-                        ],
-                      ),
-                      // End time
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        spacing: 4,
-                        children: [
-                          const Text('End'),
-                          YaruTimeEntry(
-                            initialTimeOfDay: settings.quietHoursEnd,
-                            force24HourFormat: true,
-                            onChanged: (time) {
-                              if (time == null) return;
-                              final updated =
-                                  settings.copyWith(quietHoursEnd: time);
-                              ref
-                                  .read(settingsProvider.notifier)
-                                  .updateSettings(updated);
-                            },
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ],
             ],
-          ),
+          ],
         ),
       ),
     );

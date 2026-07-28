@@ -20,68 +20,63 @@ class OverlaySettingsCard extends ConsumerWidget {
         ),
       ),
       error: (e, st) => Center(child: Text('Error: $e')),
-      data: (settings) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: YaruSection(
-          headline: const Row(
-            spacing: 8,
-            children: [
-              Icon(YaruIcons.computer),
-              Text('TV Overlay Settings'),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
-                  children: [
-                    const Text('Popup Position'),
-                    AnchorPositionPicker(
-                      value: settings.overlayPosition,
-                      onChanged: (val) {
-                        final updated = settings.copyWith(overlayPosition: val);
-                        ref
-                            .read(settingsProvider.notifier)
-                            .updateSettings(updated);
-                      },
-                    ),
-                  ],
-                ),
+      data: (settings) => YaruSection(
+        headline: const Row(
+          spacing: 8,
+          children: [
+            Icon(YaruIcons.computer),
+            Text('TV Overlay Settings'),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 8,
+                children: [
+                  const Text('Popup Position'),
+                  AnchorPositionPicker(
+                    value: settings.overlayPosition,
+                    onChanged: (val) {
+                      final updated = settings.copyWith(overlayPosition: val);
+                      ref
+                          .read(settingsProvider.notifier)
+                          .updateSettings(updated);
+                    },
+                  ),
+                ],
               ),
-              const Divider(),
-              Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  spacing: 8,
-                  children: [
-                    const Text('Display Duration'),
-                    ValueStepper(
-                      label: '${settings.overlayDurationSeconds} seconds',
-                      value: settings.overlayDurationSeconds.toDouble(),
-                      min: 2,
-                      max: 15,
-                      step: 1,
-                      onChanged: (val) {
-                        final updated = settings.copyWith(
-                          overlayDurationSeconds: val.toInt(),
-                        );
-                        ref
-                            .read(settingsProvider.notifier)
-                            .updateSettings(updated);
-                      },
-                    ),
-                  ],
-                ),
+            ),
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                spacing: 8,
+                children: [
+                  const Text('Display Duration'),
+                  ValueStepper(
+                    label: '${settings.overlayDurationSeconds} seconds',
+                    value: settings.overlayDurationSeconds.toDouble(),
+                    min: 2,
+                    max: 15,
+                    step: 1,
+                    onChanged: (val) {
+                      final updated = settings.copyWith(
+                        overlayDurationSeconds: val.toInt(),
+                      );
+                      ref
+                          .read(settingsProvider.notifier)
+                          .updateSettings(updated);
+                    },
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

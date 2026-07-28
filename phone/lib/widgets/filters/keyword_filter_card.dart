@@ -58,64 +58,61 @@ class _KeywordFilterCardState extends ConsumerState<KeywordFilterCard> {
         ),
       ),
       error: (e, st) => Center(child: Text('Error: $e')),
-      data: (settings) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        child: YaruSection(
-          headline: const Row(
+      data: (settings) => YaruSection(
+        headline: const Row(
+          children: [
+            Icon(YaruIcons.pen),
+            SizedBox(width: 8),
+            Text('Blocked Keywords'),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            spacing: 16,
             children: [
-              Icon(YaruIcons.pen),
-              SizedBox(width: 8),
-              Text('Blocked Keywords'),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 16,
-              children: [
-                const Text(
-                  'Notifications containing these keywords will not be sent to TV.',
-                ),
-                Row(
-                  spacing: 8,
-                  children: [
-                    Expanded(
-                      child: YaruSearchField(
-                        controller: _controller,
-                        autofocus: false,
-                        hintText: 'e.g., spam, discount, OTP',
-                        onChanged: (v) => setState(() {}),
-                        onClear: () {
-                          _controller.clear();
-                          setState(() {});
-                        },
-                        onSubmitted: (v) {
-                          if (v != null) _addKeyword(v);
-                        },
-                      ),
+              const Text(
+                'Notifications containing these keywords will not be sent to TV.',
+              ),
+              Row(
+                spacing: 8,
+                children: [
+                  Expanded(
+                    child: YaruSearchField(
+                      controller: _controller,
+                      autofocus: false,
+                      hintText: 'e.g., spam, discount, OTP',
+                      onChanged: (v) => setState(() {}),
+                      onClear: () {
+                        _controller.clear();
+                        setState(() {});
+                      },
+                      onSubmitted: (v) {
+                        if (v != null) _addKeyword(v);
+                      },
                     ),
-                    IconButton.filled(
-                      onPressed: () => _addKeyword(_controller.text),
-                      icon: const Icon(YaruIcons.plus),
-                    ),
-                  ],
-                ),
-                if (settings.blockedKeywords.isNotEmpty) ...[
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: settings.blockedKeywords.map((kw) {
-                      return InputChip(
-                        label: Text(kw),
-                        onDeleted: () => _removeKeyword(kw),
-                        deleteIcon: const Icon(YaruIcons.minus),
-                      );
-                    }).toList(),
+                  ),
+                  IconButton.filled(
+                    onPressed: () => _addKeyword(_controller.text),
+                    icon: const Icon(YaruIcons.plus),
                   ),
                 ],
+              ),
+              if (settings.blockedKeywords.isNotEmpty) ...[
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: settings.blockedKeywords.map((kw) {
+                    return InputChip(
+                      label: Text(kw),
+                      onDeleted: () => _removeKeyword(kw),
+                      deleteIcon: const Icon(YaruIcons.minus),
+                    );
+                  }).toList(),
+                ),
               ],
-            ),
+            ],
           ),
         ),
       ),

@@ -60,31 +60,33 @@ class PhoneHomeScreen extends ConsumerWidget {
           ),
           YaruSection(
             headline: const Text('Quick Actions'),
-            child: Row(
-              spacing: 12,
-              children: [
-                Expanded(
-                  child: _QuickActionCard(
-                    icon: YaruIcons.send,
-                    label: 'Send Test\nNotification',
-                    onTap: () => _sendTestNotification(ref),
-                  ),
-                ),
-                Expanded(
-                  child: _QuickActionCard(
-                    icon: YaruIcons.notification,
-                    label: 'Mirror Phone\nNotifications',
-                    trailing: YaruSwitch(
-                      value: masterMirrorEnabled,
-                      onChanged: (val) {
-                        ref
-                            .read(settingsProvider.notifier)
-                            .setMasterMirrorEnabled(val);
-                      },
+            child: IntrinsicHeight(
+              child: Row(
+                spacing: 12,
+                children: [
+                  Expanded(
+                    child: _QuickActionCard(
+                      icon: YaruIcons.send,
+                      label: 'Send Test\nNotification',
+                      onTap: () => _sendTestNotification(ref),
                     ),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: _QuickActionCard(
+                      icon: YaruIcons.notification,
+                      label: 'Mirror Phone\nNotifications',
+                      trailing: YaruSwitch(
+                        value: masterMirrorEnabled,
+                        onChanged: (val) {
+                          ref
+                              .read(settingsProvider.notifier)
+                              .setMasterMirrorEnabled(val);
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           YaruSection(

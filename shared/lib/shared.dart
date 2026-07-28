@@ -16,5 +16,6 @@ export 'theme/yaru_app_theme.dart';
 export 'widgets/anchor_position_picker.dart';
 export 'widgets/app_icon_widget.dart';
 export 'widgets/status_dot.dart';
+export 'widgets/support_section.dart';
 export 'widgets/value_stepper.dart';
 export 'widgets/yaru_status_card.dart';

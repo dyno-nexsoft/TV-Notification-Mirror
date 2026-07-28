@@ -18,7 +18,7 @@ Future<void> initializeBackgroundService() async {
       onStart: onStart,
       isForegroundMode: true,
       notificationChannelId: 'phone_mirror_service_channel',
-      initialNotificationTitle: 'TV Notification Mirror',
+      initialNotificationTitle: MirrorProtocol.appName,
       initialNotificationContent: 'Running in background...',
       foregroundServiceNotificationId: 888,
       foregroundServiceTypes: [AndroidForegroundType.connectedDevice],

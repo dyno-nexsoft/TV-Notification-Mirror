@@ -1,9 +1,20 @@
-part of 'tv_settings_screen.dart';
+import 'package:package_info_plus/package_info_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-/// SUPPORT section — FAQs and Contact Support open GitHub URLs; Version is
-/// real, read from the installed package via `package_info_plus`.
-class _SupportSection extends StatelessWidget {
-  const _SupportSection();
+import '../shared.dart';
+
+/// SUPPORT section — FAQs and Contact Support open the project's GitHub
+/// docs/issues; Version is real, read from the installed package. Shared
+/// between the TV and Phone apps since both point at the same repo. The app
+/// display name is defined in [MirrorProtocol.appName].
+class SupportSection extends StatelessWidget {
+  const SupportSection({super.key});
+
+  static const _faqUrl =
+      'https://github.com/dyno-nexsoft/TV-Notification-Mirror'
+      '/blob/main/doc/faq.md';
+  static const _issuesUrl =
+      'https://github.com/dyno-nexsoft/TV-Notification-Mirror/issues';
 
   @override
   Widget build(BuildContext context) {
@@ -15,23 +26,13 @@ class _SupportSection extends StatelessWidget {
             leading: const Icon(YaruIcons.information),
             title: const Text('FAQs'),
             trailing: const Icon(YaruIcons.pan_end),
-            onTap: () => launchUrl(
-              Uri.parse(
-                'https://github.com/dyno-nexsoft/TV-Notification-Mirror'
-                '/blob/main/doc/faq.md',
-              ),
-            ),
+            onTap: () => launchUrl(Uri.parse(_faqUrl)),
           ),
           YaruListTile(
             leading: const Icon(YaruIcons.chat_bubble),
             title: const Text('Contact Support'),
             trailing: const Icon(YaruIcons.pan_end),
-            onTap: () => launchUrl(
-              Uri.parse(
-                'https://github.com/dyno-nexsoft/TV-Notification-Mirror'
-                '/issues',
-              ),
-            ),
+            onTap: () => launchUrl(Uri.parse(_issuesUrl)),
           ),
           const _VersionTile(),
         ],

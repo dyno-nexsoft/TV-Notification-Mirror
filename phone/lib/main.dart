@@ -32,7 +32,7 @@ class MyApp extends StatelessWidget {
     return YaruTheme(
       builder: (context, yaru, child) {
         return MaterialApp(
-          title: 'TV Notification Mirror',
+          title: MirrorProtocol.appName,
           themeMode: ThemeMode.dark,
           theme: yaru.theme,
           darkTheme: YaruAppTheme.darkTheme,

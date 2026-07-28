@@ -19,9 +19,9 @@ class _MainScreenBody extends ConsumerWidget {
     final testItem = NotificationItem(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       packageName: 'com.dyno.tv_notification_mirror.phone',
-      appName: 'TV Mirror',
+      appName: MirrorProtocol.appName,
       title: 'Jane Doe',
-      text: 'Hello from your TV Mirror app! 📺✨',
+      text: 'Hello from your ${MirrorProtocol.appName} app! 📺✨',
       postTime: DateTime.now().millisecondsSinceEpoch,
     );
     ref.read(historyProvider.notifier).addNotification(testItem);
@@ -43,7 +43,7 @@ class _MainScreenBody extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('TV Mirror'),
+        title: const Text(MirrorProtocol.appName),
         systemOverlayStyle: SystemUiOverlayStyle.light,
         actions: [
           IconButton(

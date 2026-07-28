@@ -53,8 +53,8 @@ jobs:
       - name: Prepare Release Assets
         run: |
           mkdir -p release-assets
-          cp phone/build/app/outputs/flutter-apk/app-release.apk release-assets/noti-mirror-phone-${{ github.ref_name }}.apk
-          cp tv/build/app/outputs/flutter-apk/app-release.apk release-assets/noti-mirror-tv-${{ github.ref_name }}.apk
+          cp phone/build/app/outputs/flutter-apk/app-release.apk release-assets/notify-mirror-phone-${{ github.ref_name }}.apk
+          cp tv/build/app/outputs/flutter-apk/app-release.apk release-assets/notify-mirror-tv-${{ github.ref_name }}.apk
 
       # 7. Get Tag Message
       - name: Get Tag Message

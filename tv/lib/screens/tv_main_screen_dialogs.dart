@@ -12,7 +12,7 @@ class _ExitConfirmDialog extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           YaruDialogTitleBar(
-            title: const Text('Exit TV Mirror?'),
+            title: const Text('Exit ${MirrorProtocol.appName}?'),
             onClose: (_) => Navigator.pop(context, false),
           ),
           Padding(

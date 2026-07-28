@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
+import 'package:shared/shared.dart';
 import 'server_service.dart';
 import 'tv_settings_service.dart';
 
@@ -16,7 +17,7 @@ Future<void> initializeBackgroundService() async {
       autoStart: false,
       isForegroundMode: true,
       notificationChannelId: 'tv_mirror_service_channel',
-      initialNotificationTitle: 'TV Notification Mirror',
+      initialNotificationTitle: MirrorProtocol.appName,
       initialNotificationContent:
           'WebSocket Server is running in background...',
       foregroundServiceNotificationId: 999,

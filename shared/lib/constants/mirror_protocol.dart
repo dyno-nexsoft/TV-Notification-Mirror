@@ -2,6 +2,9 @@
 class MirrorProtocol {
   MirrorProtocol._();
 
+  /// User-facing display name of the app.
+  static const appName = 'Notify Mirror';
+
   /// mDNS service type registration string.
   static const mdnsType = '_tvmirror._tcp';
 

@@ -152,7 +152,7 @@ class _QrCardState extends ConsumerState<_QrCard> {
               ),
             const Text('Scan this code with your phone'),
             const Text(
-              "Open the NotifyMirror mobile app's QR scanner to pair it "
+              "Open the ${MirrorProtocol.appName} mobile app's QR scanner to pair it "
               'with this television instantly.',
             ),
           ],
@@ -210,7 +210,7 @@ class _ManualPinCard extends StatelessWidget {
               leading: Icon(YaruIcons.information),
               title: Text('Need help?'),
               subtitle: Text(
-                'Open the NotifyMirror mobile app and choose "Enter code '
+                'Open the ${MirrorProtocol.appName} mobile app and choose "Enter code '
                 'manually" from the pairing screen.',
               ),
             ),

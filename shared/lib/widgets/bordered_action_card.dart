@@ -32,10 +32,7 @@ class BorderedActionCard extends StatelessWidget {
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Icon(icon),
-                  if (trailing != null) trailing!,
-                ],
+                children: [Icon(icon), ?trailing],
               ),
               Text(title),
               if (subtitle != null) Text(subtitle!),

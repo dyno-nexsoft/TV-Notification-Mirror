@@ -24,13 +24,7 @@ class TvOverlaySettingsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return YaruSection(
-      headline: const Row(
-        spacing: 8,
-        children: [
-          Icon(YaruIcons.computer),
-          Text('TV Overlay Settings'),
-        ],
-      ),
+      headline: const Text('TV OVERLAY SETTINGS'),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         child: OverlayPositionDurationSettings(

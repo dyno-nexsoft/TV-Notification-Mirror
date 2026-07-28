@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
 /// A TV-optimised paired device card using Yaru UI widgets: online status,

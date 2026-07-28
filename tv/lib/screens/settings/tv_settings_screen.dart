@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared/shared.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../providers/tv_settings_provider.dart';
 import '../../services/overlay_service.dart';
@@ -10,7 +11,6 @@ import '../../widgets/page_header.dart';
 part 'tv_settings_general.dart';
 part 'tv_settings_display.dart';
 part 'tv_settings_notifications.dart';
-part 'tv_settings_account.dart';
 part 'tv_settings_support.dart';
 
 /// Settings page: General/Display/Notifications/Account/Support sections.
@@ -40,14 +40,7 @@ class TvSettingsScreen extends ConsumerWidget {
             ],
           ),
           _NotificationsSection(settings: settings),
-          const Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 20,
-            children: [
-              Expanded(child: _AccountSection()),
-              Expanded(child: _SupportSection()),
-            ],
-          ),
+          const _SupportSection(),
         ],
       ),
     );

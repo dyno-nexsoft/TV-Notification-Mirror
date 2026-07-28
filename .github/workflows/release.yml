@@ -72,7 +72,26 @@ jobs:
           echo "$TAG_MSG" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
-      # 8. Create GitHub Release and Upload Assets
+      # 8. Purge stale assets from the rolling BETA release
+      - name: Purge Stale BETA Assets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          # BETA is a rolling tag, so assets from every previous version stay
+          # attached and users end up downloading an older APK. Clear them out
+          # before uploading this version's build.
+          if ! gh release view BETA --json id > /dev/null 2>&1; then
+            echo "No BETA release yet, nothing to purge."
+            exit 0
+          fi
+          gh release view BETA --json assets --jq '.assets[].name' | while read -r asset; do
+            [ -z "$asset" ] && continue
+            echo "Deleting stale asset: $asset"
+            gh release delete-asset BETA "$asset" --yes
+          done
+
+      # 9. Create GitHub Release and Upload Assets
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -83,7 +102,7 @@ jobs:
             release-assets/notify-mirror-phone-${{ github.ref_name }}.apk
             release-assets/notify-mirror-tv-${{ github.ref_name }}.apk
           body: |
-            ## TV Notification Mirror BETA Release (Version ${{ github.ref_name }})
+            ## Notify Mirror BETA Release (Version ${{ github.ref_name }})
             
             ${{ steps.tag_message.outputs.tag_msg }}
             

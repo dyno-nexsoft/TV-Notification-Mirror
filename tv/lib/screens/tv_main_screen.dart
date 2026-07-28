@@ -23,7 +23,7 @@ const _navItems = [
     icon: YaruIcons.smartphone,
     label: 'Manage Devices',
   ),
-  (page: TvNavPage.pairDevice, icon: YaruIcons.scanner, label: 'Pair Device'),
+  (page: TvNavPage.pairDevice, icon: Icons.qr_code, label: 'Pair Device'),
   (page: TvNavPage.settings, icon: YaruIcons.settings, label: 'Settings'),
 ];
 

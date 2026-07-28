@@ -1,15 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared/shared.dart';
 
 import '../../providers/phone_providers.dart';
 import '../../widgets/filters/overlay_settings_card.dart';
 import 'phone_app_filters_screen.dart';
 
-part 'phone_settings_support.dart';
-
 /// The Settings page — notification preferences, TV overlay display options,
-/// per-app filters, and a stub support section.
+/// per-app filters, and a support section.
 class PhoneSettingsScreen extends ConsumerWidget {
   const PhoneSettingsScreen({super.key, required this.onAddCustomApp});
 
@@ -75,7 +72,7 @@ class PhoneSettingsScreen extends ConsumerWidget {
               ),
             ),
           ),
-          const _SupportSection(),
+          const SupportSection(),
         ],
       ),
     );

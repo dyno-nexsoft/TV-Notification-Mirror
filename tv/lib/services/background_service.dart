@@ -83,6 +83,7 @@ void onStart(ServiceInstance service) async {
     if (service is AndroidServiceInstance) {
       service.invoke('stateUpdate', {
         'pin': server.currentPin,
+        'qrToken': server.currentQrToken,
         'isRunning': server.isRunning,
         'isDnd': server.isDndEnabled,
         'clients': server.pairedClients
@@ -133,6 +134,10 @@ void onStart(ServiceInstance service) async {
 
   service.on('clearHistory').listen((event) {
     server.clearHistory();
+  });
+
+  service.on('regenerateQrToken').listen((event) {
+    server.regenerateQrToken();
   });
 
   service.on('stopService').listen((event) async {

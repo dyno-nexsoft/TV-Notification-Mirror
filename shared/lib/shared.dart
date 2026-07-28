@@ -13,6 +13,8 @@ export 'models/notification_category.dart';
 export 'models/notification_item.dart';
 export 'services/mirror_filter_evaluator.dart';
 export 'theme/yaru_app_theme.dart';
+export 'widgets/anchor_position_picker.dart';
 export 'widgets/app_icon_widget.dart';
 export 'widgets/status_dot.dart';
+export 'widgets/value_stepper.dart';
 export 'widgets/yaru_status_card.dart';

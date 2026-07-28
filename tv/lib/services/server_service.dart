@@ -32,6 +32,17 @@ class ServerService {
   String? _currentPin;
   String? _pairingDeviceName;
 
+  /// Single-use token proactively displayed as a QR code on the Pair Device
+  /// screen — unlike [_currentPin], this exists from server start (no need
+  /// for the phone to call [_handlePairRequest] first) so it's scannable
+  /// immediately. Regenerated after every successful use.
+  String _qrToken = const Uuid().v4();
+  String get currentQrToken => _qrToken;
+  void regenerateQrToken() {
+    _qrToken = const Uuid().v4();
+    debugPrint("QR pairing token regenerated: $_qrToken");
+  }
+
   final List<ConnectedClient> _pairedClients = [];
   final Set<WebSocketChannel> _activeSockets = {};
   final Set<String> _activeTokens = {};
@@ -130,6 +141,7 @@ class ServerService {
     final app = Router();
     app.post(MirrorProtocol.apiPair, _handlePairRequest);
     app.post(MirrorProtocol.apiPairConfirm, (r) => _handlePairConfirm(r, port));
+    app.post(MirrorProtocol.apiPairQr, (r) => _handlePairQr(r, port));
     app.get(MirrorProtocol.wsPath, _handleWebSocketUpgrade);
 
     try {
@@ -188,29 +200,74 @@ class ServerService {
         return shelf.Response.forbidden(jsonEncode({'error': 'invalid_pin'}));
       }
 
-      final token = const Uuid().v4();
-      final ip =
-          request.context['shelf.io.connection_info'] as HttpConnectionInfo;
-      final client = MirrorDevice(
-        name: _pairingDeviceName ?? 'Android Phone',
-        ip: ip.remoteAddress.address,
+      final response = await _completePairing(
+        request: request,
         port: port,
-        token: token,
+        deviceName: _pairingDeviceName ?? 'Android Phone',
       );
-
-      _removeDuplicateClient(client);
-      _pairedClients.add(client);
-      await _savePairedClients();
 
       _currentPin = null;
       _pairingStateController.add(null);
-
-      debugPrint("Client paired successfully: ${client.name} (${client.ip})");
-      return shelf.Response.ok(
-          jsonEncode({'status': 'paired', 'token': token}));
+      return response;
     } catch (e) {
       return shelf.Response.internalServerError(body: 'Invalid payload');
     }
+  }
+
+  /// HTTP Endpoint: Confirm pairing via a scanned QR token.
+  ///
+  /// Unlike the PIN flow, [_qrToken] is proactively generated (not only
+  /// after a phone starts pairing), so the QR code shown on the Pair Device
+  /// screen is scannable from a cold start. The token is single-use: it's
+  /// regenerated after every successful (or attempted) confirmation so a
+  /// photo of an old QR code stops working.
+  Future<shelf.Response> _handlePairQr(shelf.Request request, int port) async {
+    final payload = await request.readAsString();
+    try {
+      final body = jsonDecode(payload);
+      final token = body['token'] as String?;
+      final deviceName = body['deviceName'] as String? ?? 'Android Phone';
+
+      if (token == null || token != _qrToken) {
+        regenerateQrToken();
+        return shelf.Response.forbidden(jsonEncode({'error': 'invalid_token'}));
+      }
+
+      final response = await _completePairing(
+        request: request,
+        port: port,
+        deviceName: deviceName,
+      );
+      regenerateQrToken();
+      return response;
+    } catch (e) {
+      return shelf.Response.internalServerError(body: 'Invalid payload');
+    }
+  }
+
+  /// Shared by both the PIN and QR pairing flows: mints an auth token, saves
+  /// the paired client, and returns the `{status, token}` response body.
+  Future<shelf.Response> _completePairing({
+    required shelf.Request request,
+    required int port,
+    required String deviceName,
+  }) async {
+    final token = const Uuid().v4();
+    final ip =
+        request.context['shelf.io.connection_info'] as HttpConnectionInfo;
+    final client = MirrorDevice(
+      name: deviceName,
+      ip: ip.remoteAddress.address,
+      port: port,
+      token: token,
+    );
+
+    _removeDuplicateClient(client);
+    _pairedClients.add(client);
+    await _savePairedClients();
+
+    debugPrint("Client paired successfully: ${client.name} (${client.ip})");
+    return shelf.Response.ok(jsonEncode({'status': 'paired', 'token': token}));
   }
 
   /// Drops any existing paired client with the same name or IP as [client],

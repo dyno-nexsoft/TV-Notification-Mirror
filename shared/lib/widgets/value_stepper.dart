@@ -1,11 +1,12 @@
-import 'package:shared/shared.dart';
+import '../shared.dart';
 
 /// A -/value/+ stepper used instead of [Slider] for settings that need to be
 /// adjustable by a D-pad remote: Material's [Slider] registers `Shortcuts`
 /// for all 4 arrow keys once focused (up/down/left/right all adjust its
 /// value), so there is no directional key left to move focus away from it —
 /// a real focus trap on TV. Two independently-focusable buttons don't have
-/// that problem.
+/// that problem. Used on both apps for a consistent look on overlay settings
+/// they share.
 class ValueStepper extends StatelessWidget {
   const ValueStepper({
     super.key,

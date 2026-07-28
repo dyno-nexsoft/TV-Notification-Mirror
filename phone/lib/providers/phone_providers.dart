@@ -169,6 +169,26 @@ class Connector extends _$Connector {
     });
   }
 
+  Future<bool> pairViaQr(String rawQrData) async {
+    final service = FlutterBackgroundService();
+    final completer = Completer<bool>();
+
+    StreamSubscription? sub;
+    sub = service.on('pairViaQrResult').listen((event) {
+      if (event != null) {
+        completer.complete(event['success'] as bool? ?? false);
+      }
+      sub?.cancel();
+    });
+
+    service.invoke('pairViaQr', {'rawQrData': rawQrData});
+
+    return completer.future.timeout(const Duration(seconds: 10), onTimeout: () {
+      sub?.cancel();
+      return false;
+    });
+  }
+
   void disconnect() {
     FlutterBackgroundService().invoke('disconnect');
   }
@@ -223,6 +243,22 @@ class Settings extends _$Settings {
     try {
       ref.read(connectorProvider.notifier).sendDndToggle(enabled);
       await FilterService.saveTvDnd(enabled);
+    } catch (e) {
+      state = previousState;
+      ref.read(appToastProvider.notifier).show('Error: $e');
+    }
+  }
+
+  Future<void> setMasterMirrorEnabled(bool enabled) async {
+    final current = state.value;
+    if (current == null) return;
+
+    final previousState = state;
+    state = AsyncData(current.copyWith(masterMirrorEnabled: enabled));
+
+    try {
+      await FilterService.saveMasterMirrorEnabled(enabled);
+      FlutterBackgroundService().invoke('reloadSettings');
     } catch (e) {
       state = previousState;
       ref.read(appToastProvider.notifier).show('Error: $e');
@@ -359,5 +395,9 @@ class History extends _$History {
 
   void addNotification(NotificationItem item) {
     state = [item, ...state];
+  }
+
+  void clearHistory() {
+    state = [];
   }
 }

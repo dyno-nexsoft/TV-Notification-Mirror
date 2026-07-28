@@ -3,22 +3,24 @@ import 'package:shared/shared.dart';
 
 import '../../providers/phone_providers.dart';
 import '../../services/connector_service.dart';
-import 'device_list_tile.dart';
-import 'status_card.dart';
+import '../../widgets/connect/device_list_tile.dart';
+import '../../widgets/connect/status_card.dart';
 
-/// The Connect tab — shows connection status, discovered devices list,
-/// and manual IP connect option using Yaru UI elements.
-class ConnectTab extends ConsumerWidget {
-  const ConnectTab({
+/// The Devices page — connection status, pairing entry points (QR/PIN/manual
+/// IP), and the list of TVs discovered on the local network.
+class PhoneDevicesScreen extends ConsumerWidget {
+  const PhoneDevicesScreen({
     super.key,
     required this.onSendTest,
     required this.onManualConnect,
     required this.onPairDevice,
+    required this.onScanQr,
   });
 
   final VoidCallback onSendTest;
   final VoidCallback onManualConnect;
   final ValueChanged<TVDevice> onPairDevice;
+  final VoidCallback onScanQr;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,19 +34,20 @@ class ConnectTab extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 24,
         children: [
-          StatusCard(
-            onSendTest: onSendTest,
-          ),
+          StatusCard(onSendTest: onSendTest),
           if (!isConnected) ...[
+            OutlinedButton.icon(
+              onPressed: onScanQr,
+              icon: const Icon(YaruIcons.scanner),
+              label: const Text('Scan QR to Pair'),
+            ),
             OutlinedButton.icon(
               onPressed: onManualConnect,
               icon: const Icon(YaruIcons.external_link),
               label: const Text('Connect with IP Address'),
             ),
             YaruSection(
-              headline: Text(
-                'Available TVs (${discoveredDevices.length})',
-              ),
+              headline: Text('Available TVs (${discoveredDevices.length})'),
               child: discoveredDevices.isEmpty
                   ? const _ScanningCard()
                   : ListView.builder(

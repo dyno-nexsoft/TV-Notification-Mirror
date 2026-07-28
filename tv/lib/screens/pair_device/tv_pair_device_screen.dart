@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:shared/shared.dart';
@@ -5,18 +7,21 @@ import 'package:shared/shared.dart';
 import '../../providers/tv_providers.dart';
 import '../../widgets/page_header.dart';
 
-/// Pair Device page: a QR code (scanned by the phone app) and, as a manual
-/// fallback, the same PIN shown broken into per-character boxes.
+/// Pair Device page: a QR code (scanned by the phone app's QR scanner) and,
+/// as a manual fallback, the 4-digit PIN shown broken into per-character
+/// boxes.
 ///
-/// The QR code currently just encodes the PIN as plain text — the phone app
-/// does not yet have a QR scanner, so this is a visual placeholder ahead of
-/// a real deep-link pairing protocol (out of scope for this refactor).
+/// The two paths are independent: the PIN only exists once a phone calls
+/// `POST /api/pair` first, while the QR token is generated proactively (see
+/// `ServerService._qrToken`) so it's scannable from a cold start, and is
+/// single-use — regenerated after every pairing attempt.
 class TvPairDeviceScreen extends ConsumerWidget {
   const TvPairDeviceScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final pairingPin = ref.watch(tvServiceStateProvider).pairingPin;
+    final serviceState = ref.watch(tvServiceStateProvider);
+    final tvIp = ref.watch(tvIpProvider).value;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
@@ -34,8 +39,13 @@ class TvPairDeviceScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: 20,
               children: [
-                Expanded(child: _QrCard(pin: pairingPin)),
-                Expanded(child: _ManualPinCard(pin: pairingPin)),
+                Expanded(
+                  child: _QrCard(
+                    tvIp: tvIp,
+                    qrToken: serviceState.qrToken,
+                  ),
+                ),
+                Expanded(child: _ManualPinCard(pin: serviceState.pairingPin)),
               ],
             ),
           ),
@@ -45,23 +55,46 @@ class TvPairDeviceScreen extends ConsumerWidget {
   }
 }
 
-class _QrCard extends StatelessWidget {
-  const _QrCard({required this.pin});
+class _QrCard extends ConsumerWidget {
+  const _QrCard({required this.tvIp, required this.qrToken});
 
-  final String? pin;
+  final String? tvIp;
+  final String? qrToken;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final ready = tvIp != null && qrToken != null;
+    final qrData = ready
+        ? jsonEncode({
+            'ip': tvIp,
+            'port': MirrorProtocol.defaultPort,
+            'token': qrToken,
+          })
+        : null;
+
     return YaruSection(
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           spacing: 16,
           children: [
-            const Text('Scan to Pair Device'),
-            if (pin != null)
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Text('Scan to Pair Device'),
+                const Spacer(),
+                IconButton(
+                  tooltip: 'Generate new code',
+                  icon: const Icon(YaruIcons.refresh),
+                  onPressed: () => ref
+                      .read(tvServiceStateProvider.notifier)
+                      .regenerateQrCode(),
+                ),
+              ],
+            ),
+            if (qrData != null)
               QrImageView(
-                data: pin!,
+                data: qrData,
                 size: 200,
               )
             else
@@ -72,8 +105,8 @@ class _QrCard extends StatelessWidget {
               ),
             const Text('Scan this code with your phone'),
             const Text(
-              "Open your phone's camera or the NotifyMirror mobile app to "
-              'pair it with this television instantly.',
+              "Open the NotifyMirror mobile app's QR scanner to pair it "
+              'with this television instantly.',
             ),
           ],
         ),

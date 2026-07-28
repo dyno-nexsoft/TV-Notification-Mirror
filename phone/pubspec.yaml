@@ -27,6 +27,8 @@ dependencies:
   flutter_background_service: ^5.1.0
   native_bridge:
     path: ../native_bridge
+  mobile_scanner: ^7.0.1
+  package_info_plus: ^8.1.2
 
 dev_dependencies:
   flutter_test:

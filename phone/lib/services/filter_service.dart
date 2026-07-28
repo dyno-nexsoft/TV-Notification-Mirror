@@ -42,7 +42,13 @@ class FilterService {
           prefs.getString('overlay_position') ?? MirrorProtocol.overlayTopRight,
       overlayDurationSeconds: prefs.getInt('overlay_duration_seconds') ?? 5,
       tvDndEnabled: prefs.getBool('tv_dnd_enabled') ?? false,
+      masterMirrorEnabled: prefs.getBool('master_mirror_enabled') ?? true,
     );
+  }
+
+  static Future<void> saveMasterMirrorEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('master_mirror_enabled', enabled);
   }
 
   static Future<void> saveQuietHours({
@@ -98,6 +104,7 @@ class AppSettings {
     required this.overlayPosition,
     required this.overlayDurationSeconds,
     required this.tvDndEnabled,
+    this.masterMirrorEnabled = true,
   });
   final bool quietHoursEnabled;
   final TimeOfDay quietHoursStart;
@@ -107,6 +114,11 @@ class AppSettings {
   final int overlayDurationSeconds;
   final bool tvDndEnabled;
 
+  /// Master switch for mirroring notifications to the TV at all. When
+  /// false, incoming notifications are never forwarded, regardless of any
+  /// per-app filter or quiet-hours setting.
+  final bool masterMirrorEnabled;
+
   AppSettings copyWith({
     bool? quietHoursEnabled,
     TimeOfDay? quietHoursStart,
@@ -115,6 +127,7 @@ class AppSettings {
     String? overlayPosition,
     int? overlayDurationSeconds,
     bool? tvDndEnabled,
+    bool? masterMirrorEnabled,
   }) {
     return AppSettings(
       quietHoursEnabled: quietHoursEnabled ?? this.quietHoursEnabled,
@@ -125,6 +138,7 @@ class AppSettings {
       overlayDurationSeconds:
           overlayDurationSeconds ?? this.overlayDurationSeconds,
       tvDndEnabled: tvDndEnabled ?? this.tvDndEnabled,
+      masterMirrorEnabled: masterMirrorEnabled ?? this.masterMirrorEnabled,
     );
   }
 }

@@ -97,6 +97,13 @@ void onStart(ServiceInstance service) async {
     service.invoke('pairingConfirmResult', {'success': success});
   });
 
+  service.on('pairViaQr').listen((event) async {
+    if (event == null) return;
+    final rawQrData = event['rawQrData'] as String;
+    final success = await connector.pairViaQr(rawQrData);
+    service.invoke('pairViaQrResult', {'success': success});
+  });
+
   service.on('disconnect').listen((_) {
     connector.disconnect();
   });
@@ -119,6 +126,11 @@ void onStart(ServiceInstance service) async {
 
   // Notification Listening & Filtering
   notificationService.notificationStream.listen((item) async {
+    if (!appSettings.masterMirrorEnabled) {
+      debugPrint("Mirroring disabled by master switch, ignoring notification.");
+      return;
+    }
+
     final isBlockedByKw = MirrorFilterEvaluator.findMatchingBlockedKeyword(
           item.title,
           item.text,

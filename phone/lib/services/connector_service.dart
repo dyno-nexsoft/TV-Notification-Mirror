@@ -139,29 +139,60 @@ class ConnectorService {
           )
           .timeout(const Duration(seconds: 5));
 
-      if (response.statusCode == 200) {
-        final body = jsonDecode(response.body);
-        final token = body['token'] as String;
-
-        await _storage.write(key: 'auth_token_${device.ip}', value: token);
-
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('connected_tv_ip', device.ip);
-        await prefs.setInt('connected_tv_port', device.port);
-        await prefs.setString('connected_tv_name', device.name);
-
-        _connectedTvIp = device.ip;
-        _connectedTvPort = device.port;
-        _connectedTvName = device.name;
-
-        connectToSavedTv();
-        return true;
-      }
-      return false;
+      return _completePairing(device, response);
     } catch (e) {
       debugPrint("Failed to confirm pairing: $e");
       return false;
     }
+  }
+
+  /// Pairs using a token scanned from the TV's QR code — skips the PIN step
+  /// entirely. [rawQrData] is the raw string decoded from the QR (JSON:
+  /// `{"ip", "port", "token"}`, see `TvPairDeviceScreen`).
+  Future<bool> pairViaQr(String rawQrData) async {
+    try {
+      final decoded = jsonDecode(rawQrData) as Map<String, dynamic>;
+      final ip = decoded['ip'] as String;
+      final port = decoded['port'] as int;
+      final token = decoded['token'] as String;
+      final device = TVDevice(name: 'Android TV', ip: ip, port: port);
+
+      final response = await http
+          .post(
+            Uri.parse('http://$ip:$port${MirrorProtocol.apiPairQr}'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'token': token, 'deviceName': 'Android Phone'}),
+          )
+          .timeout(const Duration(seconds: 5));
+
+      return await _completePairing(device, response);
+    } catch (e) {
+      debugPrint("Failed to pair via QR: $e");
+      return false;
+    }
+  }
+
+  /// Shared by [confirmPairing] and [pairViaQr]: on a successful `{status,
+  /// token}` response, saves the auth token + connected-TV info and connects.
+  Future<bool> _completePairing(TVDevice device, http.Response response) async {
+    if (response.statusCode != 200) return false;
+
+    final body = jsonDecode(response.body);
+    final token = body['token'] as String;
+
+    await _storage.write(key: 'auth_token_${device.ip}', value: token);
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('connected_tv_ip', device.ip);
+    await prefs.setInt('connected_tv_port', device.port);
+    await prefs.setString('connected_tv_name', device.name);
+
+    _connectedTvIp = device.ip;
+    _connectedTvPort = device.port;
+    _connectedTvName = device.name;
+
+    connectToSavedTv();
+    return true;
   }
 
   // Establish WebSocket connection

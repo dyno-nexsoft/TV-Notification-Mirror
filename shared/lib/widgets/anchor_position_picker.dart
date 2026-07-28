@@ -1,4 +1,4 @@
-import 'package:shared/shared.dart';
+import '../shared.dart';
 
 /// 2x2 grid to pick which screen corner the overlay toast anchors to.
 /// Only 4 positions exist in [MirrorProtocol] (the real anchors the overlay

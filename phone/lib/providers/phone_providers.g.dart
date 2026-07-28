@@ -133,7 +133,7 @@ final class ConnectorProvider
   }
 }
 
-String _$connectorHash() => r'fe1a45b95f41b5047499c615f654a7518d36c17e';
+String _$connectorHash() => r'ff0469b9d97dc3c56927e4fce0c971a58291a372';
 
 abstract class _$Connector extends $Notifier<PhoneConnectorState> {
   PhoneConnectorState build();
@@ -174,7 +174,7 @@ final class SettingsProvider
   Settings create() => Settings();
 }
 
-String _$settingsHash() => r'67008c6fba95c8f0a5f60747dd95fd38de4de1ea';
+String _$settingsHash() => r'a47967c93aff9ede725c3e70f469cfae3277275d';
 
 abstract class _$Settings extends $AsyncNotifier<AppSettings> {
   FutureOr<AppSettings> build();
@@ -265,7 +265,7 @@ final class HistoryProvider
   }
 }
 
-String _$historyHash() => r'd9a751fbaab3917d65b1b57131aa421e78ca0548';
+String _$historyHash() => r'1808e5a96d23509062fb46f8162231595c0ca07a';
 
 abstract class _$History extends $Notifier<List<NotificationItem>> {
   List<NotificationItem> build();

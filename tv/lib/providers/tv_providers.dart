@@ -98,6 +98,7 @@ Future<String> tvIp(Ref ref) async {
 class TvServiceData {
   const TvServiceData({
     this.pairingPin,
+    this.qrToken,
     this.isRunning = false,
     this.isDnd = false,
     this.pairedClients = const [],
@@ -106,6 +107,7 @@ class TvServiceData {
   });
 
   final String? pairingPin;
+  final String? qrToken;
   final bool isRunning;
   final bool isDnd;
   final List<MirrorDevice> pairedClients;
@@ -114,6 +116,7 @@ class TvServiceData {
 
   TvServiceData copyWith({
     String? pairingPin,
+    String? qrToken,
     bool? isRunning,
     bool? isDnd,
     List<MirrorDevice>? pairedClients,
@@ -122,6 +125,7 @@ class TvServiceData {
   }) {
     return TvServiceData(
       pairingPin: pairingPin ?? this.pairingPin,
+      qrToken: qrToken ?? this.qrToken,
       isRunning: isRunning ?? this.isRunning,
       isDnd: isDnd ?? this.isDnd,
       pairedClients: pairedClients ?? this.pairedClients,
@@ -159,6 +163,7 @@ class TvServiceState extends _$TvServiceState {
             [];
         state = TvServiceData(
           pairingPin: data['pin'],
+          qrToken: data['qrToken'],
           isRunning: data['isRunning'] ?? false,
           isDnd: data['isDnd'] ?? false,
           pairedClients: clientsList,
@@ -217,6 +222,10 @@ class TvServiceState extends _$TvServiceState {
 
   void clearHistory() {
     FlutterBackgroundService().invoke('clearHistory');
+  }
+
+  void regenerateQrCode() {
+    FlutterBackgroundService().invoke('regenerateQrToken');
   }
 
   void testOverlay() {

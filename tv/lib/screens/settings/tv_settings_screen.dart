@@ -5,9 +5,7 @@ import 'package:shared/shared.dart';
 import '../../providers/tv_settings_provider.dart';
 import '../../services/overlay_service.dart';
 import '../../services/tv_settings_service.dart';
-import '../../widgets/anchor_position_picker.dart';
 import '../../widgets/page_header.dart';
-import '../../widgets/value_stepper.dart';
 
 part 'tv_settings_general.dart';
 part 'tv_settings_display.dart';

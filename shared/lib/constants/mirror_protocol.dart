@@ -14,6 +14,9 @@ class MirrorProtocol {
   /// REST API endpoint for confirming pairing PIN (POST).
   static const apiPairConfirm = '/api/pair/confirm';
 
+  /// REST API endpoint for confirming pairing via a scanned QR token (POST).
+  static const apiPairQr = '/api/pair/qr';
+
   /// WebSocket endpoint path.
   static const wsPath = '/ws';
 

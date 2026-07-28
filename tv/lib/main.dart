@@ -8,11 +8,7 @@ import 'services/background_service.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   initializeBackgroundService();
-  runApp(
-    const ProviderScope(
-      child: MyApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 /// TV Root Application Widget. Configured with Yaru UI theme.

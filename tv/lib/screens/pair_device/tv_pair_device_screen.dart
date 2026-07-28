@@ -31,7 +31,8 @@ class TvPairDeviceScreen extends ConsumerWidget {
         children: [
           const PageHeader(
             title: 'Pair Device',
-            subtitle: 'Connect your mobile device to receive notifications '
+            subtitle:
+                'Connect your mobile device to receive notifications '
                 'directly on your television screen while you watch.',
           ),
           Expanded(
@@ -40,10 +41,7 @@ class TvPairDeviceScreen extends ConsumerWidget {
               spacing: 20,
               children: [
                 Expanded(
-                  child: _QrCard(
-                    tvIp: tvIp,
-                    qrToken: serviceState.qrToken,
-                  ),
+                  child: _QrCard(tvIp: tvIp, qrToken: serviceState.qrToken),
                 ),
                 Expanded(child: _ManualPinCard(pin: serviceState.pairingPin)),
               ],

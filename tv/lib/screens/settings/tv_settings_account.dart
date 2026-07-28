@@ -24,10 +24,7 @@ class _AccountSection extends StatelessWidget {
               spacing: 8,
               children: [
                 OutlinedButton(onPressed: null, child: Text('Sign Out')),
-                FilledButton(
-                  onPressed: null,
-                  child: Text('Manage Account'),
-                ),
+                FilledButton(onPressed: null, child: Text('Manage Account')),
               ],
             ),
           ),

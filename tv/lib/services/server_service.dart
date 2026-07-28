@@ -115,8 +115,9 @@ class ServerService {
         final List decoded = jsonDecode(jsonStr);
         _pairedClients.clear();
         for (final item in decoded) {
-          _pairedClients
-              .add(MirrorDevice.fromJson(Map<String, dynamic>.from(item)));
+          _pairedClients.add(
+            MirrorDevice.fromJson(Map<String, dynamic>.from(item)),
+          );
         }
         _clientsController.add(List.from(_pairedClients));
       } catch (e) {
@@ -181,7 +182,8 @@ class ServerService {
       _pairingStateController.add(_currentPin);
 
       debugPrint(
-          "Pairing initiated from $_pairingDeviceName. Generated PIN: $_currentPin");
+        "Pairing initiated from $_pairingDeviceName. Generated PIN: $_currentPin",
+      );
       return shelf.Response.ok(jsonEncode({'status': 'pin_generated'}));
     } catch (e) {
       return shelf.Response.internalServerError(body: 'Invalid payload');
@@ -190,7 +192,9 @@ class ServerService {
 
   /// HTTP Endpoint: Confirm PIN and retrieve Token.
   Future<shelf.Response> _handlePairConfirm(
-      shelf.Request request, int port) async {
+    shelf.Request request,
+    int port,
+  ) async {
     final payload = await request.readAsString();
     try {
       final body = jsonDecode(payload);
@@ -293,7 +297,8 @@ class ServerService {
       }
     }
     debugPrint(
-        "Removed old duplicate client: ${oldClient.name} (${oldClient.ip})");
+      "Removed old duplicate client: ${oldClient.name} (${oldClient.ip})",
+    );
   }
 
   /// WebSocket Endpoint: Real-time communication with a paired phone.
@@ -331,8 +336,9 @@ class ServerService {
   void _touchLastSynced(String token) {
     final index = _pairedClients.indexWhere((c) => c.token == token);
     if (index == -1) return;
-    _pairedClients[index] = _pairedClients[index]
-        .copyWith(lastSyncedAt: DateTime.now().millisecondsSinceEpoch);
+    _pairedClients[index] = _pairedClients[index].copyWith(
+      lastSyncedAt: DateTime.now().millisecondsSinceEpoch,
+    );
     _savePairedClients();
   }
 
@@ -379,10 +385,12 @@ class ServerService {
   }
 
   void _handlePing(WebSocketChannel socket) {
-    socket.sink.add(jsonEncode({
-      'event': MirrorProtocol.eventPong,
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-    }));
+    socket.sink.add(
+      jsonEncode({
+        'event': MirrorProtocol.eventPong,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      }),
+    );
   }
 
   void _handleClientDisconnect(WebSocketChannel socket) {
@@ -408,7 +416,8 @@ class ServerService {
 
     var item = NotificationItem.fromJson(data);
 
-    final isCall = item.category == NotificationCategory.voiceCall ||
+    final isCall =
+        item.category == NotificationCategory.voiceCall ||
         item.category == NotificationCategory.videoCall;
     final isMessage = item.category == NotificationCategory.message;
     if (isCall && !_settings.callNotificationsEnabled) {
@@ -430,7 +439,8 @@ class ServerService {
     }
 
     debugPrint(
-        "Displaying notification: ${item.title} - ${item.text} from ${item.appName}");
+      "Displaying notification: ${item.title} - ${item.text} from ${item.appName}",
+    );
     _overlayController.add({
       'action': 'show',
       'title': item.title,

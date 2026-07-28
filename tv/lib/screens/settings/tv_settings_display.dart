@@ -26,18 +26,9 @@ class _DisplaySection extends ConsumerWidget {
                 const Text('Appearance'),
                 SegmentedButton<ThemeMode>(
                   segments: const [
-                    ButtonSegment(
-                      value: ThemeMode.dark,
-                      label: Text('Dark'),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.light,
-                      label: Text('Light'),
-                    ),
-                    ButtonSegment(
-                      value: ThemeMode.system,
-                      label: Text('Auto'),
-                    ),
+                    ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
+                    ButtonSegment(value: ThemeMode.light, label: Text('Light')),
+                    ButtonSegment(value: ThemeMode.system, label: Text('Auto')),
                   ],
                   selected: {settings.themeMode},
                   onSelectionChanged: (selection) =>

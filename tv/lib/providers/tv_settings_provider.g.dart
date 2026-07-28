@@ -24,15 +24,15 @@ final class TvSettingsNotifierProvider
   /// filters). Every setter persists first, then notifies the background
   /// isolate to reload so `ServerService`/overlay dispatch stay in sync.
   TvSettingsNotifierProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'tvSettingsProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'tvSettingsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$tvSettingsNotifierHash();
@@ -63,8 +63,14 @@ abstract class _$TvSettingsNotifier extends $Notifier<TvSettings> {
   @override
   WhenComplete runBuild() {
     final ref = this.ref as $Ref<TvSettings, TvSettings>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<TvSettings, TvSettings>, TvSettings, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<TvSettings, TvSettings>,
+              TvSettings,
+              Object?,
+              Object?
+            >;
     return element.handleCreate(ref, build);
   }
 }

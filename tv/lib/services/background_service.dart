@@ -22,10 +22,7 @@ Future<void> initializeBackgroundService() async {
       foregroundServiceNotificationId: 999,
       foregroundServiceTypes: [AndroidForegroundType.connectedDevice],
     ),
-    iosConfiguration: IosConfiguration(
-      autoStart: false,
-      onForeground: onStart,
-    ),
+    iosConfiguration: IosConfiguration(autoStart: false, onForeground: onStart),
   );
 }
 
@@ -88,12 +85,14 @@ void onStart(ServiceInstance service) async {
         'isRunning': server.isRunning,
         'isDnd': server.isDndEnabled,
         'clients': server.pairedClients
-            .map((c) => {
-                  'deviceName': c.name,
-                  'ip': c.ip,
-                  'token': c.token,
-                  'lastSyncedAt': c.lastSyncedAt,
-                })
+            .map(
+              (c) => {
+                'deviceName': c.name,
+                'ip': c.ip,
+                'token': c.token,
+                'lastSyncedAt': c.lastSyncedAt,
+              },
+            )
             .toList(),
         // Which tokens currently have an active WebSocket connection.
         'activeTokens': server.activeTokens.toList(),
@@ -118,8 +117,9 @@ void onStart(ServiceInstance service) async {
   service.on('removeClient').listen((event) {
     if (event != null && event['token'] != null) {
       final token = event['token'] as String;
-      final clientToRemove =
-          server.pairedClients.firstWhere((c) => c.token == token);
+      final clientToRemove = server.pairedClients.firstWhere(
+        (c) => c.token == token,
+      );
       server.removeClient(clientToRemove);
       debugPrint("Removed client: ${clientToRemove.name}");
     }
@@ -128,7 +128,9 @@ void onStart(ServiceInstance service) async {
   service.on('renameClient').listen((event) async {
     if (event != null && event['token'] != null && event['newName'] != null) {
       await server.renameClient(
-          event['token'] as String, event['newName'] as String);
+        event['token'] as String,
+        event['newName'] as String,
+      );
       debugPrint("Renamed client ${event['token']} to ${event['newName']}");
     }
   });

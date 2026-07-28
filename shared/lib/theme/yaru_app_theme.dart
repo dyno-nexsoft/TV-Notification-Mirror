@@ -37,16 +37,20 @@ class YaruAppTheme {
     }
 
     final iconSide = WidgetStateProperty.resolveWith<BorderSide?>(
-        (states) => getSide(states));
+      (states) => getSide(states),
+    );
     final elevatedSide = WidgetStateProperty.resolveWith<BorderSide?>(
-        (states) => getSide(states));
+      (states) => getSide(states),
+    );
     final outlinedSide = WidgetStateProperty.resolveWith<BorderSide?>((states) {
       return getSide(states, BorderSide(color: theme.colorScheme.outline));
     });
     final textSide = WidgetStateProperty.resolveWith<BorderSide?>(
-        (states) => getSide(states));
+      (states) => getSide(states),
+    );
     final filledSide = WidgetStateProperty.resolveWith<BorderSide?>(
-        (states) => getSide(states));
+      (states) => getSide(states),
+    );
 
     return theme.copyWith(
       iconButtonTheme: IconButtonThemeData(
@@ -55,16 +59,12 @@ class YaruAppTheme {
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
-        style:
-            (theme.elevatedButtonTheme.style ?? const ButtonStyle()).copyWith(
-          side: elevatedSide,
-        ),
+        style: (theme.elevatedButtonTheme.style ?? const ButtonStyle())
+            .copyWith(side: elevatedSide),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style:
-            (theme.outlinedButtonTheme.style ?? const ButtonStyle()).copyWith(
-          side: outlinedSide,
-        ),
+        style: (theme.outlinedButtonTheme.style ?? const ButtonStyle())
+            .copyWith(side: outlinedSide),
       ),
       textButtonTheme: TextButtonThemeData(
         style: (theme.textButtonTheme.style ?? const ButtonStyle()).copyWith(

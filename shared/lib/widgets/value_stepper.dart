@@ -35,9 +35,7 @@ class ValueStepper extends StatelessWidget {
               ? () => onChanged((value - step).clamp(min, max))
               : null,
         ),
-        Expanded(
-          child: Text(label, textAlign: TextAlign.center),
-        ),
+        Expanded(child: Text(label, textAlign: TextAlign.center)),
         IconButton(
           icon: const Icon(YaruIcons.plus),
           onPressed: value < max

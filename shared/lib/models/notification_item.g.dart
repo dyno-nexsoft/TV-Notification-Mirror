@@ -17,8 +17,11 @@ _NotificationItem _$NotificationItemFromJson(Map<String, dynamic> json) =>
       appIcon: json['appIcon'] as String?,
       overlayPosition: json['overlayPosition'] as String?,
       overlayDuration: (json['overlayDuration'] as num?)?.toInt(),
-      category: $enumDecodeNullable(
-              _$NotificationCategoryEnumMap, json['category']) ??
+      category:
+          $enumDecodeNullable(
+            _$NotificationCategoryEnumMap,
+            json['category'],
+          ) ??
           NotificationCategory.generic,
     );
 

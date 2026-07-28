@@ -42,17 +42,19 @@ class TvSettingsNotifier extends _$TvSettingsNotifier {
   Future<void> setOverlayDurationSeconds(int seconds) =>
       _update(state.copyWith(overlayDurationSeconds: seconds));
 
-  Future<void> setAlertSoundUri(String? uri) => _update(TvSettings(
-        themeMode: state.themeMode,
-        launchOnBoot: state.launchOnBoot,
-        overlayOpacity: state.overlayOpacity,
-        anchorPosition: state.anchorPosition,
-        overlayDurationSeconds: state.overlayDurationSeconds,
-        alertSoundUri: uri,
-        callNotificationsEnabled: state.callNotificationsEnabled,
-        textNotificationsEnabled: state.textNotificationsEnabled,
-        imagePreviewsEnabled: state.imagePreviewsEnabled,
-      ));
+  Future<void> setAlertSoundUri(String? uri) => _update(
+    TvSettings(
+      themeMode: state.themeMode,
+      launchOnBoot: state.launchOnBoot,
+      overlayOpacity: state.overlayOpacity,
+      anchorPosition: state.anchorPosition,
+      overlayDurationSeconds: state.overlayDurationSeconds,
+      alertSoundUri: uri,
+      callNotificationsEnabled: state.callNotificationsEnabled,
+      textNotificationsEnabled: state.textNotificationsEnabled,
+      imagePreviewsEnabled: state.imagePreviewsEnabled,
+    ),
+  );
 
   Future<void> setCallNotificationsEnabled(bool enabled) =>
       _update(state.copyWith(callNotificationsEnabled: enabled));
@@ -64,9 +66,11 @@ class TvSettingsNotifier extends _$TvSettingsNotifier {
       _update(state.copyWith(imagePreviewsEnabled: enabled));
 
   /// Bulk toggle for the NOTIFICATIONS section's master switch.
-  Future<void> setAllNotificationTypes(bool enabled) => _update(state.copyWith(
-        callNotificationsEnabled: enabled,
-        textNotificationsEnabled: enabled,
-        imagePreviewsEnabled: enabled,
-      ));
+  Future<void> setAllNotificationTypes(bool enabled) => _update(
+    state.copyWith(
+      callNotificationsEnabled: enabled,
+      textNotificationsEnabled: enabled,
+      imagePreviewsEnabled: enabled,
+    ),
+  );
 }

@@ -21,7 +21,7 @@ const _navItems = [
   (
     page: TvNavPage.manageDevices,
     icon: YaruIcons.smartphone,
-    label: 'Manage Devices'
+    label: 'Manage Devices',
   ),
   (page: TvNavPage.pairDevice, icon: YaruIcons.scanner, label: 'Pair Device'),
   (page: TvNavPage.settings, icon: YaruIcons.settings, label: 'Settings'),
@@ -86,8 +86,9 @@ class _TvMainScreenState extends ConsumerState<TvMainScreen>
     });
 
     final selectedPage = ref.watch(tvNavIndexProvider);
-    final selectedIndex =
-        _navItems.indexWhere((item) => item.page == selectedPage);
+    final selectedIndex = _navItems.indexWhere(
+      (item) => item.page == selectedPage,
+    );
     final isServerRunning = ref.watch(tvServiceStateProvider).isRunning;
 
     return PopScope(

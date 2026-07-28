@@ -3,13 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 part 'tv_nav_provider.g.dart';
 
 /// The 5 top-level pages reachable from the TV app's navigation rail.
-enum TvNavPage {
-  home,
-  history,
-  manageDevices,
-  pairDevice,
-  settings,
-}
+enum TvNavPage { home, history, manageDevices, pairDevice, settings }
 
 @riverpod
 class TvNavIndex extends _$TvNavIndex {

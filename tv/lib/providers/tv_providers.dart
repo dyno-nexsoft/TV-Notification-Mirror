@@ -151,14 +151,22 @@ class TvServiceState extends _$TvServiceState {
 
     _stateSub = service.on('stateUpdate').listen((data) {
       if (data != null) {
-        final clientsList = (data['clients'] as List?)
-                ?.map((e) =>
-                    MirrorDevice.fromJson(Map<String, dynamic>.from(e as Map)))
+        final clientsList =
+            (data['clients'] as List?)
+                ?.map(
+                  (e) => MirrorDevice.fromJson(
+                    Map<String, dynamic>.from(e as Map),
+                  ),
+                )
                 .toList() ??
             [];
-        final historyList = (data['history'] as List?)
-                ?.map((e) => NotificationItem.fromJson(
-                    Map<String, dynamic>.from(e as Map)))
+        final historyList =
+            (data['history'] as List?)
+                ?.map(
+                  (e) => NotificationItem.fromJson(
+                    Map<String, dynamic>.from(e as Map),
+                  ),
+                )
                 .toList() ??
             [];
         state = TvServiceData(
@@ -207,8 +215,9 @@ class TvServiceState extends _$TvServiceState {
   }
 
   void setDndForDuration(Duration duration) {
-    FlutterBackgroundService()
-        .invoke('setDndForDuration', {'minutes': duration.inMinutes});
+    FlutterBackgroundService().invoke('setDndForDuration', {
+      'minutes': duration.inMinutes,
+    });
   }
 
   void removeClient(String token) {
@@ -216,8 +225,10 @@ class TvServiceState extends _$TvServiceState {
   }
 
   void renameClient(String token, String newName) {
-    FlutterBackgroundService()
-        .invoke('renameClient', {'token': token, 'newName': newName});
+    FlutterBackgroundService().invoke('renameClient', {
+      'token': token,
+      'newName': newName,
+    });
   }
 
   void clearHistory() {

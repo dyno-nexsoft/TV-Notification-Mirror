@@ -76,8 +76,9 @@ class _MiniScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final lineColor =
-        selected ? theme.colorScheme.onPrimary : theme.colorScheme.outline;
+    final lineColor = selected
+        ? theme.colorScheme.onPrimary
+        : theme.colorScheme.outline;
 
     return Padding(
       padding: const EdgeInsets.all(6),
@@ -93,10 +94,7 @@ class _MiniScreen extends StatelessWidget {
           child: Container(
             width: 8,
             height: 8,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: lineColor,
-            ),
+            decoration: BoxDecoration(shape: BoxShape.circle, color: lineColor),
           ),
         ),
       ),

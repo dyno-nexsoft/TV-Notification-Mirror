@@ -12,9 +12,9 @@ class _PermissionWarningBanner extends ConsumerWidget {
     final missingOverlay = !permissions.hasOverlayPermission;
     final message = missingOverlay
         ? 'This application requires Overlay Permission to display '
-            'notifications over other apps.'
+              'notifications over other apps.'
         : 'This application requires Notification Permission to run '
-            'background connectivity.';
+              'background connectivity.';
     final buttonLabel = missingOverlay
         ? 'Grant Overlay Permission'
         : 'Grant Notification Permission';
@@ -22,10 +22,7 @@ class _PermissionWarningBanner extends ConsumerWidget {
     return YaruSection(
       headline: const Row(
         spacing: 8,
-        children: [
-          Icon(YaruIcons.warning),
-          Text('Permission Needed'),
-        ],
+        children: [Icon(YaruIcons.warning), Text('Permission Needed')],
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),

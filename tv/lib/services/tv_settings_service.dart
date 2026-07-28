@@ -99,17 +99,25 @@ class TvSettingsService {
     await prefs.setDouble(_keyOverlayOpacity, settings.overlayOpacity);
     await prefs.setString(_keyAnchorPosition, settings.anchorPosition);
     await prefs.setInt(
-        _keyOverlayDurationSeconds, settings.overlayDurationSeconds);
+      _keyOverlayDurationSeconds,
+      settings.overlayDurationSeconds,
+    );
     if (settings.alertSoundUri != null) {
       await prefs.setString(_keyAlertSoundUri, settings.alertSoundUri!);
     } else {
       await prefs.remove(_keyAlertSoundUri);
     }
     await prefs.setBool(
-        _keyCallNotificationsEnabled, settings.callNotificationsEnabled);
+      _keyCallNotificationsEnabled,
+      settings.callNotificationsEnabled,
+    );
     await prefs.setBool(
-        _keyTextNotificationsEnabled, settings.textNotificationsEnabled);
+      _keyTextNotificationsEnabled,
+      settings.textNotificationsEnabled,
+    );
     await prefs.setBool(
-        _keyImagePreviewsEnabled, settings.imagePreviewsEnabled);
+      _keyImagePreviewsEnabled,
+      settings.imagePreviewsEnabled,
+    );
   }
 }

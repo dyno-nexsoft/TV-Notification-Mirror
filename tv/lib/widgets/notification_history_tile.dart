@@ -10,8 +10,9 @@ class NotificationHistoryTile extends StatelessWidget {
   final NotificationItem item;
 
   String get _relativeTime {
-    final diff = DateTime.now()
-        .difference(DateTime.fromMillisecondsSinceEpoch(item.postTime));
+    final diff = DateTime.now().difference(
+      DateTime.fromMillisecondsSinceEpoch(item.postTime),
+    );
     if (diff.inMinutes < 1) return 'Just now';
     if (diff.inMinutes < 60) return '${diff.inMinutes} minutes ago';
     if (diff.inHours < 24) return '${diff.inHours} hours ago';
@@ -78,11 +79,7 @@ class NotificationHistoryTile extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Text(
-                    item.text,
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                  Text(item.text, maxLines: 2, overflow: TextOverflow.ellipsis),
                 ],
               ),
             ),

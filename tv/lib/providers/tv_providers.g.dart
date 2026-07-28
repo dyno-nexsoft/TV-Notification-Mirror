@@ -14,15 +14,15 @@ final appToastProvider = AppToastProvider._();
 
 final class AppToastProvider extends $NotifierProvider<AppToast, ToastData?> {
   AppToastProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'appToastProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'appToastProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$appToastHash();
@@ -48,8 +48,14 @@ abstract class _$AppToast extends $Notifier<ToastData?> {
   @override
   WhenComplete runBuild() {
     final ref = this.ref as $Ref<ToastData?, ToastData?>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<ToastData?, ToastData?>, ToastData?, Object?, Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<ToastData?, ToastData?>,
+              ToastData?,
+              Object?,
+              Object?
+            >;
     return element.handleCreate(ref, build);
   }
 }
@@ -60,15 +66,15 @@ final tvPermissionsProvider = TvPermissionsProvider._();
 final class TvPermissionsProvider
     extends $AsyncNotifierProvider<TvPermissions, TvPermissionsState> {
   TvPermissionsProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'tvPermissionsProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'tvPermissionsProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$tvPermissionsHash();
@@ -87,11 +93,14 @@ abstract class _$TvPermissions extends $AsyncNotifier<TvPermissionsState> {
   WhenComplete runBuild() {
     final ref =
         this.ref as $Ref<AsyncValue<TvPermissionsState>, TvPermissionsState>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<AsyncValue<TvPermissionsState>, TvPermissionsState>,
-        AsyncValue<TvPermissionsState>,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<AsyncValue<TvPermissionsState>, TvPermissionsState>,
+              AsyncValue<TvPermissionsState>,
+              Object?,
+              Object?
+            >;
     return element.handleCreate(ref, build);
   }
 }
@@ -103,15 +112,15 @@ final class TvIpProvider
     extends $FunctionalProvider<AsyncValue<String>, String, FutureOr<String>>
     with $FutureModifier<String>, $FutureProvider<String> {
   TvIpProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'tvIpProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'tvIpProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$tvIpHash();
@@ -135,15 +144,15 @@ final tvServiceStateProvider = TvServiceStateProvider._();
 final class TvServiceStateProvider
     extends $NotifierProvider<TvServiceState, TvServiceData> {
   TvServiceStateProvider._()
-      : super(
-          from: null,
-          argument: null,
-          retry: null,
-          name: r'tvServiceStateProvider',
-          isAutoDispose: false,
-          dependencies: null,
-          $allTransitiveDependencies: null,
-        );
+    : super(
+        from: null,
+        argument: null,
+        retry: null,
+        name: r'tvServiceStateProvider',
+        isAutoDispose: false,
+        dependencies: null,
+        $allTransitiveDependencies: null,
+      );
 
   @override
   String debugGetCreateSourceHash() => _$tvServiceStateHash();
@@ -169,11 +178,14 @@ abstract class _$TvServiceState extends $Notifier<TvServiceData> {
   @override
   WhenComplete runBuild() {
     final ref = this.ref as $Ref<TvServiceData, TvServiceData>;
-    final element = ref.element as $ClassProviderElement<
-        AnyNotifier<TvServiceData, TvServiceData>,
-        TvServiceData,
-        Object?,
-        Object?>;
+    final element =
+        ref.element
+            as $ClassProviderElement<
+              AnyNotifier<TvServiceData, TvServiceData>,
+              TvServiceData,
+              Object?,
+              Object?
+            >;
     return element.handleCreate(ref, build);
   }
 }

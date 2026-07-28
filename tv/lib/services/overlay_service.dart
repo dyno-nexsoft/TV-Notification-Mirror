@@ -4,8 +4,9 @@ import 'package:flutter/services.dart';
 /// Bridges to the native Kotlin overlay window (SYSTEM_ALERT_WINDOW) and its
 /// runtime permissions, since Flutter has no built-in overlay-window API.
 class OverlayService {
-  static const _channel =
-      MethodChannel('com.dyno.tv_notification_mirror/overlay');
+  static const _channel = MethodChannel(
+    'com.dyno.tv_notification_mirror/overlay',
+  );
 
   static Future<bool> checkPermission() async {
     try {
@@ -27,8 +28,9 @@ class OverlayService {
 
   static Future<bool> checkNotificationPermission() async {
     try {
-      final bool hasPermission =
-          await _channel.invokeMethod('checkNotificationPermission');
+      final bool hasPermission = await _channel.invokeMethod(
+        'checkNotificationPermission',
+      );
       return hasPermission;
     } on PlatformException catch (e) {
       debugPrint("Failed to check notification permission: ${e.message}");

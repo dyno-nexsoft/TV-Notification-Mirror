@@ -59,10 +59,7 @@ class _EmptyHistory extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         spacing: 12,
-        children: [
-          Icon(YaruIcons.notification),
-          Text('No notifications yet.'),
-        ],
+        children: [Icon(YaruIcons.notification), Text('No notifications yet.')],
       ),
     );
   }

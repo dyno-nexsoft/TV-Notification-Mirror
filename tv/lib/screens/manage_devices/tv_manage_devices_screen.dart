@@ -37,11 +37,11 @@ class TvManageDevicesScreen extends ConsumerWidget {
                 : GridView.builder(
                     gridDelegate:
                         const SliverGridDelegateWithMaxCrossAxisExtent(
-                      maxCrossAxisExtent: 340,
-                      mainAxisExtent: 160,
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
+                          maxCrossAxisExtent: 340,
+                          mainAxisExtent: 160,
+                          crossAxisSpacing: 16,
+                          mainAxisSpacing: 16,
+                        ),
                     itemCount: pairedClients.length + 1,
                     itemBuilder: (context, index) {
                       if (index == pairedClients.length) {
@@ -119,10 +119,7 @@ class _AddDeviceCard extends StatelessWidget {
         child: const Column(
           mainAxisAlignment: MainAxisAlignment.center,
           spacing: 8,
-          children: [
-            Icon(YaruIcons.plus),
-            Text('Add device via QR code'),
-          ],
+          children: [Icon(YaruIcons.plus), Text('Add device via QR code')],
         ),
       ),
     );
@@ -138,10 +135,7 @@ class _EmptyDevices extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         spacing: 12,
-        children: [
-          Icon(YaruIcons.phone),
-          Text('No devices paired yet.'),
-        ],
+        children: [Icon(YaruIcons.phone), Text('No devices paired yet.')],
       ),
     );
   }

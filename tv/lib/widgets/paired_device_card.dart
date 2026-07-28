@@ -20,8 +20,9 @@ class PairedDeviceCard extends StatelessWidget {
 
   String get _lastSyncedLabel {
     if (lastSyncedAt == null) return 'Never synced';
-    final diff = DateTime.now()
-        .difference(DateTime.fromMillisecondsSinceEpoch(lastSyncedAt!));
+    final diff = DateTime.now().difference(
+      DateTime.fromMillisecondsSinceEpoch(lastSyncedAt!),
+    );
     if (diff.inMinutes < 1) return 'Last synced: Just now';
     if (diff.inMinutes < 60) {
       return 'Last synced: ${diff.inMinutes} minutes ago';
@@ -77,10 +78,7 @@ class PairedDeviceCard extends StatelessWidget {
           Row(
             spacing: 8,
             children: [
-              OutlinedButton(
-                onPressed: onRename,
-                child: const Text('Rename'),
-              ),
+              OutlinedButton(onPressed: onRename, child: const Text('Rename')),
               OutlinedButton.icon(
                 onPressed: onRemove,
                 icon: const Icon(YaruIcons.trash),

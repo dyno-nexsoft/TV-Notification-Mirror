@@ -248,16 +248,9 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    /// Builds the overlay's rounded background at runtime so [opacity] (0..1)
-    /// is adjustable — replaces the old static `overlay_background` drawable.
-    private fun buildOverlayBackground(opacity: Double): GradientDrawable {
-        val alpha = (opacity.coerceIn(0.0, 1.0) * 255).toInt()
-        return GradientDrawable().apply {
-            shape = GradientDrawable.RECTANGLE
-            cornerRadius = 16f * resources.displayMetrics.density
-            setColor(android.graphics.Color.argb(alpha, 0x20, 0x21, 0x24))
-            setStroke((1f * resources.displayMetrics.density).toInt(), 0x1AFFFFFF)
-        }
+    /// Applies opacity (0..1) to the overlay root by adjusting its alpha.
+    private fun applyOverlayOpacity(opacity: Double) {
+        overlayView?.alpha = opacity.coerceIn(0.0, 1.0).toFloat()
     }
 
     private fun showNotificationOverlay(
@@ -286,65 +279,72 @@ class MainActivity : FlutterActivity() {
                 val view = inflater.inflate(R.layout.notification_overlay_layout, null)
                 overlayView = view
 
-                view.findViewById<View>(R.id.overlayRoot)?.background = buildOverlayBackground(opacity)
                 view.findViewById<TextView>(R.id.titleText)?.text = title
                 view.findViewById<TextView>(R.id.bodyText)?.text = text
                 view.findViewById<TextView>(R.id.timeText)?.text = "Just now"
+                applyOverlayOpacity(opacity)
 
                 val isCall = category == "voice_call" || category == "video_call"
                 val isMessage = category == "message"
 
+                // Header icon + app name
+                val headerIcon = view.findViewById<ImageView>(R.id.headerIcon)
                 val appNameText = view.findViewById<TextView>(R.id.appNameText)
-                val timeGroup = view.findViewById<View>(R.id.timeGroup)
                 when (category) {
                     "voice_call" -> {
+                        headerIcon?.setImageResource(R.drawable.ic_call)
                         appNameText?.text = "INCOMING CALL"
-                        timeGroup?.visibility = View.GONE
                     }
                     "video_call" -> {
+                        headerIcon?.setImageResource(R.drawable.ic_videocam)
                         appNameText?.text = "INCOMING VIDEO CALL"
-                        timeGroup?.visibility = View.GONE
+                    }
+                    "message" -> {
+                        headerIcon?.setImageResource(R.drawable.ic_chat)
+                        appNameText?.text = appName.uppercase()
                     }
                     else -> {
-                        appNameText?.text = appName
-                        timeGroup?.visibility = View.VISIBLE
+                        headerIcon?.setImageResource(R.drawable.ic_notification_bell)
+                        appNameText?.text = appName.uppercase()
                     }
                 }
 
+                // Avatar: use base64 icon for app icon or generic; use person placeholder for calls/messages
+                val avatarImage = view.findViewById<ImageView>(R.id.avatarImage)
                 val fallbackGlyph = view.findViewById<ImageView>(R.id.fallbackGlyph)
-                fallbackGlyph?.setImageResource(
-                    if (isCall || isMessage) R.drawable.ic_person_placeholder
-                    else R.drawable.ic_notification_bell
-                )
-
-                val appIconImage = view.findViewById<ImageView>(R.id.appIconImage)
                 val fallbackIndicator = view.findViewById<View>(R.id.fallbackIndicator)
+                val onlineDot = view.findViewById<ImageView>(R.id.onlineDot)
 
-                if (base64Icon != null && base64Icon.isNotEmpty()) {
+                val hasBase64Icon = base64Icon != null && base64Icon.isNotEmpty()
+                if (hasBase64Icon && !isCall) {
                     try {
                         val decodedString = Base64.decode(base64Icon, Base64.DEFAULT)
                         val decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
                         if (decodedByte != null) {
-                            appIconImage?.setImageBitmap(decodedByte)
-                            appIconImage?.visibility = View.VISIBLE
+                            avatarImage?.setImageBitmap(decodedByte)
+                            avatarImage?.visibility = View.VISIBLE
                             fallbackIndicator?.visibility = View.GONE
                         } else {
-                            appIconImage?.visibility = View.GONE
+                            avatarImage?.visibility = View.GONE
                             fallbackIndicator?.visibility = View.VISIBLE
                         }
                     } catch (e: Exception) {
                         Log.e(TAG, "Failed to decode base64 icon: ${e.message}")
-                        appIconImage?.visibility = View.GONE
+                        avatarImage?.visibility = View.GONE
                         fallbackIndicator?.visibility = View.VISIBLE
                     }
                 } else {
-                    appIconImage?.visibility = View.GONE
+                    avatarImage?.visibility = View.GONE
                     fallbackIndicator?.visibility = View.VISIBLE
                 }
 
-                // Action row + remote-key hints, driven by category. Both buttons
-                // only dismiss the overlay early — there is no relay of a real
-                // Accept/Answer action back to the phone (out of scope).
+                fallbackGlyph?.setImageResource(
+                    if (isCall || isMessage) R.drawable.ic_person_placeholder
+                    else R.drawable.ic_notification_bell
+                )
+                onlineDot?.visibility = if (isMessage) View.VISIBLE else View.GONE
+
+                // Action row + remote-key hints
                 val actionRow = view.findViewById<View>(R.id.actionRow)
                 val primaryButton = view.findViewById<Button>(R.id.primaryActionButton)
                 val secondaryButton = view.findViewById<Button>(R.id.secondaryActionButton)
@@ -404,9 +404,15 @@ class MainActivity : FlutterActivity() {
                 Log.d(TAG, "Overlay displayed: $title")
                 playAlertSound(alertSoundUri)
 
-                // Add fade-in animation
+                // Slide-in animation from right (matching design's toast-in)
+                val displayMetrics = resources.displayMetrics
+                overlayView?.translationX = (displayMetrics.widthPixels * 0.3f).coerceAtLeast(200f)
                 overlayView?.alpha = 0f
-                overlayView?.animate()?.alpha(1f)?.setDuration(300)?.start()
+                overlayView?.animate()
+                    ?.translationX(0f)
+                    ?.alpha(1f)
+                    ?.setDuration(500)
+                    ?.start()
 
                 removeRunnable = Runnable {
                     hideNotificationOverlay()
@@ -427,14 +433,18 @@ class MainActivity : FlutterActivity() {
             removeRunnable = null
 
             try {
-                viewToRemove?.animate()?.alpha(0f)?.setDuration(300)?.withEndAction {
-                    try {
-                        wm?.removeView(viewToRemove)
-                        Log.d(TAG, "Overlay removed.")
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Failed to remove overlay view: ${e.message}")
-                    }
-                }?.start()
+                viewToRemove?.animate()
+                    ?.translationX(120f)
+                    ?.alpha(0f)
+                    ?.setDuration(400)
+                    ?.withEndAction {
+                        try {
+                            wm?.removeView(viewToRemove)
+                            Log.d(TAG, "Overlay removed.")
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to remove overlay view: ${e.message}")
+                        }
+                    }?.start()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to animate overlay removal: ${e.message}")
                 try {

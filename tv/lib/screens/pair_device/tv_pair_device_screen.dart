@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:qr_flutter/qr_flutter.dart';
@@ -53,22 +55,55 @@ class TvPairDeviceScreen extends ConsumerWidget {
   }
 }
 
-class _QrCard extends ConsumerWidget {
+class _QrCard extends ConsumerStatefulWidget {
   const _QrCard({required this.tvIp, required this.qrToken});
 
   final String? tvIp;
   final String? qrToken;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ready = tvIp != null && qrToken != null;
-    final qrData = ready
+  ConsumerState<_QrCard> createState() => _QrCardState();
+}
+
+class _QrCardState extends ConsumerState<_QrCard> {
+  Timer? _ipTimer;
+
+  static const _validIps = {'Disconnected', 'Error fetching IP'};
+
+  @override
+  void initState() {
+    super.initState();
+    _ipTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => ref.invalidate(tvIpProvider),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ipTimer?.cancel();
+    super.dispose();
+  }
+
+  bool get _canBuildQr {
+    final ip = widget.tvIp;
+    final token = widget.qrToken;
+    if (ip == null || token == null) return false;
+    if (_validIps.contains(ip)) return false;
+    return InternetAddress.tryParse(ip)?.type == InternetAddressType.IPv4;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final qrData = _canBuildQr
         ? jsonEncode({
-            'ip': tvIp,
+            'ip': widget.tvIp,
             'port': MirrorProtocol.defaultPort,
-            'token': qrToken,
+            'token': widget.qrToken,
           })
         : null;
+
+    final isRunning = ref.watch(tvServiceStateProvider).isRunning;
 
     return YaruSection(
       child: SingleChildScrollView(
@@ -95,12 +130,25 @@ class _QrCard extends ConsumerWidget {
                 data: qrData,
                 size: 200,
                 backgroundColor: const Color(0xFFFFFFFF),
+                errorStateBuilder: (ctx, error) => const Center(
+                  child: Text('Could not generate QR code'),
+                ),
               )
-            else
+            else if (!isRunning)
+              const _QrPlaceholder(
+                icon: YaruIcons.warning,
+                message: 'Service unavailable',
+              )
+            else if (widget.tvIp == null || widget.qrToken == null)
               const SizedBox(
                 width: 200,
                 height: 200,
                 child: Center(child: YaruCircularProgressIndicator()),
+              )
+            else
+              const _QrPlaceholder(
+                icon: YaruIcons.warning,
+                message: 'No network connection',
               ),
             const Text('Scan this code with your phone'),
             const Text(
@@ -109,6 +157,29 @@ class _QrCard extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _QrPlaceholder extends StatelessWidget {
+  const _QrPlaceholder({required this.icon, required this.message});
+
+  final IconData icon;
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 200,
+      height: 200,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        spacing: 8,
+        children: [
+          Icon(icon, size: 32),
+          Text(message),
+        ],
       ),
     );
   }

@@ -237,6 +237,7 @@ class TvServiceState extends _$TvServiceState {
 
   void regenerateQrCode() {
     FlutterBackgroundService().invoke('regenerateQrToken');
+    ref.read(appToastProvider.notifier).show('New QR code generated');
   }
 
   void testOverlay() {

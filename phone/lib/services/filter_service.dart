@@ -39,8 +39,8 @@ class FilterService {
           prefs.getBool('call_notifications_enabled') ?? true,
       textNotificationsEnabled:
           prefs.getBool('text_notifications_enabled') ?? true,
-      otherNotificationsEnabled:
-          prefs.getBool('other_notifications_enabled') ?? true,
+      imagePreviewsEnabled: prefs.getBool('image_previews_enabled') ?? true,
+      alertSoundUri: prefs.getString('alert_sound_uri'),
     );
   }
 
@@ -59,9 +59,14 @@ class FilterService {
     await prefs.setBool('text_notifications_enabled', enabled);
   }
 
-  static Future<void> saveOtherNotificationsEnabled(bool enabled) async {
+  static Future<void> saveImagePreviewsEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('other_notifications_enabled', enabled);
+    await prefs.setBool('image_previews_enabled', enabled);
+  }
+
+  static Future<void> saveAlertSoundUri(String uri) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('alert_sound_uri', uri);
   }
 
   static Future<void> saveOverlaySettings({
@@ -88,7 +93,8 @@ class AppSettings {
     this.masterMirrorEnabled = true,
     this.callNotificationsEnabled = true,
     this.textNotificationsEnabled = true,
-    this.otherNotificationsEnabled = true,
+    this.imagePreviewsEnabled = true,
+    this.alertSoundUri,
   });
   final String overlayPosition;
   final int overlayDurationSeconds;
@@ -105,9 +111,14 @@ class AppSettings {
   /// Whether to mirror notifications classified as a text message.
   final bool textNotificationsEnabled;
 
-  /// Whether to mirror notifications that don't fall into either category
-  /// above (everything else — most apps).
-  final bool otherNotificationsEnabled;
+  /// Whether to attach the app icon to a mirrored notification. When false,
+  /// the notification is still mirrored, just without its image.
+  final bool imagePreviewsEnabled;
+
+  /// URI of the sound played locally when using "Send Test Notification".
+  /// Null means the device's default notification sound; `'silent'` means no
+  /// sound at all.
+  final String? alertSoundUri;
 
   AppSettings copyWith({
     String? overlayPosition,
@@ -116,7 +127,8 @@ class AppSettings {
     bool? masterMirrorEnabled,
     bool? callNotificationsEnabled,
     bool? textNotificationsEnabled,
-    bool? otherNotificationsEnabled,
+    bool? imagePreviewsEnabled,
+    String? alertSoundUri,
   }) {
     return AppSettings(
       overlayPosition: overlayPosition ?? this.overlayPosition,
@@ -128,8 +140,9 @@ class AppSettings {
           callNotificationsEnabled ?? this.callNotificationsEnabled,
       textNotificationsEnabled:
           textNotificationsEnabled ?? this.textNotificationsEnabled,
-      otherNotificationsEnabled:
-          otherNotificationsEnabled ?? this.otherNotificationsEnabled,
+      imagePreviewsEnabled:
+          imagePreviewsEnabled ?? this.imagePreviewsEnabled,
+      alertSoundUri: alertSoundUri ?? this.alertSoundUri,
     );
   }
 }

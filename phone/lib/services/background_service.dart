@@ -140,10 +140,6 @@ void onStart(ServiceInstance service) async {
       debugPrint("Text notifications disabled, ignoring notification.");
       return;
     }
-    if (!isCall && !isMessage && !appSettings.otherNotificationsEnabled) {
-      debugPrint("Other notifications disabled, ignoring notification.");
-      return;
-    }
 
     final isAppAllowed = MirrorFilterEvaluator.isAppEnabled(
       item.packageName,
@@ -151,17 +147,20 @@ void onStart(ServiceInstance service) async {
     );
 
     if (isAppAllowed) {
-      // Need icon? Yes. Wait, FilterService.loadFilters() doesn't load icons!
-      // In phone app, iconCache is loaded from InstalledApps package.
-      // We can fetch it on the fly for the specific package to save memory in background!
+      // Need icon? Yes, unless Image Previews is disabled. Wait,
+      // FilterService.loadFilters() doesn't load icons! In phone app,
+      // iconCache is loaded from InstalledApps package. We can fetch it on
+      // the fly for the specific package to save memory in background!
       String? base64Icon;
-      try {
-        final appInfo = await InstalledApps.getAppInfo(item.packageName);
-        if (appInfo != null && appInfo.icon != null) {
-          base64Icon = base64Encode(appInfo.icon!);
+      if (appSettings.imagePreviewsEnabled) {
+        try {
+          final appInfo = await InstalledApps.getAppInfo(item.packageName);
+          if (appInfo != null && appInfo.icon != null) {
+            base64Icon = base64Encode(appInfo.icon!);
+          }
+        } catch (e) {
+          debugPrint("Failed to load icon for ${item.packageName}: $e");
         }
-      } catch (e) {
-        debugPrint("Failed to load icon for ${item.packageName}: $e");
       }
 
       connector.sendNotification(

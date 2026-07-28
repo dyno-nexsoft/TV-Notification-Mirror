@@ -30,6 +30,7 @@ class ConnectorService {
   Timer? _pingTimer;
   var _isConnecting = false;
   var _isConnected = false;
+  var _reconnectAttempt = 0;
 
   String? _connectedTvIp;
   int? _connectedTvPort;
@@ -220,6 +221,7 @@ class ConnectorService {
       _wsChannel = channel;
       _isConnected = true;
       _isConnecting = false;
+      _reconnectAttempt = 0;
       _connectionStateController.add(true);
       _reconnectTimer?.cancel();
       _startPingTimer();
@@ -274,16 +276,26 @@ class ConnectorService {
 
     _reconnectTimer?.cancel();
     if (_connectedTvIp != null) {
-      _reconnectTimer =
-          Timer.periodic(const Duration(seconds: 5), (timer) async {
-        if (_isConnected) {
-          timer.cancel();
-        } else if (!_isConnecting) {
-          debugPrint("Attempting automatic reconnect...");
-          await connectToSavedTv();
-        }
-      });
+      _scheduleReconnect();
     }
+  }
+
+  void _scheduleReconnect() {
+    _reconnectTimer?.cancel();
+    final backoff = Duration(
+      seconds: (5 * (1 << _reconnectAttempt)).clamp(5, 60),
+    );
+    _reconnectAttempt++;
+    debugPrint(
+      "Scheduling reconnect attempt $_reconnectAttempt in ${backoff.inSeconds}s",
+    );
+    _reconnectTimer = Timer(backoff, () async {
+      if (_isConnected) return;
+      if (!_isConnecting) {
+        debugPrint("Attempting automatic reconnect...");
+        await connectToSavedTv();
+      }
+    });
   }
 
   // Send notification to TV

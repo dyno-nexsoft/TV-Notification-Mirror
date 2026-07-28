@@ -294,16 +294,31 @@ class Settings extends _$Settings {
     }
   }
 
-  Future<void> setOtherNotificationsEnabled(bool enabled) async {
+  Future<void> setImagePreviewsEnabled(bool enabled) async {
     final current = state.value;
     if (current == null) return;
 
     final previousState = state;
-    state = AsyncData(current.copyWith(otherNotificationsEnabled: enabled));
+    state = AsyncData(current.copyWith(imagePreviewsEnabled: enabled));
 
     try {
-      await FilterService.saveOtherNotificationsEnabled(enabled);
+      await FilterService.saveImagePreviewsEnabled(enabled);
       FlutterBackgroundService().invoke('reloadSettings');
+    } catch (e) {
+      state = previousState;
+      ref.read(appToastProvider.notifier).show('Error: $e');
+    }
+  }
+
+  Future<void> setAlertSoundUri(String uri) async {
+    final current = state.value;
+    if (current == null) return;
+
+    final previousState = state;
+    state = AsyncData(current.copyWith(alertSoundUri: uri));
+
+    try {
+      await FilterService.saveAlertSoundUri(uri);
     } catch (e) {
       state = previousState;
       ref.read(appToastProvider.notifier).show('Error: $e');

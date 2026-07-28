@@ -172,23 +172,31 @@ fun showNotificationOverlay(context: Context, title: String, text: String, appNa
 
 ---
 
-## 3. Khởi động cùng TV (Autostart on Boot)
+## 3. Khởi động cùng TV & Watchdog (Autostart & Keep-alive)
 
-Để ứng dụng TV hoạt động ngay khi TV bật mà không cần người dùng mở ứng dụng thủ công:
+Để ứng dụng TV hoạt động ngay khi TV bật mà không cần người dùng mở ứng dụng thủ công, và duy trì service ngay cả khi bị Android kill.
 
-### 3.1. Tạo BootReceiver
+### 3.1. BootReceiver — Khởi động khi TV bật
+
 ```kotlin
 package com.dyno.tv_notification_mirror.tv
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action == Intent.ACTION_BOOT_COMPLETED) {
-            // Khởi động Background Service chạy server của Flutter
-            val serviceIntent = Intent(context, TvBackgroundService::class.java)
+        if (intent.action == Intent.ACTION_BOOT_COMPLETED ||
+            intent.action == "android.intent.action.QUICKBOOT_POWERON") {
+            val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
+            val launchOnBoot = prefs.getBoolean("flutter.tv_launch_on_boot", true)
+            if (!launchOnBoot) return
+
+            val serviceIntent = Intent().apply {
+                setClassName(context.packageName, "id.flutter.flutter_background_service.BackgroundService")
+            }
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 context.startForegroundService(serviceIntent)
             } else {
@@ -199,21 +207,117 @@ class BootReceiver : BroadcastReceiver() {
 }
 ```
 
-### 3.2. Đăng ký BootReceiver trong `AndroidManifest.xml`
+### 3.2. Watchdog AlarmManager — Chống service bị kill
+
+Khi Android kill Foreground Service (do thiếu RAM hoặc chính sách OEM), tiến trình Flutter biến mất hoàn toàn. Giải pháp là dùng **AlarmManager** native — độc lập với Dart VM — để tự động restart service định kỳ.
+
+**Cơ chế:**
+- `TvApplication.onCreate()` schedule một `AlarmManager` với `setInexactRepeating(ELAPSED_REALTIME_WAKEUP, ...)` mỗi 5 phút.
+- Khi alarm fire, `RestartAlarmReceiver` nhận broadcast và gọi `startForegroundService()`.
+- Hành động này idempotent: nếu service đang chạy, Android sẽ ignore; nếu đã chết, service được khởi động lại.
+
+**RestartAlarmReceiver.kt:**
+```kotlin
+package com.dyno.tv_notification_mirror.tv
+
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+
+class RestartAlarmReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        if (intent.action == ACTION_RESTART_SERVICE) {
+            val serviceIntent = Intent().apply {
+                setClassName(context.packageName, "id.flutter.flutter_background_service.BackgroundService")
+            }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context.startForegroundService(serviceIntent)
+            } else {
+                context.startService(serviceIntent)
+            }
+        }
+    }
+
+    companion object {
+        const val ACTION_RESTART_SERVICE = "com.dyno.tv_notification_mirror.RESTART_SERVICE"
+        const val REQUEST_CODE = 1001
+        const val INTERVAL_MS = 5 * 60 * 1000L // 5 phút
+    }
+}
+```
+
+**Đăng ký trong AndroidManifest.xml:**
 ```xml
-<receiver android:name=".BootReceiver" 
+<receiver android:name=".RestartAlarmReceiver" 
           android:enabled="true" 
-          android:exported="true">
-    <intent-filter>
-        <action android:name="android.intent.action.BOOT_COMPLETED" />
-        <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-    </intent-filter>
-</receiver>
+          android:exported="true" />
+```
+
+**TvApplication.kt schedule alarm:**
+```kotlin
+class TvApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        createNotificationChannels()
+        scheduleWatchdogAlarm()
+    }
+
+    private fun scheduleWatchdogAlarm() {
+        val alarmManager = getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
+        val intent = Intent(this, RestartAlarmReceiver::class.java).apply {
+            action = RestartAlarmReceiver.ACTION_RESTART_SERVICE
+        }
+        val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        } else {
+            PendingIntent.FLAG_UPDATE_CURRENT
+        }
+        val pendingIntent = PendingIntent.getBroadcast(
+            this, RestartAlarmReceiver.REQUEST_CODE, intent, flags
+        )
+        alarmManager.setInexactRepeating(
+            AlarmManager.ELAPSED_REALTIME_WAKEUP,
+            RestartAlarmReceiver.INTERVAL_MS,
+            RestartAlarmReceiver.INTERVAL_MS,
+            pendingIntent
+        )
+    }
+}
 ```
 
 ---
 
-## 4. Tối ưu hóa UI cho Android TV (Leanback Guidelines)
+## 4. Phone Auto-reconnect — Exponential Backoff
+
+Khi WebSocket bị đứt (TV restart, network glitch, TV service bị kill), phone tự động reconnect với backoff:
+
+- **Attempt 0:** 5 giây
+- **Attempt 1:** 10 giây
+- **Attempt 2:** 20 giây
+- **Attempt 3:** 40 giây
+- **Attempt 4+:** 60 giây (cap)
+
+Công thức: `(5 * 2^attempt).clamp(5, 60)`. Reset về 0 khi kết nối thành công.
+
+```dart
+void _scheduleReconnect() {
+  _reconnectTimer?.cancel();
+  final backoff = Duration(
+    seconds: (5 * (1 << _reconnectAttempt)).clamp(5, 60),
+  );
+  _reconnectAttempt++;
+  _reconnectTimer = Timer(backoff, () async {
+    if (!_isConnecting) await connectToSavedTv();
+  });
+}
+```
+
+Kết hợp với mDNS discovery: phone tự động kết nối lại khi phát hiện lại TV đã lưu trong mạng.
+
+---
+
+## 5. Tối ưu hóa UI cho Android TV (Leanback Guidelines)
 
 Khi xây dựng giao diện ứng dụng cấu hình trên Android TV bằng Flutter, cần lưu ý:
 1. **Hỗ trợ D-pad hoàn toàn:**

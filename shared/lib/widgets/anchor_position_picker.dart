@@ -83,6 +83,7 @@ class _MiniScreen extends StatelessWidget {
       padding: const EdgeInsets.all(6),
       child: Container(
         decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(color: lineColor, width: 1.5),
         ),

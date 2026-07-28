@@ -1,4 +1,3 @@
-
 import 'native_bridge_platform_interface.dart';
 
 class NativeBridge {

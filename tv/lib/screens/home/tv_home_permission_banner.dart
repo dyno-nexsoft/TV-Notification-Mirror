@@ -15,8 +15,9 @@ class _PermissionWarningBanner extends ConsumerWidget {
             'notifications over other apps.'
         : 'This application requires Notification Permission to run '
             'background connectivity.';
-    final buttonLabel =
-        missingOverlay ? 'Grant Overlay Permission' : 'Grant Notification Permission';
+    final buttonLabel = missingOverlay
+        ? 'Grant Overlay Permission'
+        : 'Grant Notification Permission';
 
     return YaruSection(
       headline: const Row(

@@ -26,8 +26,9 @@ class TvHistoryScreen extends ConsumerWidget {
             trailing: history.isEmpty
                 ? null
                 : OutlinedButton.icon(
-                    onPressed: () =>
-                        ref.read(tvServiceStateProvider.notifier).clearHistory(),
+                    onPressed: () => ref
+                        .read(tvServiceStateProvider.notifier)
+                        .clearHistory(),
                     icon: const Icon(YaruIcons.trash),
                     label: const Text('Clear All'),
                   ),

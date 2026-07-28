@@ -17,7 +17,8 @@ Future<void> initializeBackgroundService() async {
       isForegroundMode: true,
       notificationChannelId: 'tv_mirror_service_channel',
       initialNotificationTitle: 'TV Notification Mirror',
-      initialNotificationContent: 'WebSocket Server is running in background...',
+      initialNotificationContent:
+          'WebSocket Server is running in background...',
       foregroundServiceNotificationId: 999,
       foregroundServiceTypes: [AndroidForegroundType.connectedDevice],
     ),

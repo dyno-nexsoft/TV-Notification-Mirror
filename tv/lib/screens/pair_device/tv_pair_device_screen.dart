@@ -36,7 +36,7 @@ class TvPairDeviceScreen extends ConsumerWidget {
           ),
           Expanded(
             child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               spacing: 20,
               children: [
                 Expanded(
@@ -96,6 +96,7 @@ class _QrCard extends ConsumerWidget {
               QrImageView(
                 data: qrData,
                 size: 200,
+                backgroundColor: const Color(0xFFFFFFFF),
               )
             else
               const SizedBox(

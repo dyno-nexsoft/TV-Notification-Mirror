@@ -38,14 +38,12 @@ class _NotificationsSection extends ConsumerWidget {
                 YaruSwitchListTile(
                   title: const Text('Call Notifications'),
                   value: settings.callNotificationsEnabled,
-                  onChanged: (v) =>
-                      notifier.setCallNotificationsEnabled(v),
+                  onChanged: (v) => notifier.setCallNotificationsEnabled(v),
                 ),
                 YaruSwitchListTile(
                   title: const Text('Text Messages'),
                   value: settings.textNotificationsEnabled,
-                  onChanged: (v) =>
-                      notifier.setTextNotificationsEnabled(v),
+                  onChanged: (v) => notifier.setTextNotificationsEnabled(v),
                 ),
                 YaruSwitchListTile(
                   title: const Text('Image Previews'),

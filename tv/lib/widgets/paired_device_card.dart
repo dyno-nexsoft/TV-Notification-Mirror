@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:shared/shared.dart';
 
 /// A TV-optimised paired device card using Yaru UI widgets: online status,
@@ -36,9 +37,9 @@ class PairedDeviceCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return YaruSection(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 12,
         children: [
           Row(
             spacing: 12,
@@ -75,10 +76,16 @@ class PairedDeviceCard extends StatelessWidget {
               ),
             ],
           ),
+          const Spacer(),
           Row(
+            mainAxisAlignment: MainAxisAlignment.end,
             spacing: 8,
             children: [
-              OutlinedButton(onPressed: onRename, child: const Text('Rename')),
+              OutlinedButton.icon(
+                onPressed: onRename,
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('Rename'),
+              ),
               OutlinedButton.icon(
                 onPressed: onRemove,
                 icon: const Icon(YaruIcons.trash),

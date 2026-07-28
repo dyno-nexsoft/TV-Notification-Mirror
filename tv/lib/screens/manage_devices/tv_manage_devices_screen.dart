@@ -22,10 +22,10 @@ class TvManageDevicesScreen extends ConsumerWidget {
     final notifier = ref.read(tvServiceStateProvider.notifier);
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+      padding: const EdgeInsets.fromLTRB(40, 24, 40, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 20,
+        spacing: 16,
         children: [
           const PageHeader(
             title: 'Manage Devices',
@@ -33,8 +33,8 @@ class TvManageDevicesScreen extends ConsumerWidget {
           ),
           Expanded(
             child: pairedClients.isEmpty
-                ? const _EmptyDevices()
-                : GridView.builder(
+              ? const _EmptyDevices()
+              : GridView.builder(
                     gridDelegate:
                         const SliverGridDelegateWithMaxCrossAxisExtent(
                           maxCrossAxisExtent: 340,

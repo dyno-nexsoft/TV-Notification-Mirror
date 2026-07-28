@@ -101,6 +101,7 @@ class TvServiceData {
     this.qrToken,
     this.isRunning = false,
     this.isDnd = false,
+    this.dndUntilEpochMs,
     this.pairedClients = const [],
     this.activeTokens = const {},
     this.notificationHistory = const [],
@@ -110,6 +111,7 @@ class TvServiceData {
   final String? qrToken;
   final bool isRunning;
   final bool isDnd;
+  final int? dndUntilEpochMs;
   final List<MirrorDevice> pairedClients;
   final Set<String> activeTokens;
   final List<NotificationItem> notificationHistory;
@@ -119,6 +121,7 @@ class TvServiceData {
     String? qrToken,
     bool? isRunning,
     bool? isDnd,
+    int? dndUntilEpochMs,
     List<MirrorDevice>? pairedClients,
     Set<String>? activeTokens,
     List<NotificationItem>? notificationHistory,
@@ -128,6 +131,7 @@ class TvServiceData {
       qrToken: qrToken ?? this.qrToken,
       isRunning: isRunning ?? this.isRunning,
       isDnd: isDnd ?? this.isDnd,
+      dndUntilEpochMs: dndUntilEpochMs ?? this.dndUntilEpochMs,
       pairedClients: pairedClients ?? this.pairedClients,
       activeTokens: activeTokens ?? this.activeTokens,
       notificationHistory: notificationHistory ?? this.notificationHistory,
@@ -174,6 +178,7 @@ class TvServiceState extends _$TvServiceState {
           qrToken: data['qrToken'],
           isRunning: data['isRunning'] ?? false,
           isDnd: data['isDnd'] ?? false,
+          dndUntilEpochMs: data['dndUntilEpochMs'],
           pairedClients: clientsList,
           activeTokens: Set<String>.from(data['activeTokens'] ?? []),
           notificationHistory: historyList,

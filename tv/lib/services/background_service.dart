@@ -84,6 +84,7 @@ void onStart(ServiceInstance service) async {
         'qrToken': server.currentQrToken,
         'isRunning': server.isRunning,
         'isDnd': server.isDndEnabled,
+        'dndUntilEpochMs': server.dndUntilEpochMs,
         'clients': server.pairedClients
             .map(
               (c) => {

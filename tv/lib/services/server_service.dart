@@ -56,6 +56,7 @@ class ServerService {
   var _isRunning = false;
   var isDndEnabled = false;
   int? _dndUntilEpochMs;
+  int? get dndUntilEpochMs => _dndUntilEpochMs;
   var _settings = const TvSettings();
   final List<NotificationItem> _notificationHistory = [];
 

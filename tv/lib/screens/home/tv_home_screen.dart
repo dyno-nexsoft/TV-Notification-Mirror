@@ -40,7 +40,10 @@ class TvHomeScreen extends ConsumerWidget {
             onChanged: (_) =>
                 ref.read(tvServiceStateProvider.notifier).toggleDnd(),
           ),
-          _DoNotDisturbSection(isDnd: isDnd),
+          _DoNotDisturbSection(
+            isDnd: isDnd,
+            dndUntilEpochMs: tvState.dndUntilEpochMs,
+          ),
         ],
       ),
     );

@@ -34,8 +34,9 @@ class AppToast extends _$AppToast {
 /// Manages Android notification listener permission state.
 @Riverpod(keepAlive: true)
 class Permission extends _$Permission {
-  static const _methodsChannel = MethodChannel('com.dyno.tv_notification_mirror/methods');
-  
+  static const _methodsChannel =
+      MethodChannel('com.dyno.tv_notification_mirror/methods');
+
   @override
   FutureOr<bool> build() async {
     return _checkPermission();
@@ -44,7 +45,7 @@ class Permission extends _$Permission {
   Future<void> checkPermission() async {
     state = await AsyncValue.guard(_checkPermission);
   }
-  
+
   Future<bool> _checkPermission() async {
     try {
       return await _methodsChannel.invokeMethod('checkPermission');
@@ -52,7 +53,7 @@ class Permission extends _$Permission {
       return false;
     }
   }
-  
+
   Future<void> openSettings() async {
     try {
       await _methodsChannel.invokeMethod('openSettings');
@@ -97,13 +98,15 @@ class Connector extends _$Connector {
     _stateSub?.cancel();
     _stateSub = service.on('stateUpdate').listen((event) {
       if (event == null) return;
-      
+
       final isConnected = event['isConnected'] as bool? ?? false;
       final connectedTvName = event['connectedTvName'] as String?;
-      
+
       final rawDevices = event['discoveredDevices'] as List<dynamic>? ?? [];
-      final discoveredDevices = rawDevices.map((d) => MirrorDevice.fromJson(Map<String, dynamic>.from(d))).toList();
-      
+      final discoveredDevices = rawDevices
+          .map((d) => MirrorDevice.fromJson(Map<String, dynamic>.from(d)))
+          .toList();
+
       state = state.copyWith(
         isConnected: isConnected,
         connectedTvName: connectedTvName,
@@ -129,7 +132,7 @@ class Connector extends _$Connector {
   Future<bool> startPairing(TVDevice device) async {
     final service = FlutterBackgroundService();
     final completer = Completer<bool>();
-    
+
     StreamSubscription? sub;
     sub = service.on('pairingResult').listen((event) {
       if (event != null) {
@@ -137,9 +140,9 @@ class Connector extends _$Connector {
       }
       sub?.cancel();
     });
-    
+
     service.invoke('startPairing', device.toJson());
-    
+
     return completer.future.timeout(const Duration(seconds: 10), onTimeout: () {
       sub?.cancel();
       return false;
@@ -149,7 +152,7 @@ class Connector extends _$Connector {
   Future<bool> confirmPairing(TVDevice device, String pin) async {
     final service = FlutterBackgroundService();
     final completer = Completer<bool>();
-    
+
     StreamSubscription? sub;
     sub = service.on('pairingConfirmResult').listen((event) {
       if (event != null) {
@@ -157,12 +160,12 @@ class Connector extends _$Connector {
       }
       sub?.cancel();
     });
-    
+
     service.invoke('confirmPairing', {
       'device': device.toJson(),
       'pin': pin,
     });
-    
+
     return completer.future.timeout(const Duration(seconds: 10), onTimeout: () {
       sub?.cancel();
       return false;

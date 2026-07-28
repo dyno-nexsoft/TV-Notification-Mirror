@@ -45,55 +45,49 @@ class QuietHoursCard extends ConsumerWidget {
                 Padding(
                   padding:
                       const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-                  child: Row(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    spacing: 16,
                     children: [
                       // Start time
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          spacing: 4,
-                          children: [
-                            const Text('Start'),
-                            YaruTimeEntry(
-                              initialTimeOfDay: settings.quietHoursStart,
-                              force24HourFormat: true,
-                              onChanged: (time) {
-                                if (time == null) return;
-                                final updated =
-                                    settings.copyWith(quietHoursStart: time);
-                                ref
-                                    .read(settingsProvider.notifier)
-                                    .updateSettings(updated);
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 12),
-                        child: Icon(YaruIcons.go_next),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 4,
+                        children: [
+                          const Text('Start'),
+                          YaruTimeEntry(
+                            initialTimeOfDay: settings.quietHoursStart,
+                            force24HourFormat: true,
+                            onChanged: (time) {
+                              if (time == null) return;
+                              final updated =
+                                  settings.copyWith(quietHoursStart: time);
+                              ref
+                                  .read(settingsProvider.notifier)
+                                  .updateSettings(updated);
+                            },
+                          ),
+                        ],
                       ),
                       // End time
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          spacing: 4,
-                          children: [
-                            const Text('End'),
-                            YaruTimeEntry(
-                              initialTimeOfDay: settings.quietHoursEnd,
-                              force24HourFormat: true,
-                              onChanged: (time) {
-                                if (time == null) return;
-                                final updated =
-                                    settings.copyWith(quietHoursEnd: time);
-                                ref
-                                    .read(settingsProvider.notifier)
-                                    .updateSettings(updated);
-                              },
-                            ),
-                          ],
-                        ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: 4,
+                        children: [
+                          const Text('End'),
+                          YaruTimeEntry(
+                            initialTimeOfDay: settings.quietHoursEnd,
+                            force24HourFormat: true,
+                            onChanged: (time) {
+                              if (time == null) return;
+                              final updated =
+                                  settings.copyWith(quietHoursEnd: time);
+                              ref
+                                  .read(settingsProvider.notifier)
+                                  .updateSettings(updated);
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),

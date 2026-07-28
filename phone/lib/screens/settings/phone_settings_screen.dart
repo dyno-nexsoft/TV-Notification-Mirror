@@ -21,7 +21,8 @@ class PhoneSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncSettings = ref.watch(settingsProvider);
-    final masterMirrorEnabled = asyncSettings.value?.masterMirrorEnabled ?? true;
+    final masterMirrorEnabled =
+        asyncSettings.value?.masterMirrorEnabled ?? true;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),

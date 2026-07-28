@@ -30,7 +30,8 @@ class PhoneHomeScreen extends ConsumerWidget {
     final history = ref.watch(historyProvider);
     final iconCache = ref.watch(filtersProvider).value?.iconCache ?? {};
     final isConnected = connectorState.isConnected;
-    final masterMirrorEnabled = asyncSettings.value?.masterMirrorEnabled ?? true;
+    final masterMirrorEnabled =
+        asyncSettings.value?.masterMirrorEnabled ?? true;
     final recent = history.take(3).toList();
 
     return SingleChildScrollView(
@@ -64,7 +65,7 @@ class PhoneHomeScreen extends ConsumerWidget {
               children: [
                 Expanded(
                   child: _QuickActionCard(
-                    icon: YaruIcons.go_next,
+                    icon: YaruIcons.send,
                     label: 'Send Test\nNotification',
                     onTap: () => _sendTestNotification(ref),
                   ),
@@ -102,7 +103,8 @@ class PhoneHomeScreen extends ConsumerWidget {
             child: recent.isEmpty
                 ? const Padding(
                     padding: EdgeInsets.symmetric(vertical: 24),
-                    child: Center(child: Text('No notifications captured yet.')),
+                    child:
+                        Center(child: Text('No notifications captured yet.')),
                   )
                 : Column(
                     children: [

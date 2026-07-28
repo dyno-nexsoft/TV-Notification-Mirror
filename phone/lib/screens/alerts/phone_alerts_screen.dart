@@ -18,6 +18,7 @@ class _PhoneAlertsScreenState extends ConsumerState<PhoneAlertsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final history = ref.watch(historyProvider);
     final iconCache = ref.watch(filtersProvider).value?.iconCache ?? {};
 
@@ -41,7 +42,7 @@ class _PhoneAlertsScreenState extends ConsumerState<PhoneAlertsScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Recent Alerts'),
+                  Text('Recent Alerts', style: theme.textTheme.titleLarge),
                   if (history.isNotEmpty)
                     TextButton.icon(
                       onPressed: () =>

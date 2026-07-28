@@ -35,7 +35,7 @@ void onStart(ServiceInstance service) async {
 
   final connector = ConnectorService();
   final notificationService = NotificationService();
-  
+
   var appFilters = <String, bool>{};
   var appSettings = const AppSettings(
     blockedKeywords: [],
@@ -68,7 +68,8 @@ void onStart(ServiceInstance service) async {
       service.invoke('stateUpdate', {
         'isConnected': connector.isConnected,
         'connectedTvName': connector.connectedTvName,
-        'discoveredDevices': connector.discoveredDevices.map((d) => d.toJson()).toList(),
+        'discoveredDevices':
+            connector.discoveredDevices.map((d) => d.toJson()).toList(),
       });
     }
   });
@@ -77,7 +78,7 @@ void onStart(ServiceInstance service) async {
   service.on('startScanning').listen((_) {
     connector.startScanning();
   });
-  
+
   service.on('stopScanning').listen((_) {
     connector.stopScanning();
   });
@@ -91,7 +92,8 @@ void onStart(ServiceInstance service) async {
 
   service.on('confirmPairing').listen((event) async {
     if (event == null) return;
-    final device = MirrorDevice.fromJson(Map<String, dynamic>.from(event['device']));
+    final device =
+        MirrorDevice.fromJson(Map<String, dynamic>.from(event['device']));
     final pin = event['pin'] as String;
     final success = await connector.confirmPairing(device, pin);
     service.invoke('pairingConfirmResult', {'success': success});
@@ -135,7 +137,8 @@ void onStart(ServiceInstance service) async {
           item.title,
           item.text,
           appSettings.blockedKeywords,
-        ) != null;
+        ) !=
+        null;
 
     final isBlockedByQuiet = appSettings.quietHoursEnabled &&
         MirrorFilterEvaluator.isTimeInQuietHours(
@@ -151,16 +154,16 @@ void onStart(ServiceInstance service) async {
 
     if (!isBlockedByKw && !isBlockedByQuiet && isAppAllowed) {
       // Need icon? Yes. Wait, FilterService.loadFilters() doesn't load icons!
-      // In phone app, iconCache is loaded from InstalledApps package. 
+      // In phone app, iconCache is loaded from InstalledApps package.
       // We can fetch it on the fly for the specific package to save memory in background!
       String? base64Icon;
       try {
-         final appInfo = await InstalledApps.getAppInfo(item.packageName);
-         if (appInfo != null && appInfo.icon != null) {
-           base64Icon = base64Encode(appInfo.icon!);
-         }
+        final appInfo = await InstalledApps.getAppInfo(item.packageName);
+        if (appInfo != null && appInfo.icon != null) {
+          base64Icon = base64Encode(appInfo.icon!);
+        }
       } catch (e) {
-         debugPrint("Failed to load icon for ${item.packageName}: $e");
+        debugPrint("Failed to load icon for ${item.packageName}: $e");
       }
 
       connector.sendNotification(
@@ -169,7 +172,7 @@ void onStart(ServiceInstance service) async {
         overlayPosition: appSettings.overlayPosition,
         overlayDurationMs: appSettings.overlayDurationSeconds * 1000,
       );
-      
+
       service.invoke('notificationSent', item.toJson());
     }
   });

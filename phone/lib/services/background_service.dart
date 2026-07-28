@@ -38,12 +38,8 @@ void onStart(ServiceInstance service) async {
 
   var appFilters = <String, bool>{};
   var appSettings = const AppSettings(
-    blockedKeywords: [],
     overlayDurationSeconds: 5,
     overlayPosition: 'bottom',
-    quietHoursEnabled: false,
-    quietHoursStart: TimeOfDay(hour: 22, minute: 0),
-    quietHoursEnd: TimeOfDay(hour: 7, minute: 0),
     tvDndEnabled: false,
   );
 
@@ -133,26 +129,28 @@ void onStart(ServiceInstance service) async {
       return;
     }
 
-    final isBlockedByKw = MirrorFilterEvaluator.findMatchingBlockedKeyword(
-          item.title,
-          item.text,
-          appSettings.blockedKeywords,
-        ) !=
-        null;
-
-    final isBlockedByQuiet = appSettings.quietHoursEnabled &&
-        MirrorFilterEvaluator.isTimeInQuietHours(
-          appSettings.quietHoursStart,
-          appSettings.quietHoursEnd,
-          DateTime.now(),
-        );
+    final isCall = item.category == NotificationCategory.voiceCall ||
+        item.category == NotificationCategory.videoCall;
+    final isMessage = item.category == NotificationCategory.message;
+    if (isCall && !appSettings.callNotificationsEnabled) {
+      debugPrint("Call notifications disabled, ignoring notification.");
+      return;
+    }
+    if (isMessage && !appSettings.textNotificationsEnabled) {
+      debugPrint("Text notifications disabled, ignoring notification.");
+      return;
+    }
+    if (!isCall && !isMessage && !appSettings.otherNotificationsEnabled) {
+      debugPrint("Other notifications disabled, ignoring notification.");
+      return;
+    }
 
     final isAppAllowed = MirrorFilterEvaluator.isAppEnabled(
       item.packageName,
       appFilters,
     );
 
-    if (!isBlockedByKw && !isBlockedByQuiet && isAppAllowed) {
+    if (isAppAllowed) {
       // Need icon? Yes. Wait, FilterService.loadFilters() doesn't load icons!
       // In phone app, iconCache is loaded from InstalledApps package.
       // We can fetch it on the fly for the specific package to save memory in background!

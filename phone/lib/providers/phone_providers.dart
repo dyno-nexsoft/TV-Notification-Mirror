@@ -219,12 +219,6 @@ class Settings extends _$Settings {
     state = AsyncData(updated);
 
     try {
-      await FilterService.saveQuietHours(
-        enabled: updated.quietHoursEnabled,
-        start: updated.quietHoursStart,
-        end: updated.quietHoursEnd,
-      );
-      await FilterService.saveBlockedKeywords(updated.blockedKeywords);
       await FilterService.saveOverlaySettings(
         position: updated.overlayPosition,
         durationSeconds: updated.overlayDurationSeconds,
@@ -261,6 +255,54 @@ class Settings extends _$Settings {
 
     try {
       await FilterService.saveMasterMirrorEnabled(enabled);
+      FlutterBackgroundService().invoke('reloadSettings');
+    } catch (e) {
+      state = previousState;
+      ref.read(appToastProvider.notifier).show('Error: $e');
+    }
+  }
+
+  Future<void> setCallNotificationsEnabled(bool enabled) async {
+    final current = state.value;
+    if (current == null) return;
+
+    final previousState = state;
+    state = AsyncData(current.copyWith(callNotificationsEnabled: enabled));
+
+    try {
+      await FilterService.saveCallNotificationsEnabled(enabled);
+      FlutterBackgroundService().invoke('reloadSettings');
+    } catch (e) {
+      state = previousState;
+      ref.read(appToastProvider.notifier).show('Error: $e');
+    }
+  }
+
+  Future<void> setTextNotificationsEnabled(bool enabled) async {
+    final current = state.value;
+    if (current == null) return;
+
+    final previousState = state;
+    state = AsyncData(current.copyWith(textNotificationsEnabled: enabled));
+
+    try {
+      await FilterService.saveTextNotificationsEnabled(enabled);
+      FlutterBackgroundService().invoke('reloadSettings');
+    } catch (e) {
+      state = previousState;
+      ref.read(appToastProvider.notifier).show('Error: $e');
+    }
+  }
+
+  Future<void> setOtherNotificationsEnabled(bool enabled) async {
+    final current = state.value;
+    if (current == null) return;
+
+    final previousState = state;
+    state = AsyncData(current.copyWith(otherNotificationsEnabled: enabled));
+
+    try {
+      await FilterService.saveOtherNotificationsEnabled(enabled);
       FlutterBackgroundService().invoke('reloadSettings');
     } catch (e) {
       state = previousState;

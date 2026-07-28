@@ -3,16 +3,13 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared/shared.dart';
 
 import '../../providers/phone_providers.dart';
-import '../../widgets/filters/keyword_filter_card.dart';
 import '../../widgets/filters/overlay_settings_card.dart';
-import '../../widgets/filters/quiet_hours_card.dart';
 import 'phone_app_filters_screen.dart';
 
-part 'phone_settings_account.dart';
 part 'phone_settings_support.dart';
 
 /// The Settings page — notification preferences, TV overlay display options,
-/// per-app filters, and stub account/support sections.
+/// per-app filters, and a stub support section.
 class PhoneSettingsScreen extends ConsumerWidget {
   const PhoneSettingsScreen({super.key, required this.onAddCustomApp});
 
@@ -21,8 +18,8 @@ class PhoneSettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncSettings = ref.watch(settingsProvider);
-    final masterMirrorEnabled =
-        asyncSettings.value?.masterMirrorEnabled ?? true;
+    final settings = asyncSettings.value;
+    final notifier = ref.read(settingsProvider.notifier);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -30,20 +27,38 @@ class PhoneSettingsScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 16,
         children: [
-          const _AccountSection(),
           YaruSection(
             headline: const Text('NOTIFICATION PREFERENCES'),
-            child: YaruSwitchListTile(
-              title: const Text('Mirror Phone Notifications'),
-              subtitle: const Text('Master switch for all TV mirroring'),
-              value: masterMirrorEnabled,
-              onChanged: (val) {
-                ref.read(settingsProvider.notifier).setMasterMirrorEnabled(val);
-              },
+            child: Column(
+              children: [
+                YaruSwitchListTile(
+                  title: const Text('Mirror Phone Notifications'),
+                  subtitle: const Text('Master switch for all TV mirroring'),
+                  value: settings?.masterMirrorEnabled ?? true,
+                  onChanged: notifier.setMasterMirrorEnabled,
+                ),
+                const Divider(),
+                YaruSwitchListTile(
+                  secondary: const Icon(YaruIcons.headset),
+                  title: const Text('Incoming Calls'),
+                  value: settings?.callNotificationsEnabled ?? true,
+                  onChanged: notifier.setCallNotificationsEnabled,
+                ),
+                YaruSwitchListTile(
+                  secondary: const Icon(YaruIcons.chat_bubble),
+                  title: const Text('Text Messages'),
+                  value: settings?.textNotificationsEnabled ?? true,
+                  onChanged: notifier.setTextNotificationsEnabled,
+                ),
+                YaruSwitchListTile(
+                  secondary: const Icon(YaruIcons.notification),
+                  title: const Text('Other Notifications'),
+                  value: settings?.otherNotificationsEnabled ?? true,
+                  onChanged: notifier.setOtherNotificationsEnabled,
+                ),
+              ],
             ),
           ),
-          const QuietHoursCard(),
-          const KeywordFilterCard(),
           const OverlaySettingsCard(),
           YaruSection(
             headline: const Text('APP FILTERS'),

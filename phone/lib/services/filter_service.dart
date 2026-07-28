@@ -1,8 +1,8 @@
 import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Encapsulates all persistence logic for app filters, quiet hours,
-/// blocked keywords, and overlay settings (Single Responsibility).
+/// Encapsulates all persistence logic for app filters and mirror settings
+/// (Single Responsibility).
 class FilterService {
   FilterService._();
 
@@ -28,21 +28,19 @@ class FilterService {
 
   static Future<AppSettings> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final startHour = prefs.getInt('quiet_hours_start_hour') ?? 22;
-    final startMinute = prefs.getInt('quiet_hours_start_minute') ?? 0;
-    final endHour = prefs.getInt('quiet_hours_end_hour') ?? 7;
-    final endMinute = prefs.getInt('quiet_hours_end_minute') ?? 0;
 
     return AppSettings(
-      quietHoursEnabled: prefs.getBool('quiet_hours_enabled') ?? false,
-      quietHoursStart: TimeOfDay(hour: startHour, minute: startMinute),
-      quietHoursEnd: TimeOfDay(hour: endHour, minute: endMinute),
-      blockedKeywords: prefs.getStringList('blocked_keywords') ?? [],
       overlayPosition:
           prefs.getString('overlay_position') ?? MirrorProtocol.overlayTopRight,
       overlayDurationSeconds: prefs.getInt('overlay_duration_seconds') ?? 5,
       tvDndEnabled: prefs.getBool('tv_dnd_enabled') ?? false,
       masterMirrorEnabled: prefs.getBool('master_mirror_enabled') ?? true,
+      callNotificationsEnabled:
+          prefs.getBool('call_notifications_enabled') ?? true,
+      textNotificationsEnabled:
+          prefs.getBool('text_notifications_enabled') ?? true,
+      otherNotificationsEnabled:
+          prefs.getBool('other_notifications_enabled') ?? true,
     );
   }
 
@@ -51,22 +49,19 @@ class FilterService {
     await prefs.setBool('master_mirror_enabled', enabled);
   }
 
-  static Future<void> saveQuietHours({
-    required bool enabled,
-    required TimeOfDay start,
-    required TimeOfDay end,
-  }) async {
+  static Future<void> saveCallNotificationsEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('quiet_hours_enabled', enabled);
-    await prefs.setInt('quiet_hours_start_hour', start.hour);
-    await prefs.setInt('quiet_hours_start_minute', start.minute);
-    await prefs.setInt('quiet_hours_end_hour', end.hour);
-    await prefs.setInt('quiet_hours_end_minute', end.minute);
+    await prefs.setBool('call_notifications_enabled', enabled);
   }
 
-  static Future<void> saveBlockedKeywords(List<String> keywords) async {
+  static Future<void> saveTextNotificationsEnabled(bool enabled) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList('blocked_keywords', keywords);
+    await prefs.setBool('text_notifications_enabled', enabled);
+  }
+
+  static Future<void> saveOtherNotificationsEnabled(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('other_notifications_enabled', enabled);
   }
 
   static Future<void> saveOverlaySettings({
@@ -82,63 +77,59 @@ class FilterService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('tv_dnd_enabled', enabled);
   }
-
-  // ── Business logic ────────────────────────────────────────────────────────
-
-  static bool isTimeInQuietHours(
-    TimeOfDay start,
-    TimeOfDay end,
-    DateTime now,
-  ) {
-    return MirrorFilterEvaluator.isTimeInQuietHours(start, end, now);
-  }
 }
 
 /// Immutable value object holding all user-configurable app settings.
 class AppSettings {
   const AppSettings({
-    required this.quietHoursEnabled,
-    required this.quietHoursStart,
-    required this.quietHoursEnd,
-    required this.blockedKeywords,
     required this.overlayPosition,
     required this.overlayDurationSeconds,
     required this.tvDndEnabled,
     this.masterMirrorEnabled = true,
+    this.callNotificationsEnabled = true,
+    this.textNotificationsEnabled = true,
+    this.otherNotificationsEnabled = true,
   });
-  final bool quietHoursEnabled;
-  final TimeOfDay quietHoursStart;
-  final TimeOfDay quietHoursEnd;
-  final List<String> blockedKeywords;
   final String overlayPosition;
   final int overlayDurationSeconds;
   final bool tvDndEnabled;
 
   /// Master switch for mirroring notifications to the TV at all. When
   /// false, incoming notifications are never forwarded, regardless of any
-  /// per-app filter or quiet-hours setting.
+  /// per-app filter or per-category setting.
   final bool masterMirrorEnabled;
 
+  /// Whether to mirror notifications classified as a voice or video call.
+  final bool callNotificationsEnabled;
+
+  /// Whether to mirror notifications classified as a text message.
+  final bool textNotificationsEnabled;
+
+  /// Whether to mirror notifications that don't fall into either category
+  /// above (everything else — most apps).
+  final bool otherNotificationsEnabled;
+
   AppSettings copyWith({
-    bool? quietHoursEnabled,
-    TimeOfDay? quietHoursStart,
-    TimeOfDay? quietHoursEnd,
-    List<String>? blockedKeywords,
     String? overlayPosition,
     int? overlayDurationSeconds,
     bool? tvDndEnabled,
     bool? masterMirrorEnabled,
+    bool? callNotificationsEnabled,
+    bool? textNotificationsEnabled,
+    bool? otherNotificationsEnabled,
   }) {
     return AppSettings(
-      quietHoursEnabled: quietHoursEnabled ?? this.quietHoursEnabled,
-      quietHoursStart: quietHoursStart ?? this.quietHoursStart,
-      quietHoursEnd: quietHoursEnd ?? this.quietHoursEnd,
-      blockedKeywords: blockedKeywords ?? this.blockedKeywords,
       overlayPosition: overlayPosition ?? this.overlayPosition,
       overlayDurationSeconds:
           overlayDurationSeconds ?? this.overlayDurationSeconds,
       tvDndEnabled: tvDndEnabled ?? this.tvDndEnabled,
       masterMirrorEnabled: masterMirrorEnabled ?? this.masterMirrorEnabled,
+      callNotificationsEnabled:
+          callNotificationsEnabled ?? this.callNotificationsEnabled,
+      textNotificationsEnabled:
+          textNotificationsEnabled ?? this.textNotificationsEnabled,
+      otherNotificationsEnabled:
+          otherNotificationsEnabled ?? this.otherNotificationsEnabled,
     );
   }
 }

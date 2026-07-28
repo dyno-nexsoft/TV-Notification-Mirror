@@ -4,6 +4,7 @@ import 'package:shared/shared.dart';
 import 'providers/tv_settings_provider.dart';
 import 'screens/tv_main_screen.dart';
 import 'services/background_service.dart';
+import 'widgets/tv_auto_scroll_root.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,7 +29,7 @@ class MyApp extends ConsumerWidget {
           themeMode: themeMode,
           theme: yaru.theme,
           darkTheme: YaruAppTheme.darkTheme,
-          home: const TvMainScreen(),
+          home: const TvAutoScrollRoot(child: TvMainScreen()),
         );
       },
     );

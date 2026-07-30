@@ -106,6 +106,10 @@ void onStart(ServiceInstance service) async {
     connector.disconnect();
   });
 
+  service.on('checkConnection').listen((_) {
+    connector.checkConnection();
+  });
+
   service.on('sendDndToggle').listen((event) {
     if (event != null && event['enabled'] != null) {
       connector.sendDndToggle(event['enabled'] as bool);

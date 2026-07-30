@@ -361,6 +361,16 @@ class ConnectorService {
     debugPrint("Notification remove request sent to TV for id: $id");
   }
 
+  /// Immediately attempts to reconnect, resetting any exponential backoff.
+  /// Called from UI when the app resumes from background.
+  void checkConnection() {
+    if (_isConnected) return;
+    _reconnectTimer?.cancel();
+    _reconnectAttempt = 0;
+    debugPrint("checkConnection: resetting backoff and reconnecting...");
+    connectToSavedTv();
+  }
+
   Future<void> disconnect() async {
     _reconnectTimer?.cancel();
     if (_isConnected && _wsChannel != null) {

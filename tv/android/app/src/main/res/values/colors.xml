@@ -2,20 +2,20 @@
 <resources>
     <color name="ic_launcher_background">#210A3E</color>
 
-    <!-- Design System -->
-    <color name="surface_dim">#10131a</color>
-    <color name="surface_container">#1d2026</color>
-    <color name="surface_container_lowest">#0b0e14</color>
-    <color name="surface_container_low">#191c22</color>
-    <color name="surface_bright">#363940</color>
-    <color name="surface_variant">#32353c</color>
-    <color name="on_surface">#e1e2eb</color>
-    <color name="on_surface_variant">#c4c5d8</color>
-    <color name="outline">#8e90a1</color>
-    <color name="outline_variant">#444655</color>
-    <color name="primary">#b9c3ff</color>
-    <color name="primary_container">#3e64ff</color>
-    <color name="on_primary_container">#fdfaff</color>
-    <color name="on_background">#e1e2eb</color>
+    <!-- Android TV Material 3 Dark Theme -->
+    <color name="surface_dim">#121316</color>
+    <color name="surface_container">#1e1f22</color>
+    <color name="surface_container_lowest">#0a0b0e</color>
+    <color name="surface_container_low">#18191c</color>
+    <color name="surface_bright">#37383c</color>
+    <color name="surface_variant">#45464f</color>
+    <color name="on_surface">#e2e3e5</color>
+    <color name="on_surface_variant">#c4c6d0</color>
+    <color name="outline">#8e9099</color>
+    <color name="outline_variant">#45464f</color>
+    <color name="primary">#8ab4f8</color>
+    <color name="primary_container">#004a9f</color>
+    <color name="on_primary_container">#d3e3fd</color>
+    <color name="on_background">#e2e3e5</color>
     <color name="green_500">#22c55e</color>
 </resources>

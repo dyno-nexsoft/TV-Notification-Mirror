@@ -1,4 +1,3 @@
-import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Encapsulates all persistence logic for app filters and mirror settings
@@ -28,92 +27,22 @@ class FilterService {
 
   static Future<AppSettings> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
-
     return AppSettings(
-      overlayPosition:
-          prefs.getString('overlay_position') ?? MirrorProtocol.overlayTopRight,
-      overlayDurationSeconds: prefs.getInt('overlay_duration_seconds') ?? 5,
-      tvDndEnabled: prefs.getBool('tv_dnd_enabled') ?? false,
-      masterMirrorEnabled: prefs.getBool('master_mirror_enabled') ?? true,
-      callNotificationsEnabled:
-          prefs.getBool('call_notifications_enabled') ?? true,
-      textNotificationsEnabled:
-          prefs.getBool('text_notifications_enabled') ?? true,
-      imagePreviewsEnabled: prefs.getBool('image_previews_enabled') ?? true,
       alertSoundUri: prefs.getString('alert_sound_uri'),
     );
-  }
-
-  static Future<void> saveMasterMirrorEnabled(bool enabled) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('master_mirror_enabled', enabled);
-  }
-
-  static Future<void> saveCallNotificationsEnabled(bool enabled) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('call_notifications_enabled', enabled);
-  }
-
-  static Future<void> saveTextNotificationsEnabled(bool enabled) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('text_notifications_enabled', enabled);
-  }
-
-  static Future<void> saveImagePreviewsEnabled(bool enabled) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('image_previews_enabled', enabled);
   }
 
   static Future<void> saveAlertSoundUri(String uri) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('alert_sound_uri', uri);
   }
-
-  static Future<void> saveOverlaySettings({
-    required String position,
-    required int durationSeconds,
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('overlay_position', position);
-    await prefs.setInt('overlay_duration_seconds', durationSeconds);
-  }
-
-  static Future<void> saveTvDnd(bool enabled) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('tv_dnd_enabled', enabled);
-  }
 }
 
-/// Immutable value object holding all user-configurable app settings.
+/// Phone-side settings — only what the phone needs locally.
 class AppSettings {
   const AppSettings({
-    required this.overlayPosition,
-    required this.overlayDurationSeconds,
-    required this.tvDndEnabled,
-    this.masterMirrorEnabled = true,
-    this.callNotificationsEnabled = true,
-    this.textNotificationsEnabled = true,
-    this.imagePreviewsEnabled = true,
     this.alertSoundUri,
   });
-  final String overlayPosition;
-  final int overlayDurationSeconds;
-  final bool tvDndEnabled;
-
-  /// Master switch for mirroring notifications to the TV at all. When
-  /// false, incoming notifications are never forwarded, regardless of any
-  /// per-app filter or per-category setting.
-  final bool masterMirrorEnabled;
-
-  /// Whether to mirror notifications classified as a voice or video call.
-  final bool callNotificationsEnabled;
-
-  /// Whether to mirror notifications classified as a text message.
-  final bool textNotificationsEnabled;
-
-  /// Whether to attach the app icon to a mirrored notification. When false,
-  /// the notification is still mirrored, just without its image.
-  final bool imagePreviewsEnabled;
 
   /// URI of the sound played locally when using "Send Test Notification".
   /// Null means the device's default notification sound; `'silent'` means no
@@ -121,27 +50,9 @@ class AppSettings {
   final String? alertSoundUri;
 
   AppSettings copyWith({
-    String? overlayPosition,
-    int? overlayDurationSeconds,
-    bool? tvDndEnabled,
-    bool? masterMirrorEnabled,
-    bool? callNotificationsEnabled,
-    bool? textNotificationsEnabled,
-    bool? imagePreviewsEnabled,
     String? alertSoundUri,
   }) {
     return AppSettings(
-      overlayPosition: overlayPosition ?? this.overlayPosition,
-      overlayDurationSeconds:
-          overlayDurationSeconds ?? this.overlayDurationSeconds,
-      tvDndEnabled: tvDndEnabled ?? this.tvDndEnabled,
-      masterMirrorEnabled: masterMirrorEnabled ?? this.masterMirrorEnabled,
-      callNotificationsEnabled:
-          callNotificationsEnabled ?? this.callNotificationsEnabled,
-      textNotificationsEnabled:
-          textNotificationsEnabled ?? this.textNotificationsEnabled,
-      imagePreviewsEnabled:
-          imagePreviewsEnabled ?? this.imagePreviewsEnabled,
       alertSoundUri: alertSoundUri ?? this.alertSoundUri,
     );
   }

@@ -47,18 +47,6 @@ class _MainScreenBody extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text(MirrorProtocol.appName),
-        systemOverlayStyle: SystemUiOverlayStyle.light,
-        actions: [
-          IconButton(
-            icon: const Icon(YaruIcons.refresh),
-            onPressed: () {
-              ref.read(permissionProvider.notifier).checkPermission();
-              ref.read(connectorProvider.notifier).startScanning();
-            },
-            tooltip: 'Refresh / Scan',
-          ),
-        ],
-        actionsPadding: const EdgeInsets.only(right: 8.0),
       ),
       body: Column(
         children: [

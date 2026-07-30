@@ -30,12 +30,9 @@ class PhoneHomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final connectorState = ref.watch(connectorProvider);
-    final asyncSettings = ref.watch(settingsProvider);
     final history = ref.watch(historyProvider);
     final iconCache = ref.watch(filtersProvider).value?.iconCache ?? {};
     final isConnected = connectorState.isConnected;
-    final masterMirrorEnabled =
-        asyncSettings.value?.masterMirrorEnabled ?? true;
     final recent = history.take(3).toList();
 
     return SingleChildScrollView(
@@ -64,33 +61,10 @@ class PhoneHomeScreen extends ConsumerWidget {
           ),
           YaruSection(
             headline: const Text('Quick Actions'),
-            child: IntrinsicHeight(
-              child: Row(
-                spacing: 12,
-                children: [
-                  Expanded(
-                    child: BorderedActionCard(
-                      icon: YaruIcons.send,
-                      title: 'Send Test\nNotification',
-                      onTap: () => _sendTestNotification(ref),
-                    ),
-                  ),
-                  Expanded(
-                    child: BorderedActionCard(
-                      icon: YaruIcons.notification,
-                      title: 'Mirror Phone\nNotifications',
-                      trailing: YaruSwitch(
-                        value: masterMirrorEnabled,
-                        onChanged: (val) {
-                          ref
-                              .read(settingsProvider.notifier)
-                              .setMasterMirrorEnabled(val);
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            child: BorderedActionCard(
+              icon: YaruIcons.send,
+              title: 'Send Test\nNotification',
+              onTap: () => _sendTestNotification(ref),
             ),
           ),
           YaruSection(

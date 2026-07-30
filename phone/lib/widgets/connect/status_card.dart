@@ -16,10 +16,8 @@ class StatusCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final connectorState = ref.watch(connectorProvider);
-    final asyncSettings = ref.watch(settingsProvider);
     final isConnected = connectorState.isConnected;
     final connectedTvName = connectorState.connectedTvName;
-    final tvDndEnabled = asyncSettings.value?.tvDndEnabled ?? false;
 
     return YaruSection(
       headline: Text(
@@ -43,22 +41,6 @@ class StatusCard extends ConsumerWidget {
                   : 'Scan local Wi-Fi network to discover TV.',
             ),
           ),
-          if (isConnected) ...[
-            const Divider(),
-            YaruListTile(
-              leading: Icon(
-                tvDndEnabled ? YaruIcons.error : YaruIcons.ok,
-              ),
-              title: const Text('TV Do Not Disturb (DND)'),
-              subtitle: const Text('Mute all notification popups on TV'),
-              trailing: YaruSwitch(
-                value: tvDndEnabled,
-                onChanged: (val) {
-                  ref.read(settingsProvider.notifier).setTvDnd(val);
-                },
-              ),
-            ),
-          ],
           Row(
             spacing: 12,
             children: [

@@ -351,8 +351,6 @@ class ConnectorService {
   void sendNotification(
     NotificationItem item, {
     String? base64Icon,
-    String? overlayPosition,
-    int? overlayDurationMs,
   }) {
     if (!_isConnected || _wsChannel == null) {
       debugPrint("Cannot send notification: WebSocket not connected.");
@@ -361,10 +359,6 @@ class ConnectorService {
 
     final itemJson = item.toJson();
     if (base64Icon != null) itemJson['appIcon'] = base64Icon;
-    if (overlayPosition != null) itemJson['overlayPosition'] = overlayPosition;
-    if (overlayDurationMs != null) {
-      itemJson['overlayDuration'] = overlayDurationMs;
-    }
 
     final payload = {
       'event': MirrorProtocol.eventNotificationNew,
@@ -374,23 +368,6 @@ class ConnectorService {
 
     _wsChannel!.sink.add(jsonEncode(payload));
     debugPrint("Notification sent to TV: ${item.title}");
-  }
-
-  // Send DND setting to TV
-  void sendDndToggle(bool enabled) {
-    if (!_isConnected || _wsChannel == null) {
-      debugPrint("Cannot send DND toggle: WebSocket not connected.");
-      return;
-    }
-
-    final payload = {
-      'event': MirrorProtocol.eventSetDnd,
-      'timestamp': DateTime.now().millisecondsSinceEpoch,
-      'data': {'enabled': enabled},
-    };
-
-    _wsChannel!.sink.add(jsonEncode(payload));
-    debugPrint("Remote DND change sent to TV: $enabled");
   }
 
   // Send cancel notification to TV

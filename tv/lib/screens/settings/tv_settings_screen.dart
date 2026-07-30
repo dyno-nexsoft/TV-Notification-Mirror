@@ -9,6 +9,18 @@ import '../../widgets/page_header.dart';
 part 'tv_settings_general.dart';
 part 'tv_settings_display.dart';
 
+String _alertSoundLabel(String? uri) {
+  if (uri == null) return 'Default';
+  if (uri == 'silent') return 'Silent';
+  try {
+    final decoded = Uri.decodeComponent(uri.split('/').last);
+    if (decoded.length > 30) return '${decoded.substring(0, 27)}...';
+    return decoded;
+  } catch (_) {
+    return uri;
+  }
+}
+
 /// Settings page: General/Display/Notification Preferences/TV Overlay/
 /// Support sections. The notification preferences and overlay settings
 /// cards are shared, identical widgets with the Phone app's own settings.
@@ -51,10 +63,7 @@ class TvSettingsScreen extends ConsumerWidget {
                   onTextChanged: notifier.setTextNotificationsEnabled,
                   imagePreviewsEnabled: settings.imagePreviewsEnabled,
                   onImagePreviewsChanged: notifier.setImagePreviewsEnabled,
-                  alertSoundLabel:
-                      settings.alertSoundUri == 'silent'
-                          ? 'Silent'
-                          : 'Standard Ping',
+                  alertSoundLabel: _alertSoundLabel(settings.alertSoundUri),
                   onPickAlertSound: () async {
                     final uri = await OverlayService.pickAlertSound();
                     if (uri != null) {

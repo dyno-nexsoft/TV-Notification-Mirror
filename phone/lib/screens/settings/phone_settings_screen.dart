@@ -5,6 +5,18 @@ import '../../providers/phone_providers.dart';
 import '../../services/alert_sound_service.dart';
 import 'phone_app_filters_screen.dart';
 
+String _alertSoundLabel(String? uri) {
+  if (uri == null) return 'Default';
+  if (uri == 'silent') return 'Silent';
+  try {
+    final decoded = Uri.decodeComponent(uri.split('/').last);
+    if (decoded.length > 30) return '${decoded.substring(0, 27)}...';
+    return decoded;
+  } catch (_) {
+    return uri;
+  }
+}
+
 /// The Settings page — notification preferences, TV overlay display options,
 /// per-app filters, and a support section.
 class PhoneSettingsScreen extends ConsumerWidget {
@@ -23,7 +35,6 @@ class PhoneSettingsScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final asyncSettings = ref.watch(settingsProvider);
     final settings = asyncSettings.value;
-    final notifier = ref.read(settingsProvider.notifier);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -31,39 +42,15 @@ class PhoneSettingsScreen extends ConsumerWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 16,
         children: [
-          NotificationPreferencesCard(
-            leading: YaruSwitchListTile(
-              title: const Text('Mirror Phone Notifications'),
-              subtitle: const Text('Master switch for all TV mirroring'),
-              value: settings?.masterMirrorEnabled ?? true,
-              onChanged: notifier.setMasterMirrorEnabled,
+          YaruSection(
+            headline: const Text('ALERT SOUND'),
+            child: YaruListTile(
+              leading: const Icon(YaruIcons.headset),
+              title: const Text('Test Notification Sound'),
+              subtitle: Text(_alertSoundLabel(settings?.alertSoundUri)),
+              trailing: const Icon(YaruIcons.pan_end),
+              onTap: () => _pickAlertSound(ref),
             ),
-            callEnabled: settings?.callNotificationsEnabled ?? true,
-            onCallChanged: notifier.setCallNotificationsEnabled,
-            textEnabled: settings?.textNotificationsEnabled ?? true,
-            onTextChanged: notifier.setTextNotificationsEnabled,
-            imagePreviewsEnabled: settings?.imagePreviewsEnabled ?? true,
-            onImagePreviewsChanged: notifier.setImagePreviewsEnabled,
-            alertSoundLabel:
-                settings?.alertSoundUri == 'silent'
-                    ? 'Silent'
-                    : 'Standard Ping',
-            onPickAlertSound: () => _pickAlertSound(ref),
-          ),
-          TvOverlaySettingsCard(
-            position: settings?.overlayPosition ?? MirrorProtocol.overlayTopRight,
-            onPositionChanged: (val) {
-              if (settings == null) return;
-              notifier.updateSettings(settings.copyWith(overlayPosition: val));
-            },
-            durationSeconds: settings?.overlayDurationSeconds ?? 5,
-            onDurationChanged: (val) {
-              if (settings == null) return;
-              notifier.updateSettings(
-                settings.copyWith(overlayDurationSeconds: val),
-              );
-            },
-            durationMin: 2,
           ),
           YaruSection(
             headline: const Text('APP FILTERS'),

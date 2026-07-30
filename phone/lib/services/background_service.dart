@@ -37,15 +37,9 @@ void onStart(ServiceInstance service) async {
   final notificationService = NotificationService();
 
   var appFilters = <String, bool>{};
-  var appSettings = const AppSettings(
-    overlayDurationSeconds: 5,
-    overlayPosition: 'bottom',
-    tvDndEnabled: false,
-  );
 
   Future<void> reloadSettings() async {
     appFilters = await FilterService.loadFilters();
-    appSettings = await FilterService.loadSettings();
   }
 
   await reloadSettings();
@@ -115,82 +109,41 @@ void onStart(ServiceInstance service) async {
     connector.checkConnection();
   });
 
-  service.on('sendDndToggle').listen((event) {
-    if (event != null && event['enabled'] != null) {
-      connector.sendDndToggle(event['enabled'] as bool);
-    }
-  });
-
   service.on('sendTestNotification').listen((event) async {
     if (event == null) return;
     final item = NotificationItem.fromJson(Map<String, dynamic>.from(event));
     String? base64Icon;
-    if (appSettings.imagePreviewsEnabled) {
-      try {
-        final appInfo = await InstalledApps.getAppInfo(item.packageName);
-        if (appInfo != null && appInfo.icon != null) {
-          base64Icon = base64Encode(appInfo.icon!);
-        }
-      } catch (e) {
-        debugPrint("Failed to load icon for test notification: $e");
+    try {
+      final appInfo = await InstalledApps.getAppInfo(item.packageName);
+      if (appInfo != null && appInfo.icon != null) {
+        base64Icon = base64Encode(appInfo.icon!);
       }
+    } catch (e) {
+      debugPrint("Failed to load icon for test notification: $e");
     }
-    connector.sendNotification(
-      item,
-      base64Icon: base64Icon,
-      overlayPosition: appSettings.overlayPosition,
-      overlayDurationMs: appSettings.overlayDurationSeconds * 1000,
-    );
+    connector.sendNotification(item, base64Icon: base64Icon);
   });
 
-  // Notification Listening & Filtering
+  // Notification Listening & Filtering — phone only filters by app allowlist.
+  // TV decides category-based filtering (call/text/images) and display settings.
   notificationService.notificationStream.listen((item) async {
-    if (!appSettings.masterMirrorEnabled) {
-      debugPrint("Mirroring disabled by master switch, ignoring notification.");
-      return;
-    }
-
-    final isCall = item.category == NotificationCategory.voiceCall ||
-        item.category == NotificationCategory.videoCall;
-    final isMessage = item.category == NotificationCategory.message;
-    if (isCall && !appSettings.callNotificationsEnabled) {
-      debugPrint("Call notifications disabled, ignoring notification.");
-      return;
-    }
-    if (isMessage && !appSettings.textNotificationsEnabled) {
-      debugPrint("Text notifications disabled, ignoring notification.");
-      return;
-    }
-
     final isAppAllowed = MirrorFilterEvaluator.isAppEnabled(
       item.packageName,
       appFilters,
     );
 
     if (isAppAllowed) {
-      // Need icon? Yes, unless Image Previews is disabled. Wait,
-      // FilterService.loadFilters() doesn't load icons! In phone app,
-      // iconCache is loaded from InstalledApps package. We can fetch it on
-      // the fly for the specific package to save memory in background!
       String? base64Icon;
-      if (appSettings.imagePreviewsEnabled) {
-        try {
-          final appInfo = await InstalledApps.getAppInfo(item.packageName);
-          if (appInfo != null && appInfo.icon != null) {
-            base64Icon = base64Encode(appInfo.icon!);
-          }
-        } catch (e) {
-          debugPrint("Failed to load icon for ${item.packageName}: $e");
+      try {
+        final appInfo = await InstalledApps.getAppInfo(item.packageName);
+        if (appInfo != null && appInfo.icon != null) {
+          base64Icon = base64Encode(appInfo.icon!);
         }
+      } catch (e) {
+        debugPrint("Failed to load icon for ${item.packageName}: $e");
       }
 
-      connector.sendNotification(
-        item,
-        base64Icon: base64Icon,
-        overlayPosition: appSettings.overlayPosition,
-        overlayDurationMs: appSettings.overlayDurationSeconds * 1000,
-      );
-
+      connector.sendNotification(item, base64Icon: base64Icon);
       service.invoke('notificationSent', item.toJson());
     }
   });

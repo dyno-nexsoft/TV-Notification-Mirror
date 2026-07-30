@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:yaru/yaru.dart';
 
 /// Pure default Yaru Design System theme configuration shared between Phone and TV apps.
@@ -24,6 +25,7 @@ class YaruAppTheme {
   );
 
   static ThemeData _applyCustomTheme(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
     final focusBorder = BorderSide(
       color: theme.colorScheme.primary,
       width: 2.0,
@@ -53,6 +55,11 @@ class YaruAppTheme {
     );
 
     return theme.copyWith(
+      appBarTheme: theme.appBarTheme.copyWith(
+        systemOverlayStyle: isDark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
+      ),
       iconButtonTheme: IconButtonThemeData(
         style: (theme.iconButtonTheme.style ?? const ButtonStyle()).copyWith(
           side: iconSide,

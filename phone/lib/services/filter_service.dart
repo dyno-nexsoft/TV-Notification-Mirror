@@ -1,3 +1,4 @@
+import 'package:shared/shared.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Encapsulates all persistence logic for app filters and mirror settings
@@ -29,6 +30,10 @@ class FilterService {
     final prefs = await SharedPreferences.getInstance();
     return AppSettings(
       alertSoundUri: prefs.getString('alert_sound_uri'),
+      themeMode: ThemeMode.values.firstWhere(
+        (m) => m.name == prefs.getString('phone_theme_mode'),
+        orElse: () => ThemeMode.dark,
+      ),
     );
   }
 
@@ -36,12 +41,18 @@ class FilterService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('alert_sound_uri', uri);
   }
+
+  static Future<void> saveThemeMode(ThemeMode mode) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('phone_theme_mode', mode.name);
+  }
 }
 
 /// Phone-side settings — only what the phone needs locally.
 class AppSettings {
   const AppSettings({
     this.alertSoundUri,
+    this.themeMode = ThemeMode.dark,
   });
 
   /// URI of the sound played locally when using "Send Test Notification".
@@ -49,11 +60,16 @@ class AppSettings {
   /// sound at all.
   final String? alertSoundUri;
 
+  /// Light / Dark / System theme mode for the phone app.
+  final ThemeMode themeMode;
+
   AppSettings copyWith({
     String? alertSoundUri,
+    ThemeMode? themeMode,
   }) {
     return AppSettings(
       alertSoundUri: alertSoundUri ?? this.alertSoundUri,
+      themeMode: themeMode ?? this.themeMode,
     );
   }
 }

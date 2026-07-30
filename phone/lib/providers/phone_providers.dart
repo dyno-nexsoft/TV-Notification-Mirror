@@ -235,6 +235,21 @@ class Settings extends _$Settings {
       ref.read(appToastProvider.notifier).show('Error: $e');
     }
   }
+
+  Future<void> setThemeMode(ThemeMode mode) async {
+    final current = state.value;
+    if (current == null) return;
+
+    final previousState = state;
+    state = AsyncData(current.copyWith(themeMode: mode));
+
+    try {
+      await FilterService.saveThemeMode(mode);
+    } catch (e) {
+      state = previousState;
+      ref.read(appToastProvider.notifier).show('Error: $e');
+    }
+  }
 }
 
 // ── Filters & Installed Apps State & Notifier ──────────────────────────────

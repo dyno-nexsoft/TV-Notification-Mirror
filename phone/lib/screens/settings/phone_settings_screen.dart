@@ -53,6 +53,31 @@ class PhoneSettingsScreen extends ConsumerWidget {
             ),
           ),
           YaruSection(
+            headline: const Text('APPEARANCE'),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16),
+                  child: Text('Theme'),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: SegmentedButton<ThemeMode>(
+                    segments: const [
+                      ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
+                      ButtonSegment(value: ThemeMode.light, label: Text('Light')),
+                      ButtonSegment(value: ThemeMode.system, label: Text('System')),
+                    ],
+                    selected: {settings?.themeMode ?? ThemeMode.dark},
+                    onSelectionChanged: (selection) =>
+                        ref.read(settingsProvider.notifier).setThemeMode(selection.first),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          YaruSection(
             headline: const Text('APP FILTERS'),
             child: YaruListTile(
               leading: const Icon(YaruIcons.pen),

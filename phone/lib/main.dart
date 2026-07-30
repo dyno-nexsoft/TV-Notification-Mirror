@@ -1,39 +1,32 @@
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/shared.dart';
 
+import 'providers/phone_providers.dart';
 import 'screens/main_screen.dart';
-
 import 'services/background_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeBackgroundService();
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      statusBarBrightness: Brightness.dark,
-    ),
-  );
-  runApp(
-    const ProviderScope(
-      child: MyApp(),
-    ),
-  );
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 /// Root application widget configured with Yaru UI theme.
-class MyApp extends StatelessWidget {
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final themeMode = ref.watch(
+      settingsProvider
+          .select((settings) => settings.value?.themeMode ?? ThemeMode.dark),
+    );
+
     return YaruTheme(
       builder: (context, yaru, child) {
         return MaterialApp(
           title: MirrorProtocol.appName,
-          themeMode: ThemeMode.dark,
+          themeMode: themeMode,
           theme: YaruAppTheme.lightTheme,
           darkTheme: YaruAppTheme.darkTheme,
           builder: (context, child) {

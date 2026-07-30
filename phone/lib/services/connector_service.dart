@@ -250,7 +250,7 @@ class ConnectorService {
 
   void _startPingTimer() {
     _pingTimer?.cancel();
-    _pingTimer = Timer.periodic(const Duration(seconds: 15), (timer) {
+    _pingTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
       if (_isConnected && _wsChannel != null) {
         try {
           _wsChannel!.sink.add(jsonEncode({
@@ -283,7 +283,7 @@ class ConnectorService {
   void _scheduleReconnect() {
     _reconnectTimer?.cancel();
     final backoff = Duration(
-      seconds: (5 * (1 << _reconnectAttempt)).clamp(5, 60),
+      seconds: (3 * (1 << _reconnectAttempt)).clamp(3, 30),
     );
     _reconnectAttempt++;
     debugPrint(
@@ -369,6 +369,13 @@ class ConnectorService {
     _reconnectAttempt = 0;
     debugPrint("checkConnection: resetting backoff and reconnecting...");
     connectToSavedTv();
+  }
+
+  /// Resets reconnect state without connecting. Used to cancel pending
+  /// reconnection timers when a new connection is established manually.
+  void resetReconnectState() {
+    _reconnectTimer?.cancel();
+    _reconnectAttempt = 0;
   }
 
   Future<void> disconnect() async {

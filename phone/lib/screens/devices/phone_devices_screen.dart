@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/shared.dart';
 
+import '../../helpers/responsive_helper.dart';
 import '../../providers/phone_providers.dart';
 import '../../services/connector_service.dart';
 import '../../widgets/connect/device_list_tile.dart';
@@ -28,8 +29,12 @@ class PhoneDevicesScreen extends ConsumerWidget {
     final isConnected = connectorState.isConnected;
     final discoveredDevices = connectorState.discoveredDevices;
 
+    final hp = ResponsiveHelper.horizontalPadding(context);
+    final vp = ResponsiveHelper.verticalPadding(context);
+    final useGrid = ResponsiveHelper.useGrid(context);
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(horizontal: hp, vertical: vp),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         spacing: 24,
@@ -40,29 +45,70 @@ class PhoneDevicesScreen extends ConsumerWidget {
               headline: Text('Available TVs (${discoveredDevices.length})'),
               child: discoveredDevices.isEmpty
                   ? const _ScanningCard()
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: discoveredDevices.length,
-                      itemBuilder: (context, index) {
-                        final dev = discoveredDevices[index];
-                        return DeviceListTile(
-                          device: dev,
-                          onPair: () => onPairDevice(dev),
-                        );
-                      },
+                  : useGrid
+                      ? GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                            maxCrossAxisExtent: 360,
+                            crossAxisSpacing: hp,
+                            mainAxisSpacing: hp,
+                            childAspectRatio: 4,
+                          ),
+                          itemCount: discoveredDevices.length,
+                          itemBuilder: (context, index) {
+                            final dev = discoveredDevices[index];
+                            return DeviceListTile(
+                              device: dev,
+                              onPair: () => onPairDevice(dev),
+                            );
+                          },
+                        )
+                      : ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: discoveredDevices.length,
+                          itemBuilder: (context, index) {
+                            final dev = discoveredDevices[index];
+                            return DeviceListTile(
+                              device: dev,
+                              onPair: () => onPairDevice(dev),
+                            );
+                          },
+                        ),
+            ),
+            if (useGrid)
+              Row(
+                spacing: hp,
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: onScanQr,
+                      icon: const Icon(YaruIcons.scanner),
+                      label: const Text('Scan QR to Pair'),
                     ),
-            ),
-            OutlinedButton.icon(
-              onPressed: onScanQr,
-              icon: const Icon(YaruIcons.scanner),
-              label: const Text('Scan QR to Pair'),
-            ),
-            OutlinedButton.icon(
-              onPressed: onManualConnect,
-              icon: const Icon(YaruIcons.external_link),
-              label: const Text('Connect with IP Address'),
-            ),
+                  ),
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: onManualConnect,
+                      icon: const Icon(YaruIcons.external_link),
+                      label: const Text('Connect with IP Address'),
+                    ),
+                  ),
+                ],
+              )
+            else ...[
+              OutlinedButton.icon(
+                onPressed: onScanQr,
+                icon: const Icon(YaruIcons.scanner),
+                label: const Text('Scan QR to Pair'),
+              ),
+              OutlinedButton.icon(
+                onPressed: onManualConnect,
+                icon: const Icon(YaruIcons.external_link),
+                label: const Text('Connect with IP Address'),
+              ),
+            ],
           ],
         ],
       ),

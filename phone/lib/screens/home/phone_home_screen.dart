@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/shared.dart';
 
+import '../../helpers/responsive_helper.dart';
 import '../../providers/phone_nav_provider.dart';
 import '../../providers/phone_providers.dart';
 import '../../services/alert_sound_service.dart';
@@ -35,38 +36,82 @@ class PhoneHomeScreen extends ConsumerWidget {
     final isConnected = connectorState.isConnected;
     final recent = history.take(3).toList();
 
+    final hp = ResponsiveHelper.horizontalPadding(context);
+    final vp = ResponsiveHelper.verticalPadding(context);
+    final sp = ResponsiveHelper.spacing(context);
+    final useGrid = ResponsiveHelper.useGrid(context);
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(horizontal: hp, vertical: vp),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 16,
+        spacing: sp,
         children: [
-          YaruSection(
-            headline: const Text('Connection'),
-            child: YaruListTile(
-              leading: Icon(
-                isConnected ? YaruIcons.ok_simple : YaruIcons.cloud,
-              ),
-              title: Text(
-                isConnected
-                    ? (connectorState.connectedTvName ?? 'Connected')
-                    : 'No Active TV Connection',
-              ),
-              subtitle: Text(
-                isConnected
-                    ? 'Notifications are being mirrored in real-time.'
-                    : 'Go to Devices to scan or pair a TV.',
+          if (useGrid)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: sp,
+              children: [
+                Expanded(
+                  child: YaruSection(
+                    headline: const Text('Connection'),
+                    child: YaruListTile(
+                      leading: Icon(
+                        isConnected ? YaruIcons.ok_simple : YaruIcons.cloud,
+                      ),
+                      title: Text(
+                        isConnected
+                            ? (connectorState.connectedTvName ?? 'Connected')
+                            : 'No Active TV Connection',
+                      ),
+                      subtitle: Text(
+                        isConnected
+                            ? 'Notifications are being mirrored in real-time.'
+                            : 'Go to Devices to scan or pair a TV.',
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: YaruSection(
+                    headline: const Text('Quick Actions'),
+                    child: YaruListTile(
+                      leading: const Icon(YaruIcons.send),
+                      title: const Text('Send Test Notification'),
+                      onTap: () => _sendTestNotification(ref),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else ...[
+            YaruSection(
+              headline: const Text('Connection'),
+              child: YaruListTile(
+                leading: Icon(
+                  isConnected ? YaruIcons.ok_simple : YaruIcons.cloud,
+                ),
+                title: Text(
+                  isConnected
+                      ? (connectorState.connectedTvName ?? 'Connected')
+                      : 'No Active TV Connection',
+                ),
+                subtitle: Text(
+                  isConnected
+                      ? 'Notifications are being mirrored in real-time.'
+                      : 'Go to Devices to scan or pair a TV.',
+                ),
               ),
             ),
-          ),
           YaruSection(
             headline: const Text('Quick Actions'),
-            child: BorderedActionCard(
-              icon: YaruIcons.send,
-              title: 'Send Test\nNotification',
+            child: YaruListTile(
+              leading: const Icon(YaruIcons.send),
+              title: const Text('Send Test Notification'),
               onTap: () => _sendTestNotification(ref),
             ),
           ),
+          ],
           YaruSection(
             headline: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -86,12 +131,24 @@ class PhoneHomeScreen extends ConsumerWidget {
                     child:
                         Center(child: Text('No notifications captured yet.')),
                   )
-                : Column(
-                    children: [
-                      for (final item in recent)
-                        HistoryItemCard(item: item, iconCache: iconCache),
-                    ],
-                  ),
+                : useGrid
+                    ? GridView.extent(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        maxCrossAxisExtent: 400,
+                        crossAxisSpacing: sp,
+                        mainAxisSpacing: sp,
+                        children: [
+                          for (final item in recent)
+                            HistoryItemCard(item: item, iconCache: iconCache),
+                        ],
+                      )
+                    : Column(
+                        children: [
+                          for (final item in recent)
+                            HistoryItemCard(item: item, iconCache: iconCache),
+                        ],
+                      ),
           ),
         ],
       ),

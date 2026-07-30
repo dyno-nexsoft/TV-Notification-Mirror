@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/shared.dart';
 
+import '../../helpers/responsive_helper.dart';
 import '../../providers/phone_providers.dart';
 import '../../services/alert_sound_service.dart';
 import 'phone_app_filters_screen.dart';
@@ -36,11 +37,14 @@ class PhoneSettingsScreen extends ConsumerWidget {
     final asyncSettings = ref.watch(settingsProvider);
     final settings = asyncSettings.value;
 
+    final hp = ResponsiveHelper.horizontalPadding(context);
+    final sp = ResponsiveHelper.spacing(context);
+
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.symmetric(horizontal: hp, vertical: ResponsiveHelper.verticalPadding(context)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
-        spacing: 16,
+        spacing: sp,
         children: [
           YaruSection(
             headline: const Text('ALERT SOUND'),
@@ -57,12 +61,12 @@ class PhoneSettingsScreen extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 16),
-                  child: Text('Theme'),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: hp),
+                  child: const Text('Theme'),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: EdgeInsets.symmetric(horizontal: hp),
                   child: SegmentedButton<ThemeMode>(
                     segments: const [
                       ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),

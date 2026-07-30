@@ -35,6 +35,7 @@ class _MainScreenBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final hasPermissionAsync = ref.watch(permissionProvider);
     final navPage = ref.watch(phoneNavIndexProvider);
+    final useRail = ResponsiveHelper.useSideNav(context);
 
     ref.listen<ToastData?>(appToastProvider, (prev, next) {
       if (next != null) {
@@ -44,32 +45,73 @@ class _MainScreenBody extends ConsumerWidget {
       }
     });
 
+    final useSideNav = ResponsiveHelper.useSideNav(context);
+    final screens = <Widget>[
+      const PhoneHomeScreen(),
+      const PhoneAlertsScreen(),
+      PhoneDevicesScreen(
+        onSendTest: () => _sendTestNotification(ref),
+        onManualConnect: onManualConnect,
+        onPairDevice: onPairDevice,
+        onScanQr: onScanQr,
+      ),
+      PhoneSettingsScreen(onAddCustomApp: onAddCustomApp),
+    ];
+    final bodyContent = Column(
+      children: [
+        if (hasPermissionAsync.value == false)
+          PermissionBanner(
+            notifier: ref.read(permissionProvider.notifier),
+          ),
+        Expanded(
+          child: useSideNav
+              ? Center(
+                  child: SizedBox(
+                    width: ResponsiveHelper.maxContentWidth(context),
+                    child: IndexedStack(
+                      index: navPage.index,
+                      children: screens,
+                    ),
+                  ),
+                )
+              : IndexedStack(
+                  index: navPage.index,
+                  children: screens,
+                ),
+        ),
+      ],
+    );
+
+    if (useRail) {
+      return Scaffold(
+        appBar: AppBar(title: const Text(MirrorProtocol.appName)),
+        body: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: navPage.index,
+              onDestinationSelected: (index) => ref
+                  .read(phoneNavIndexProvider.notifier)
+                  .select(PhoneNavPage.values[index]),
+              labelType: NavigationRailLabelType.all,
+              destinations: const [
+                NavigationRailDestination(icon: Icon(YaruIcons.home), label: Text('Home')),
+                NavigationRailDestination(icon: Icon(YaruIcons.notification), label: Text('Alerts')),
+                NavigationRailDestination(icon: Icon(YaruIcons.computer), label: Text('Devices')),
+                NavigationRailDestination(icon: Icon(YaruIcons.settings), label: Text('Settings')),
+              ],
+            ),
+            const VerticalDivider(width: 1),
+            Expanded(child: bodyContent),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(MirrorProtocol.appName),
       ),
-      body: Column(
-        children: [
-          if (hasPermissionAsync.value == false)
-            PermissionBanner(
-              notifier: ref.read(permissionProvider.notifier),
-            ),
-          Expanded(
-            child: switch (navPage) {
-              PhoneNavPage.home => const PhoneHomeScreen(),
-              PhoneNavPage.alerts => const PhoneAlertsScreen(),
-              PhoneNavPage.devices => PhoneDevicesScreen(
-                  onSendTest: () => _sendTestNotification(ref),
-                  onManualConnect: onManualConnect,
-                  onPairDevice: onPairDevice,
-                  onScanQr: onScanQr,
-                ),
-              PhoneNavPage.settings =>
-                PhoneSettingsScreen(onAddCustomApp: onAddCustomApp),
-            },
-          ),
-        ],
-      ),
+      body: bodyContent,
       bottomNavigationBar: NavigationBar(
         selectedIndex: navPage.index,
         onDestinationSelected: (index) => ref

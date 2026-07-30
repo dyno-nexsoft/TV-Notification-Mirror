@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/shared.dart';
 
+import '../../helpers/responsive_helper.dart';
 import '../../providers/phone_providers.dart';
 import '../../widgets/history/history_item_card.dart';
 
@@ -31,10 +32,13 @@ class _PhoneAlertsScreenState extends ConsumerState<PhoneAlertsScreen> {
                 item.appName.toLowerCase().contains(query);
           }).toList();
 
+    final hp = ResponsiveHelper.horizontalPadding(context);
+    final useGrid = ResponsiveHelper.useGrid(context);
+
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          padding: EdgeInsets.fromLTRB(hp, ResponsiveHelper.verticalPadding(context), hp, 8),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: 12,
@@ -73,16 +77,31 @@ class _PhoneAlertsScreenState extends ConsumerState<PhoneAlertsScreen> {
                     ],
                   ),
                 )
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    return HistoryItemCard(
-                      item: filtered[index],
-                      iconCache: iconCache,
-                    );
-                  },
-                ),
+              : useGrid
+                  ? GridView.builder(
+                      padding: EdgeInsets.all(hp),
+                      gridDelegate: SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 400,
+                        crossAxisSpacing: hp,
+                        mainAxisSpacing: hp,
+                        childAspectRatio: 3.5,
+                      ),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) => HistoryItemCard(
+                        item: filtered[index],
+                        iconCache: iconCache,
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: EdgeInsets.symmetric(horizontal: hp),
+                      itemCount: filtered.length,
+                      itemBuilder: (context, index) {
+                        return HistoryItemCard(
+                          item: filtered[index],
+                          iconCache: iconCache,
+                        );
+                      },
+                    ),
         ),
       ],
     );

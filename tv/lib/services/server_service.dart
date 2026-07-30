@@ -17,6 +17,14 @@ import 'tv_settings_service.dart';
 /// A phone paired with (and optionally currently connected to) this TV.
 typedef ConnectedClient = MirrorDevice;
 
+/// Tracks an in-progress PIN-pairing session keyed by the phone's IP address,
+/// so simultaneous pairing attempts from different phones don't race.
+class _PairingSession {
+  _PairingSession({required this.pin, required this.deviceName});
+  final String pin;
+  final String deviceName;
+}
+
 /// Owns the TV's half of the mirror link: the HTTP pairing API, mDNS
 /// broadcast, and the WebSocket server that receives and forwards
 /// notifications from paired phones. Singleton so the background isolate
@@ -29,8 +37,7 @@ class ServerService {
   HttpServer? _server;
   BonsoirBroadcast? _broadcast;
 
-  String? _currentPin;
-  String? _pairingDeviceName;
+  final _pairingSessions = <String, _PairingSession>{};
 
   /// Single-use token proactively displayed as a QR code on the Pair Device
   /// screen — unlike [_currentPin], this exists from server start (no need
@@ -98,7 +105,8 @@ class ServerService {
   Stream<List<ConnectedClient>> get pairedClientsStream =>
       _clientsController.stream;
   bool get isRunning => _isRunning;
-  String? get currentPin => _currentPin;
+  String? get currentPin =>
+      _pairingSessions.values.isEmpty ? null : _pairingSessions.values.last.pin;
   List<ConnectedClient> get pairedClients => _pairedClients;
   Set<String> get activeTokens => _activeTokens;
   List<NotificationItem> get notificationHistory => _notificationHistory;
@@ -176,14 +184,19 @@ class ServerService {
     final payload = await request.readAsString();
     try {
       final body = jsonDecode(payload);
-      _pairingDeviceName = body['deviceName'] ?? 'Unknown Phone';
+      final deviceName = body['deviceName'] ?? 'Unknown Phone';
+      final ip = (request.context['shelf.io.connection_info']
+              as HttpConnectionInfo)
+          .remoteAddress
+          .address;
 
       final rng = Random();
-      _currentPin = (rng.nextInt(9000) + 1000).toString();
-      _pairingStateController.add(_currentPin);
+      final pin = (rng.nextInt(9000) + 1000).toString();
+      _pairingSessions[ip] = _PairingSession(pin: pin, deviceName: deviceName);
+      _pairingStateController.add(pin);
 
       debugPrint(
-        "Pairing initiated from $_pairingDeviceName. Generated PIN: $_currentPin",
+        "Pairing initiated from $deviceName ($ip). Generated PIN: $pin",
       );
       return shelf.Response.ok(jsonEncode({'status': 'pin_generated'}));
     } catch (e) {
@@ -200,18 +213,23 @@ class ServerService {
     try {
       final body = jsonDecode(payload);
       final pin = body['pin'] as String;
+      final ip = (request.context['shelf.io.connection_info']
+              as HttpConnectionInfo)
+          .remoteAddress
+          .address;
+      final session = _pairingSessions[ip];
 
-      if (_currentPin == null || pin != _currentPin) {
+      if (session == null || pin != session.pin) {
         return shelf.Response.forbidden(jsonEncode({'error': 'invalid_pin'}));
       }
 
       final response = await _completePairing(
         request: request,
         port: port,
-        deviceName: _pairingDeviceName ?? 'Android Phone',
+        deviceName: session.deviceName,
       );
 
-      _currentPin = null;
+      _pairingSessions.remove(ip);
       _pairingStateController.add(null);
       return response;
     } catch (e) {

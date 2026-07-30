@@ -58,6 +58,11 @@ void onStart(ServiceInstance service) async {
     });
   }
 
+  // Forward connection errors to UI
+  connector.errorStream.listen((message) {
+    service.invoke('connectionError', {'message': message});
+  });
+
   // Periodic state sync to UI
   Timer.periodic(const Duration(seconds: 1), (timer) {
     if (service is AndroidServiceInstance) {

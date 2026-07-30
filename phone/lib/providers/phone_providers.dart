@@ -90,6 +90,7 @@ class PhoneConnectorState {
 @Riverpod(keepAlive: true)
 class Connector extends _$Connector {
   StreamSubscription? _stateSub;
+  StreamSubscription? _errorSub;
 
   @override
   PhoneConnectorState build() {
@@ -114,8 +115,18 @@ class Connector extends _$Connector {
       );
     });
 
+    _errorSub?.cancel();
+    _errorSub = service.on('connectionError').listen((event) {
+      if (event == null) return;
+      final message = event['message'] as String?;
+      if (message != null) {
+        ref.read(appToastProvider.notifier).show(message);
+      }
+    });
+
     ref.onDispose(() {
       _stateSub?.cancel();
+      _errorSub?.cancel();
     });
 
     return const PhoneConnectorState();

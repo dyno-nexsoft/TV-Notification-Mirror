@@ -28,6 +28,7 @@ class ConnectorService {
   WebSocketChannel? _wsChannel;
   Timer? _reconnectTimer;
   Timer? _pingTimer;
+  Timer? _pongTimer;
   var _isConnecting = false;
   var _isConnected = false;
   var _reconnectAttempt = 0;
@@ -37,9 +38,11 @@ class ConnectorService {
   String? _connectedTvName;
 
   final _connectionStateController = StreamController<bool>.broadcast();
+  final _errorController = StreamController<String>.broadcast();
 
   Stream<List<TVDevice>> get devicesStream => _devicesController.stream;
   Stream<bool> get connectionStateStream => _connectionStateController.stream;
+  Stream<String> get errorStream => _errorController.stream;
   bool get isConnected => _isConnected;
   String? get connectedTvName => _connectedTvName;
   List<TVDevice> get discoveredDevices => List.unmodifiable(_discoveredDevices);
@@ -224,12 +227,11 @@ class ConnectorService {
       _reconnectAttempt = 0;
       _connectionStateController.add(true);
       _reconnectTimer?.cancel();
+      _pongTimer?.cancel();
       _startPingTimer();
 
       _wsChannel!.stream.listen(
-        (message) {
-          debugPrint("Received message from TV: $message");
-        },
+        _handleMessage,
         onDone: () {
           debugPrint("WebSocket connection closed.");
           _handleDisconnect();
@@ -243,9 +245,25 @@ class ConnectorService {
       return true;
     } catch (e) {
       debugPrint("WebSocket connection failed: $e");
-      _handleDisconnect();
+      _isConnecting = false;
+      if (e.toString().contains('403')) {
+        _errorController.add('Connection rejected: token expired');
+        debugPrint("Got 403 from TV — clearing stale token and saved TV info");
+        _clearSavedConnection();
+      } else {
+        _handleDisconnect();
+      }
       return false;
     }
+  }
+
+  void _handleMessage(dynamic raw) {
+    try {
+      final decoded = jsonDecode(raw as String);
+      if (decoded['event'] == MirrorProtocol.eventPong) {
+        _pongTimer?.cancel();
+      }
+    } catch (_) {}
   }
 
   void _startPingTimer() {
@@ -257,6 +275,12 @@ class ConnectorService {
             'event': MirrorProtocol.eventPing,
             'timestamp': DateTime.now().millisecondsSinceEpoch,
           }));
+          _pongTimer?.cancel();
+          _pongTimer = Timer(const Duration(seconds: 15), () {
+            debugPrint("Pong timeout: no response for 15s, disconnecting...");
+            _handleDisconnect();
+            _errorController.add('Connection lost: TV not responding');
+          });
         } catch (e) {
           debugPrint("Ping failed: $e");
           _handleDisconnect();
@@ -269,6 +293,7 @@ class ConnectorService {
 
   void _handleDisconnect() {
     _pingTimer?.cancel();
+    _pongTimer?.cancel();
     _isConnected = false;
     _isConnecting = false;
     _connectionStateController.add(false);
@@ -296,6 +321,30 @@ class ConnectorService {
         await connectToSavedTv();
       }
     });
+  }
+
+  /// Clears saved TV info and auth token without full disconnect ceremony.
+  Future<void> _clearSavedConnection() async {
+    _pingTimer?.cancel();
+    _pongTimer?.cancel();
+    _reconnectTimer?.cancel();
+    _isConnected = false;
+    _isConnecting = false;
+    _connectionStateController.add(false);
+    _wsChannel = null;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('connected_tv_ip');
+    await prefs.remove('connected_tv_port');
+    await prefs.remove('connected_tv_name');
+
+    if (_connectedTvIp != null) {
+      await _storage.delete(key: 'auth_token_$_connectedTvIp');
+    }
+
+    _connectedTvIp = null;
+    _connectedTvPort = null;
+    _connectedTvName = null;
   }
 
   // Send notification to TV

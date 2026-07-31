@@ -57,6 +57,7 @@ class PhoneSettingsScreen extends ConsumerWidget {
               onTap: () => _pickAlertSound(ref),
             ),
           ),
+          const BatteryOptimizationSection(),
           YaruSection(
             headline: const Text('APPEARANCE'),
             child: Column(

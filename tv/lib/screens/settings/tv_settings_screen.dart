@@ -83,6 +83,7 @@ class TvSettingsScreen extends ConsumerWidget {
               ),
             ],
           ),
+          const BatteryOptimizationSection(),
           YaruSection(
             headline: const Text('DEBUG'),
             child: Consumer(

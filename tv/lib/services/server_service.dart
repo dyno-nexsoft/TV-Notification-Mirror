@@ -341,6 +341,20 @@ class ServerService {
     }
 
     return webSocketHandler((WebSocketChannel socket, _) {
+      // If this token already has a live socket, close the old one first so a
+      // reconnecting phone never leaves a stale duplicate behind. Without this,
+      // a disconnect on the new socket keeps the token "active" via the old
+      // (half-open) socket and the connected-client count never drops to 0.
+      final existing = _socketToToken.entries
+          .where((e) => e.value == token)
+          .map((e) => e.key)
+          .toList();
+      for (final old in existing) {
+        _socketToToken.remove(old);
+        _activeSockets.remove(old);
+        old.sink.close();
+      }
+
       _activeSockets.add(socket);
       _activeTokens.add(token!);
       _socketToToken[socket] = token;
@@ -381,7 +395,13 @@ class ServerService {
   void _handleSocketClosed(WebSocketChannel socket, String reason) {
     final t = _socketToToken.remove(socket);
     _activeSockets.remove(socket);
-    if (t != null) _activeTokens.remove(t);
+    // Only drop the token from the active set if no other socket still maps
+    // to it. A phone may briefly hold two sockets with the same token (e.g.
+    // the phone app restarted before its old TCP connection was torn down);
+    // closing the stale one must not mark the live one as disconnected.
+    if (t != null && !_socketToToken.containsValue(t)) {
+      _activeTokens.remove(t);
+    }
     _log("WebSocket client $reason. Token: $t");
   }
 

@@ -61,14 +61,17 @@ class _PairingDialogState extends ConsumerState<_PairingDialog> {
                   const Text(
                     'Enter the 4-digit PIN displayed on your TV screen:',
                   ),
-                  YaruSearchField(
+                  TextField(
                     controller: _pinController,
-                    hintText: '0000',
-                    onChanged: (v) => setState(() {}),
-                    onClear: () {
-                      _pinController.clear();
-                      setState(() {});
-                    },
+                    autofocus: true,
+                    keyboardType: TextInputType.number,
+                    textAlign: TextAlign.center,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(4),
+                    ],
+                    onSubmitted: (_) => _confirmPin(),
+                    decoration: const InputDecoration(hintText: '0000'),
                   ),
                 ],
                 if (!_isLoading)

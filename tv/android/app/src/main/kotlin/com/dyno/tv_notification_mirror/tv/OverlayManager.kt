@@ -193,8 +193,8 @@ object OverlayManager {
                     "bottom_right" -> Gravity.BOTTOM or Gravity.END
                     else -> Gravity.TOP or Gravity.END
                 }
-                layoutParams.x = 80
-                layoutParams.y = 80
+                layoutParams.x = 24
+                layoutParams.y = 24
 
                 wm.addView(overlayView, layoutParams)
                 Log.d(TAG, "Overlay displayed: $title")

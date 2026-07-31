@@ -13,6 +13,7 @@ class TvSettings {
     this.callNotificationsEnabled = true,
     this.textNotificationsEnabled = true,
     this.imagePreviewsEnabled = true,
+    this.statusOverlayEnabled = false,
   });
 
   final ThemeMode themeMode;
@@ -27,6 +28,10 @@ class TvSettings {
   final bool textNotificationsEnabled;
   final bool imagePreviewsEnabled;
 
+  /// When true the background isolate shows a persistent on-screen debug HUD
+  /// (server state, connected clients, DND) via `OverlayManager`.
+  final bool statusOverlayEnabled;
+
   TvSettings copyWith({
     ThemeMode? themeMode,
     bool? launchOnBoot,
@@ -37,6 +42,7 @@ class TvSettings {
     bool? callNotificationsEnabled,
     bool? textNotificationsEnabled,
     bool? imagePreviewsEnabled,
+    bool? statusOverlayEnabled,
   }) {
     return TvSettings(
       themeMode: themeMode ?? this.themeMode,
@@ -51,6 +57,8 @@ class TvSettings {
       textNotificationsEnabled:
           textNotificationsEnabled ?? this.textNotificationsEnabled,
       imagePreviewsEnabled: imagePreviewsEnabled ?? this.imagePreviewsEnabled,
+      statusOverlayEnabled:
+          statusOverlayEnabled ?? this.statusOverlayEnabled,
     );
   }
 }
@@ -70,6 +78,7 @@ class TvSettingsService {
   static const _keyCallNotificationsEnabled = 'tv_call_notifications_enabled';
   static const _keyTextNotificationsEnabled = 'tv_text_notifications_enabled';
   static const _keyImagePreviewsEnabled = 'tv_image_previews_enabled';
+  static const _keyStatusOverlayEnabled = 'tv_status_overlay_enabled';
 
   static Future<TvSettings> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -89,6 +98,8 @@ class TvSettingsService {
       textNotificationsEnabled:
           prefs.getBool(_keyTextNotificationsEnabled) ?? true,
       imagePreviewsEnabled: prefs.getBool(_keyImagePreviewsEnabled) ?? true,
+      statusOverlayEnabled:
+          prefs.getBool(_keyStatusOverlayEnabled) ?? false,
     );
   }
 
@@ -118,6 +129,10 @@ class TvSettingsService {
     await prefs.setBool(
       _keyImagePreviewsEnabled,
       settings.imagePreviewsEnabled,
+    );
+    await prefs.setBool(
+      _keyStatusOverlayEnabled,
+      settings.statusOverlayEnabled,
     );
   }
 }

@@ -4,6 +4,7 @@ import android.app.Notification
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.content.Intent
+import android.os.Build
 import android.util.Log
 
 class MyNotificationListener : NotificationListenerService() {
@@ -36,6 +37,13 @@ class MyNotificationListener : NotificationListenerService() {
         if (packageName == this.packageName) {
             return
         }
+
+        // If the process was restarted by the system just to deliver this
+        // notification, the Flutter background isolate (which owns the
+        // broadcast receiver + WebSocket connection) is not running yet.
+        // Start it so this and subsequent notifications reach the TV, instead
+        // of waiting for the watchdog alarm to fire.
+        ensureBackgroundServiceRunning()
 
         val extras = sbn.notification.extras
         val title = extras.getString("android.title") ?: ""
@@ -82,5 +90,24 @@ class MyNotificationListener : NotificationListenerService() {
             putExtra("packageName", packageName)
         }
         sendBroadcast(intent)
+    }
+
+    /// Starts `flutter_background_service`'s foreground service if it isn't
+    /// already running. This is what boots the background isolate that holds
+    /// the notification broadcast receiver and the WebSocket connection to the
+    /// TV. Starting it here (from the system-bound listener callback) closes
+    /// the gap where a freshly-restarted process would otherwise drop the
+    /// broadcast until the watchdog alarm fires.
+    private fun ensureBackgroundServiceRunning() {
+        try {
+            val intent = Intent(this, id.flutter.flutter_background_service.BackgroundService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                startForegroundService(intent)
+            } else {
+                startService(intent)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to start background service: ${e.message}")
+        }
     }
 }

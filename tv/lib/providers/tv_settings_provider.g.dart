@@ -51,7 +51,7 @@ final class TvSettingsNotifierProvider
 }
 
 String _$tvSettingsNotifierHash() =>
-    r'56d8fed91c44bf4f1776de732435c52e8d92e761';
+    r'd275c074fda3e41450b742cb7a81dda04be8407d';
 
 /// Persisted TV-local settings (theme, overlay behavior, notification
 /// filters). Every setter persists first, then notifies the background

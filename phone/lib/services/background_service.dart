@@ -36,6 +36,21 @@ void onStart(ServiceInstance service) async {
   final connector = ConnectorService();
   final notificationService = NotificationService();
 
+  void logDebug(String source, String message,
+      [DebugLogLevel level = DebugLogLevel.info]) {
+    service.invoke(
+      'debugLog',
+      DebugLogEntry(
+        time: DateTime.now(),
+        level: level,
+        source: source,
+        message: message,
+      ).toMap(),
+    );
+  }
+
+  logDebug('service', 'Background isolate started');
+
   var appFilters = <String, bool>{};
 
   Future<void> reloadSettings() async {
@@ -44,18 +59,23 @@ void onStart(ServiceInstance service) async {
 
   await reloadSettings();
 
-  // Listen to reload requests from UI
-  if (service is AndroidServiceInstance) {
-    service.on('reloadSettings').listen((event) async {
-      await reloadSettings();
-      debugPrint("Background isolate: Settings reloaded");
-    });
-  }
-
   // Forward connection errors to UI
   connector.errorStream.listen((message) {
     service.invoke('connectionError', {'message': message});
   });
+
+  // Forward connector lifecycle logs to the UI's debug log buffer.
+  connector.logStream.listen((message) {
+    logDebug('connector', message);
+  });
+
+  // Listen to reload requests from UI
+  if (service is AndroidServiceInstance) {
+    service.on('reloadSettings').listen((event) async {
+      await reloadSettings();
+      logDebug('service', 'Settings reloaded');
+    });
+  }
 
   // Periodic state sync to UI
   Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -133,6 +153,7 @@ void onStart(ServiceInstance service) async {
     );
 
     if (isAppAllowed) {
+      logDebug('notification', 'Received from ${item.appName}: ${item.title}');
       String? base64Icon;
       try {
         final appInfo = await InstalledApps.getAppInfo(item.packageName);
@@ -140,15 +161,26 @@ void onStart(ServiceInstance service) async {
           base64Icon = base64Encode(appInfo.icon!);
         }
       } catch (e) {
-        debugPrint("Failed to load icon for ${item.packageName}: $e");
+        logDebug(
+          'notification',
+          "Failed to load icon for ${item.packageName}: $e",
+          DebugLogLevel.warn,
+        );
       }
 
       connector.sendNotification(item, base64Icon: base64Icon);
       service.invoke('notificationSent', item.toJson());
+    } else {
+      logDebug(
+        'filter',
+        "Blocked notification from ${item.appName} (${item.packageName})",
+        DebugLogLevel.debug,
+      );
     }
   });
 
   notificationService.notificationRemovedStream.listen((id) {
+    logDebug('notification', 'Notification removed: $id');
     connector.sendNotificationRemoved(id, '');
   });
 }

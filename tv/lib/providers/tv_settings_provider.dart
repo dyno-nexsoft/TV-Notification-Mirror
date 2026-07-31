@@ -53,6 +53,7 @@ class TvSettingsNotifier extends _$TvSettingsNotifier {
       callNotificationsEnabled: state.callNotificationsEnabled,
       textNotificationsEnabled: state.textNotificationsEnabled,
       imagePreviewsEnabled: state.imagePreviewsEnabled,
+      statusOverlayEnabled: state.statusOverlayEnabled,
     ),
   );
 
@@ -64,4 +65,7 @@ class TvSettingsNotifier extends _$TvSettingsNotifier {
 
   Future<void> setImagePreviewsEnabled(bool enabled) =>
       _update(state.copyWith(imagePreviewsEnabled: enabled));
+
+  Future<void> setStatusOverlayEnabled(bool enabled) =>
+      _update(state.copyWith(statusOverlayEnabled: enabled));
 }

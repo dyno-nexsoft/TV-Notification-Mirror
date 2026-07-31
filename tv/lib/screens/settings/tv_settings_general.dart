@@ -27,6 +27,15 @@ class _GeneralSection extends ConsumerWidget {
             onChanged: (value) =>
                 ref.read(tvSettingsProvider.notifier).setLaunchOnBoot(value),
           ),
+          YaruSwitchListTile(
+            title: const Text('Debug Status Overlay'),
+            subtitle: const Text(
+              'Show a persistent on-screen HUD: server state, connected clients, DND',
+            ),
+            value: settings.statusOverlayEnabled,
+            onChanged: (value) =>
+                ref.read(tvSettingsProvider.notifier).setStatusOverlayEnabled(value),
+          ),
         ],
       ),
     );

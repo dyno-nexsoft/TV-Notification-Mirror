@@ -89,6 +89,20 @@ class _TvMainScreenState extends ConsumerState<TvMainScreen>
         ..showSnackBar(SnackBar(content: Text(next.message)));
     });
 
+    // Auto-navigate around the pairing flow: jump to the Pair Device page the
+    // moment a phone requests a PIN, and return to Home once pairing finishes
+    // (PIN cleared). Only reacts to *transitions* of the PIN, since stateUpdate
+    // replaces the whole state object every second while pairing is in progress.
+    ref.listen(tvServiceStateProvider, (previous, next) {
+      final prevPin = previous?.pairingPin;
+      final nextPin = next.pairingPin;
+      if (prevPin == null && nextPin != null) {
+        ref.read(tvNavIndexProvider.notifier).select(TvNavPage.pairDevice);
+      } else if (prevPin != null && nextPin == null) {
+        ref.read(tvNavIndexProvider.notifier).select(TvNavPage.home);
+      }
+    });
+
     final selectedPage = ref.watch(tvNavIndexProvider);
     final selectedIndex = _navItems.indexWhere(
       (item) => item.page == selectedPage,

@@ -2,20 +2,21 @@
 <resources>
     <color name="ic_launcher_background">#210A3E</color>
 
-    <!-- Android TV Material 3 Dark Theme -->
+    <!-- Notification overlay color scheme: #202020 background, #FAFAFA text,
+         #9141AC primary (matches YaruColors.adwaitaPurple used by the app theme). -->
     <color name="surface_dim">#121316</color>
-    <color name="surface_container">#1e1f22</color>
+    <color name="surface_container">#202020</color>
     <color name="surface_container_lowest">#0a0b0e</color>
     <color name="surface_container_low">#18191c</color>
     <color name="surface_bright">#37383c</color>
     <color name="surface_variant">#45464f</color>
-    <color name="on_surface">#e2e3e5</color>
-    <color name="on_surface_variant">#c4c6d0</color>
-    <color name="outline">#8e9099</color>
-    <color name="outline_variant">#45464f</color>
-    <color name="primary">#8ab4f8</color>
-    <color name="primary_container">#004a9f</color>
-    <color name="on_primary_container">#d3e3fd</color>
-    <color name="on_background">#e2e3e5</color>
+    <color name="on_surface">#fafafa</color>
+    <color name="on_surface_variant">#c6c6c6</color>
+    <color name="outline">#8a8a8a</color>
+    <color name="outline_variant">#3d3d3d</color>
+    <color name="primary">#9141ac</color>
+    <color name="primary_container">#3b1d4a</color>
+    <color name="on_primary_container">#ead5f4</color>
+    <color name="on_background">#fafafa</color>
     <color name="green_500">#22c55e</color>
 </resources>

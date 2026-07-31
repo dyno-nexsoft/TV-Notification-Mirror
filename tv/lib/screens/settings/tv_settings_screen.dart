@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/shared.dart';
 
+import '../../providers/tv_debug_log_provider.dart';
 import '../../providers/tv_settings_provider.dart';
 import '../../services/overlay_service.dart';
 import '../../services/tv_settings_service.dart';
@@ -81,6 +82,19 @@ class TvSettingsScreen extends ConsumerWidget {
                 ),
               ),
             ],
+          ),
+          YaruSection(
+            headline: const Text('DEBUG'),
+            child: Consumer(
+              builder: (context, ref, _) {
+                final logs = ref.watch(tvDebugLogProvider);
+                return DebugLogListTile(
+                  logs: logs,
+                  onClear: () => ref.read(tvDebugLogProvider.notifier).clear(),
+                  subtitle: 'Server, overlay & connection logs',
+                );
+              },
+            ),
           ),
           const SupportSection(),
         ],

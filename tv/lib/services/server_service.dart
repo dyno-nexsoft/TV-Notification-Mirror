@@ -47,7 +47,7 @@ class ServerService {
   String get currentQrToken => _qrToken;
   void regenerateQrToken() {
     _qrToken = const Uuid().v4();
-    debugPrint("QR pairing token regenerated: $_qrToken");
+    _log("QR pairing token regenerated.");
   }
 
   final List<ConnectedClient> _pairedClients = [];
@@ -59,6 +59,14 @@ class ServerService {
   final _clientsController =
       StreamController<List<ConnectedClient>>.broadcast();
   final _overlayController = StreamController<Map<String, dynamic>>.broadcast();
+  final _logController = StreamController<String>.broadcast();
+
+  /// Logs [message] to console and forwards it to the background isolate's
+  /// debug-log stream so the in-app Debug Log screen can surface it.
+  void _log(String message) {
+    debugPrint(message);
+    if (!_logController.isClosed) _logController.add(message);
+  }
 
   var _isRunning = false;
   var isDndEnabled = false;
@@ -86,7 +94,7 @@ class ServerService {
   void setDndForDuration(Duration duration) {
     isDndEnabled = true;
     _dndUntilEpochMs = DateTime.now().add(duration).millisecondsSinceEpoch;
-    debugPrint("DND enabled for $duration");
+    _log("DND enabled for $duration");
   }
 
   /// Auto-clears a timed DND session once its expiry has passed. No-op for
@@ -97,7 +105,7 @@ class ServerService {
     if (DateTime.now().millisecondsSinceEpoch >= until) {
       isDndEnabled = false;
       _dndUntilEpochMs = null;
-      debugPrint("Timed DND session expired, notifications resumed.");
+      _log("Timed DND session expired, notifications resumed.");
     }
   }
 
@@ -111,6 +119,7 @@ class ServerService {
   Set<String> get activeTokens => _activeTokens;
   List<NotificationItem> get notificationHistory => _notificationHistory;
   Stream<Map<String, dynamic>> get overlayStream => _overlayController.stream;
+  Stream<String> get logStream => _logController.stream;
 
   Future<void> init() async {
     await _loadPairedClients();
@@ -156,11 +165,11 @@ class ServerService {
 
     try {
       _server = await shelf_io.serve(app.call, InternetAddress.anyIPv4, port);
-      debugPrint('HTTP Server running on port ${_server!.port}');
+      _log('HTTP Server running on port ${_server!.port}');
       await _startMdnsBroadcast(tvName, _server!.port);
       _isRunning = true;
     } catch (e) {
-      debugPrint("Failed to start server/broadcast: $e");
+      _log("Failed to start server/broadcast: $e");
       _isRunning = false;
     }
   }
@@ -176,7 +185,7 @@ class ServerService {
     );
     await _broadcast!.initialize();
     await _broadcast!.start();
-    debugPrint('mDNS Service Broadcasted: $tvName.${MirrorProtocol.mdnsType}');
+    _log('mDNS Service Broadcasted: $tvName.${MirrorProtocol.mdnsType}');
   }
 
   /// HTTP Endpoint: Request pairing PIN.
@@ -195,7 +204,7 @@ class ServerService {
       _pairingSessions[ip] = _PairingSession(pin: pin, deviceName: deviceName);
       _pairingStateController.add(pin);
 
-      debugPrint(
+      _log(
         "Pairing initiated from $deviceName ($ip). Generated PIN: $pin",
       );
       return shelf.Response.ok(jsonEncode({'status': 'pin_generated'}));
@@ -289,7 +298,7 @@ class ServerService {
     _pairedClients.add(client);
     await _savePairedClients();
 
-    debugPrint("Client paired successfully: ${client.name} (${client.ip})");
+    _log("Client paired successfully: ${client.name} (${client.ip})");
     return shelf.Response.ok(jsonEncode({'status': 'paired', 'token': token}));
   }
 
@@ -315,7 +324,7 @@ class ServerService {
         socket.sink.close();
       }
     }
-    debugPrint(
+    _log(
       "Removed old duplicate client: ${oldClient.name} (${oldClient.ip})",
     );
   }
@@ -327,7 +336,7 @@ class ServerService {
 
     final isValidToken = _pairedClients.any((c) => c.token == token);
     if (!isValidToken) {
-      debugPrint("Unauthorized connection attempt to WebSocket. Token: $token");
+      _log("Unauthorized connection attempt to WebSocket. Token: $token");
       return shelf.Response.forbidden('Unauthorized');
     }
 
@@ -336,7 +345,7 @@ class ServerService {
       _activeTokens.add(token!);
       _socketToToken[socket] = token;
       _touchLastSynced(token);
-      debugPrint("WebSocket client connected. Token: $token");
+      _log("WebSocket client connected. Token: $token");
 
       socket.stream.listen(
         (message) => _handleIncomingMessage(message as String, socket),
@@ -373,7 +382,7 @@ class ServerService {
     final t = _socketToToken.remove(socket);
     _activeSockets.remove(socket);
     if (t != null) _activeTokens.remove(t);
-    debugPrint("WebSocket client $reason. Token: $t");
+    _log("WebSocket client $reason. Token: $t");
   }
 
   /// Dispatches a decoded WebSocket message from a paired phone to the
@@ -399,7 +408,7 @@ class ServerService {
           _handleNotificationRemoved();
       }
     } catch (e) {
-      debugPrint("Failed to parse message: $e");
+      _log("Failed to parse message: $e");
     }
   }
 
@@ -419,17 +428,17 @@ class ServerService {
 
   void _handleToggleDnd() {
     isDndEnabled = !isDndEnabled;
-    debugPrint("DND mode toggled remotely to: $isDndEnabled");
+    _log("DND mode toggled remotely to: $isDndEnabled");
   }
 
   void _handleSetDnd(Map<String, dynamic> data) {
     isDndEnabled = data['enabled'] as bool? ?? false;
-    debugPrint("DND mode set remotely to: $isDndEnabled");
+    _log("DND mode set remotely to: $isDndEnabled");
   }
 
   void _handleNewNotification(Map<String, dynamic> data) {
     if (isDndEnabled) {
-      debugPrint("DND mode enabled, ignoring notification.");
+      _log("DND mode enabled, ignoring notification.");
       return;
     }
 
@@ -440,11 +449,11 @@ class ServerService {
         item.category == NotificationCategory.videoCall;
     final isMessage = item.category == NotificationCategory.message;
     if (isCall && !_settings.callNotificationsEnabled) {
-      debugPrint("Call notifications disabled, ignoring notification.");
+      _log("Call notifications disabled, ignoring notification.");
       return;
     }
     if (isMessage && !_settings.textNotificationsEnabled) {
-      debugPrint("Text notifications disabled, ignoring notification.");
+      _log("Text notifications disabled, ignoring notification.");
       return;
     }
 
@@ -457,7 +466,7 @@ class ServerService {
       _notificationHistory.removeLast();
     }
 
-    debugPrint(
+    _log(
       "Displaying notification: ${item.title} - ${item.text} from ${item.appName}",
     );
     _overlayController.add({
@@ -474,13 +483,13 @@ class ServerService {
 
   void _handleNotificationRemoved() {
     if (isDndEnabled) return;
-    debugPrint("Hiding notification overlay.");
+    _log("Hiding notification overlay.");
     _overlayController.add({'action': 'hide'});
   }
 
   void clearHistory() {
     _notificationHistory.clear();
-    debugPrint("Notification history cleared.");
+    _log("Notification history cleared.");
   }
 
   Future<void> stopServer() async {

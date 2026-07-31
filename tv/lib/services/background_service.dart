@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:shared/shared.dart';
+import 'overlay_service.dart';
 import 'server_service.dart';
 import 'tv_settings_service.dart';
 
@@ -33,16 +34,44 @@ Future<void> initializeBackgroundService() async {
 void onStart(ServiceInstance service) async {
   DartPluginRegistrant.ensureInitialized();
 
+  void logDebug(String source, String message,
+      [DebugLogLevel level = DebugLogLevel.info]) {
+    service.invoke(
+      'debugLog',
+      DebugLogEntry(
+        time: DateTime.now(),
+        level: level,
+        source: source,
+        message: message,
+      ).toMap(),
+    );
+  }
+
+  logDebug('service', 'Background isolate started');
+
   final server = ServerService();
   await server.init();
   await server.startServer('Android TV Server', 8080);
 
+  server.logStream.listen((message) {
+    logDebug('server', message);
+  });
+
   var tvSettings = await TvSettingsService.load();
   server.updateSettings(tvSettings);
+
+  if (tvSettings.statusOverlayEnabled) {
+    OverlayService.broadcastShowStatusOverlay();
+  }
 
   Future<void> reloadTvSettings() async {
     tvSettings = await TvSettingsService.load();
     server.updateSettings(tvSettings);
+    if (tvSettings.statusOverlayEnabled) {
+      OverlayService.broadcastShowStatusOverlay();
+    } else {
+      OverlayService.broadcastHideStatusOverlay();
+    }
   }
 
   if (service is AndroidServiceInstance) {
@@ -52,32 +81,43 @@ void onStart(ServiceInstance service) async {
     });
   }
 
-  // Listen for overlay messages from ServerService and forward them to the UI isolate.
-  // The TV always overrides the incoming anchor/duration with its own local
-  // settings, since it — not the phone — owns what its own screen looks like.
+  // Listen for overlay messages from ServerService and forward them to the
+  // native overlay via a broadcast — NOT through the UI isolate — so overlays
+  // keep showing even after the TV app is swiped away from recents (which
+  // destroys the UI Activity/isolate). The TV always overrides the incoming
+  // anchor/duration with its own local settings, since it — not the phone —
+  // owns what its own screen looks like.
   server.overlayStream.listen((event) {
-    if (service is AndroidServiceInstance) {
-      if (event['action'] == 'show') {
-        service.invoke('showOverlay', {
-          'title': event['title'],
-          'text': event['text'],
-          'appName': event['appName'],
-          'base64Icon': event['base64Icon'],
-          'overlayPosition': tvSettings.anchorPosition,
-          'overlayDuration': tvSettings.overlayDurationSeconds * 1000,
-          'overlayOpacity': tvSettings.overlayOpacity,
-          'alertSoundUri': tvSettings.alertSoundUri,
-          'category': event['category'],
-        });
-      } else if (event['action'] == 'hide') {
-        service.invoke('hideOverlay');
-      }
+    if (event['action'] == 'show') {
+      logDebug('overlay', 'Broadcasting overlay: ${event['title']}');
+      OverlayService.broadcastShowOverlay(
+        title: event['title'],
+        text: event['text'],
+        appName: event['appName'],
+        base64Icon: event['base64Icon'],
+        overlayPosition: tvSettings.anchorPosition,
+        overlayDurationMs: tvSettings.overlayDurationSeconds * 1000,
+        overlayOpacity: tvSettings.overlayOpacity,
+        alertSoundUri: tvSettings.alertSoundUri,
+        category: event['category'],
+      );
+    } else if (event['action'] == 'hide') {
+      logDebug('overlay', 'Broadcasting overlay hide');
+      OverlayService.broadcastHideOverlay();
     }
   });
 
   // Periodically send state updates to the UI
   Timer.periodic(const Duration(seconds: 1), (timer) {
     server.checkDndExpiry();
+    if (tvSettings.statusOverlayEnabled) {
+      OverlayService.broadcastUpdateStatusOverlay(
+        'TV Mirror — Debug\n'
+        'Server: ${server.isRunning ? 'RUNNING' : 'STOPPED'}\n'
+        'Clients: ${server.activeTokens.length}/${server.pairedClients.length} connected\n'
+        'DND: ${server.isDndEnabled ? 'ON' : 'OFF'}',
+      );
+    }
     if (service is AndroidServiceInstance) {
       service.invoke('stateUpdate', {
         'pin': server.currentPin,
@@ -105,7 +145,7 @@ void onStart(ServiceInstance service) async {
   // Listen for actions from the UI
   service.on('toggleDnd').listen((event) {
     server.toggleDndIndefinite();
-    debugPrint("DND mode toggled to: ${server.isDndEnabled}");
+    logDebug('dnd', "DND mode toggled to: ${server.isDndEnabled}");
   });
 
   service.on('setDndForDuration').listen((event) {
@@ -145,6 +185,7 @@ void onStart(ServiceInstance service) async {
   });
 
   service.on('stopService').listen((event) async {
+    OverlayService.broadcastHideStatusOverlay();
     await server.stopServer();
     service.stopSelf();
   });

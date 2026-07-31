@@ -59,25 +59,24 @@ class NotificationHistoryTile extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 spacing: 2,
                 children: [
+                  Text(
+                    item.appName.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall,
+                  ),
                   Row(
                     spacing: 8,
                     children: [
                       Flexible(
                         child: Text(
-                          item.appName.toUpperCase(),
+                          item.title,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: theme.textTheme.labelSmall,
                         ),
                       ),
-                      const Spacer(),
                       Text(_relativeTime, style: theme.textTheme.labelSmall),
                     ],
-                  ),
-                  Text(
-                    item.title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
                   Text(item.text, maxLines: 2, overflow: TextOverflow.ellipsis),
                 ],

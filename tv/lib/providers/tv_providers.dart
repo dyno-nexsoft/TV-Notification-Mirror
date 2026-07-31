@@ -142,14 +142,10 @@ class TvServiceData {
 @Riverpod(keepAlive: true)
 class TvServiceState extends _$TvServiceState {
   StreamSubscription? _stateSub;
-  StreamSubscription? _overlaySub;
-  StreamSubscription? _hideOverlaySub;
 
   @override
   TvServiceData build() {
     _stateSub?.cancel();
-    _overlaySub?.cancel();
-    _hideOverlaySub?.cancel();
 
     final service = FlutterBackgroundService();
 
@@ -186,30 +182,8 @@ class TvServiceState extends _$TvServiceState {
       }
     });
 
-    _overlaySub = service.on('showOverlay').listen((data) {
-      if (data != null) {
-        OverlayService.showOverlay(
-          title: data['title'] ?? '',
-          text: data['text'] ?? '',
-          appName: data['appName'] ?? '',
-          base64Icon: data['base64Icon'],
-          overlayPosition: data['overlayPosition'],
-          overlayDurationMs: data['overlayDuration'],
-          category: data['category'] ?? 'generic',
-          overlayOpacity: (data['overlayOpacity'] as num?)?.toDouble() ?? 0.95,
-          alertSoundUri: data['alertSoundUri'],
-        );
-      }
-    });
-
-    _hideOverlaySub = service.on('hideOverlay').listen((_) {
-      OverlayService.hideOverlay();
-    });
-
     ref.onDispose(() {
       _stateSub?.cancel();
-      _overlaySub?.cancel();
-      _hideOverlaySub?.cancel();
     });
 
     return const TvServiceData();

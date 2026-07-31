@@ -170,7 +170,7 @@ final class TvServiceStateProvider
   }
 }
 
-String _$tvServiceStateHash() => r'2dd88534d586d9c70573981b0144318461a687ae';
+String _$tvServiceStateHash() => r'f494c87cb5f5f1e83ce9e6f87201e31d0d8bc112';
 
 abstract class _$TvServiceState extends $Notifier<TvServiceData> {
   TvServiceData build();

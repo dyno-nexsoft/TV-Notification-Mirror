@@ -27,6 +27,8 @@ dependencies:
   flutter_riverpod: ^3.3.2
   riverpod_annotation: any
   qr_flutter: ^4.1.0
+  native_bridge:
+    path: ../native_bridge
 
 dev_dependencies:
   flutter_test:

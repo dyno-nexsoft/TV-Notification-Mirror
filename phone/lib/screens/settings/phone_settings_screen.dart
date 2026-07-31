@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared/shared.dart';
 
 import '../../helpers/responsive_helper.dart';
+import '../../providers/debug_log_provider.dart';
 import '../../providers/phone_providers.dart';
 import '../../services/alert_sound_service.dart';
 import 'phone_app_filters_screen.dart';
@@ -67,15 +68,10 @@ class PhoneSettingsScreen extends ConsumerWidget {
                 ),
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: hp),
-                  child: SegmentedButton<ThemeMode>(
-                    segments: const [
-                      ButtonSegment(value: ThemeMode.dark, label: Text('Dark')),
-                      ButtonSegment(value: ThemeMode.light, label: Text('Light')),
-                      ButtonSegment(value: ThemeMode.system, label: Text('System')),
-                    ],
-                    selected: {settings?.themeMode ?? ThemeMode.dark},
-                    onSelectionChanged: (selection) =>
-                        ref.read(settingsProvider.notifier).setThemeMode(selection.first),
+                  child: ThemeModeSelector(
+                    value: settings?.themeMode ?? ThemeMode.dark,
+                    onChanged: (mode) =>
+                        ref.read(settingsProvider.notifier).setThemeMode(mode),
                   ),
                 ),
               ],
@@ -94,6 +90,19 @@ class PhoneSettingsScreen extends ConsumerWidget {
                       PhoneAppFiltersScreen(onAddCustomApp: onAddCustomApp),
                 ),
               ),
+            ),
+          ),
+          YaruSection(
+            headline: const Text('DEBUG'),
+            child: Consumer(
+              builder: (context, ref, _) {
+                final logs = ref.watch(debugLogProvider);
+                return DebugLogListTile(
+                  logs: logs,
+                  onClear: () => ref.read(debugLogProvider.notifier).clear(),
+                  subtitle: 'Connection & notification pipeline logs',
+                );
+              },
             ),
           ),
           const SupportSection(),

@@ -39,13 +39,22 @@ class ConnectorService {
 
   final _connectionStateController = StreamController<bool>.broadcast();
   final _errorController = StreamController<String>.broadcast();
+  final _logController = StreamController<String>.broadcast();
 
   Stream<List<TVDevice>> get devicesStream => _devicesController.stream;
   Stream<bool> get connectionStateStream => _connectionStateController.stream;
   Stream<String> get errorStream => _errorController.stream;
+  Stream<String> get logStream => _logController.stream;
   bool get isConnected => _isConnected;
   String? get connectedTvName => _connectedTvName;
   List<TVDevice> get discoveredDevices => List.unmodifiable(_discoveredDevices);
+
+  /// Logs [message] to console and forwards it to the background isolate's
+  /// debug-log stream so the in-app Debug Log screen can surface it.
+  void _log(String message) {
+    debugPrint(message);
+    if (!_logController.isClosed) _logController.add(message);
+  }
 
   Future<void> _loadSavedConnection() async {
     final prefs = await SharedPreferences.getInstance();
@@ -54,8 +63,9 @@ class ConnectorService {
     _connectedTvName = prefs.getString('connected_tv_name');
 
     if (_connectedTvIp != null && _connectedTvPort != null) {
-      debugPrint(
-          "Found saved TV: $_connectedTvName at $_connectedTvIp:$_connectedTvPort. Reconnecting...");
+      _log(
+        "Found saved TV: $_connectedTvName at $_connectedTvIp:$_connectedTvPort. Reconnecting...",
+      );
       connectToSavedTv();
     }
   }
@@ -89,8 +99,9 @@ class ConnectorService {
             if (!_isConnected &&
                 _connectedTvIp == ip &&
                 _connectedTvPort == port) {
-              debugPrint(
-                  "Discovered saved TV via mDNS ($name at $ip:$port). Triggering auto-connect...");
+              _log(
+                "Discovered saved TV via mDNS ($name at $ip:$port). Triggering auto-connect...",
+              );
               connectToSavedTv();
             }
           }
@@ -103,7 +114,7 @@ class ConnectorService {
 
       await _discovery!.start();
     } catch (e) {
-      debugPrint("mDNS discovery failed: $e");
+      _log("mDNS discovery failed: $e");
     }
   }
 
@@ -126,7 +137,7 @@ class ConnectorService {
 
       return response.statusCode == 200;
     } catch (e) {
-      debugPrint("Failed to start pairing: $e");
+      _log("Failed to start pairing: $e");
       return false;
     }
   }
@@ -145,7 +156,7 @@ class ConnectorService {
 
       return _completePairing(device, response);
     } catch (e) {
-      debugPrint("Failed to confirm pairing: $e");
+      _log("Failed to confirm pairing: $e");
       return false;
     }
   }
@@ -171,7 +182,7 @@ class ConnectorService {
 
       return await _completePairing(device, response);
     } catch (e) {
-      debugPrint("Failed to pair via QR: $e");
+      _log("Failed to pair via QR: $e");
       return false;
     }
   }
@@ -215,7 +226,7 @@ class ConnectorService {
 
     final wsUrl =
         'ws://$_connectedTvIp:$_connectedTvPort${MirrorProtocol.wsPath}?token=$token';
-    debugPrint("Connecting WebSocket to $wsUrl");
+    _log("Connecting WebSocket to $wsUrl");
 
     try {
       final channel = WebSocketChannel.connect(Uri.parse(wsUrl));
@@ -229,26 +240,27 @@ class ConnectorService {
       _reconnectTimer?.cancel();
       _pongTimer?.cancel();
       _startPingTimer();
+      _log("WebSocket connected to $_connectedTvName");
 
       _wsChannel!.stream.listen(
         _handleMessage,
         onDone: () {
-          debugPrint("WebSocket connection closed.");
+          _log("WebSocket connection closed.");
           _handleDisconnect();
         },
         onError: (error) {
-          debugPrint("WebSocket error: $error");
+          _log("WebSocket error: $error");
           _handleDisconnect();
         },
       );
 
       return true;
     } catch (e) {
-      debugPrint("WebSocket connection failed: $e");
+      _log("WebSocket connection failed: $e");
       _isConnecting = false;
       if (e.toString().contains('403')) {
         _errorController.add('Connection rejected: token expired');
-        debugPrint("Got 403 from TV — clearing stale token and saved TV info");
+        _log("Got 403 from TV — clearing stale token and saved TV info");
         _clearSavedConnection();
       } else {
         _handleDisconnect();
@@ -277,12 +289,12 @@ class ConnectorService {
           }));
           _pongTimer?.cancel();
           _pongTimer = Timer(const Duration(seconds: 15), () {
-            debugPrint("Pong timeout: no response for 15s, disconnecting...");
+            _log("Pong timeout: no response for 15s, disconnecting...");
             _handleDisconnect();
             _errorController.add('Connection lost: TV not responding');
           });
         } catch (e) {
-          debugPrint("Ping failed: $e");
+          _log("Ping failed: $e");
           _handleDisconnect();
         }
       } else {
@@ -298,6 +310,7 @@ class ConnectorService {
     _isConnecting = false;
     _connectionStateController.add(false);
     _wsChannel = null;
+    _log("Disconnected from TV.");
 
     _reconnectTimer?.cancel();
     if (_connectedTvIp != null) {
@@ -311,13 +324,13 @@ class ConnectorService {
       seconds: (3 * (1 << _reconnectAttempt)).clamp(3, 30),
     );
     _reconnectAttempt++;
-    debugPrint(
+    _log(
       "Scheduling reconnect attempt $_reconnectAttempt in ${backoff.inSeconds}s",
     );
     _reconnectTimer = Timer(backoff, () async {
       if (_isConnected) return;
       if (!_isConnecting) {
-        debugPrint("Attempting automatic reconnect...");
+        _log("Attempting automatic reconnect...");
         await connectToSavedTv();
       }
     });
@@ -353,7 +366,7 @@ class ConnectorService {
     String? base64Icon,
   }) {
     if (!_isConnected || _wsChannel == null) {
-      debugPrint("Cannot send notification: WebSocket not connected.");
+      _log("Cannot send notification: WebSocket not connected.");
       return;
     }
 
@@ -367,7 +380,7 @@ class ConnectorService {
     };
 
     _wsChannel!.sink.add(jsonEncode(payload));
-    debugPrint("Notification sent to TV: ${item.title}");
+    _log("Notification sent to TV: ${item.title}");
   }
 
   // Send cancel notification to TV
@@ -384,7 +397,7 @@ class ConnectorService {
     };
 
     _wsChannel!.sink.add(jsonEncode(payload));
-    debugPrint("Notification remove request sent to TV for id: $id");
+    _log("Notification remove request sent to TV for id: $id");
   }
 
   /// Immediately attempts to reconnect, resetting any exponential backoff.
@@ -393,7 +406,7 @@ class ConnectorService {
     if (_isConnected) return;
     _reconnectTimer?.cancel();
     _reconnectAttempt = 0;
-    debugPrint("checkConnection: resetting backoff and reconnecting...");
+    _log("checkConnection: resetting backoff and reconnecting...");
     connectToSavedTv();
   }
 

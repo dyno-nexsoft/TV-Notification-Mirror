@@ -29,6 +29,9 @@ class ConnectorService {
   Timer? _reconnectTimer;
   Timer? _pingTimer;
   Timer? _pongTimer;
+  // Buffers outgoing messages while disconnected so notifications arriving
+  // during a reconnect window / network flap are not lost.
+  final _pendingOutgoing = <String>[];
   var _isConnecting = false;
   var _isConnected = false;
   var _reconnectAttempt = 0;
@@ -260,6 +263,9 @@ class ConnectorService {
         },
       );
 
+      // Deliver anything buffered while we were disconnected.
+      _flushPending();
+
       return true;
     } catch (e) {
       _log("WebSocket connection failed: $e");
@@ -362,6 +368,7 @@ class ConnectorService {
     _pingTimer?.cancel();
     _pongTimer?.cancel();
     _reconnectTimer?.cancel();
+    _pendingOutgoing.clear();
     _isConnected = false;
     _isConnecting = false;
     _connectionStateController.add(false);
@@ -386,11 +393,6 @@ class ConnectorService {
     NotificationItem item, {
     String? base64Icon,
   }) {
-    if (!_isConnected || _wsChannel == null) {
-      _log("Cannot send notification: WebSocket not connected.");
-      return;
-    }
-
     final itemJson = item.toJson();
     if (base64Icon != null) itemJson['appIcon'] = base64Icon;
 
@@ -400,14 +402,20 @@ class ConnectorService {
       'data': itemJson,
     };
 
+    if (!_isConnected || _wsChannel == null) {
+      // Buffer so a brief disconnect (app backgrounded, Wi-Fi flap, or
+      // reconnect backoff) doesn't silently drop the notification.
+      _enqueue(jsonEncode(payload));
+      _log("Notification queued (not connected): ${item.title}");
+      return;
+    }
+
     _wsChannel!.sink.add(jsonEncode(payload));
     _log("Notification sent to TV: ${item.title}");
   }
 
   // Send cancel notification to TV
   void sendNotificationRemoved(String id, String packageName) {
-    if (!_isConnected || _wsChannel == null) return;
-
     final payload = {
       'event': MirrorProtocol.eventNotificationRemoved,
       'timestamp': DateTime.now().millisecondsSinceEpoch,
@@ -417,8 +425,34 @@ class ConnectorService {
       },
     };
 
+    if (!_isConnected || _wsChannel == null) {
+      _enqueue(jsonEncode(payload));
+      return;
+    }
+
     _wsChannel!.sink.add(jsonEncode(payload));
     _log("Notification remove request sent to TV for id: $id");
+  }
+
+  /// Queues an outbound message, keeping only the most recent ones.
+  void _enqueue(String message) {
+    _pendingOutgoing.add(message);
+    if (_pendingOutgoing.length > 50) {
+      _pendingOutgoing.removeAt(0);
+    }
+  }
+
+  /// Sends everything buffered while disconnected, in order.
+  void _flushPending() {
+    if (_wsChannel == null || !_isConnected || _pendingOutgoing.isEmpty) return;
+    final messages = List<String>.from(_pendingOutgoing);
+    _pendingOutgoing.clear();
+    for (final message in messages) {
+      try {
+        _wsChannel!.sink.add(message);
+      } catch (_) {}
+    }
+    _log("Flushed ${messages.length} queued message(s) to TV");
   }
 
   /// Immediately attempts to reconnect, resetting any exponential backoff.
@@ -440,6 +474,7 @@ class ConnectorService {
 
   Future<void> disconnect() async {
     _reconnectTimer?.cancel();
+    _pendingOutgoing.clear();
     if (_isConnected && _wsChannel != null) {
       try {
         _wsChannel!.sink.add(

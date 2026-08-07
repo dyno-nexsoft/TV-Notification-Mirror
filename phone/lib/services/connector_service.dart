@@ -32,6 +32,7 @@ class ConnectorService {
   var _isConnecting = false;
   var _isConnected = false;
   var _reconnectAttempt = 0;
+  var _missedPongs = 0;
 
   String? _connectedTvIp;
   int? _connectedTvPort;
@@ -236,21 +237,26 @@ class ConnectorService {
       _isConnected = true;
       _isConnecting = false;
       _reconnectAttempt = 0;
+      _missedPongs = 0;
       _connectionStateController.add(true);
       _reconnectTimer?.cancel();
       _pongTimer?.cancel();
       _startPingTimer();
       _log("WebSocket connected to $_connectedTvName");
 
-      _wsChannel!.stream.listen(
+      channel.stream.listen(
         _handleMessage,
         onDone: () {
           _log("WebSocket connection closed.");
-          _handleDisconnect();
+          // Ignore a close from a stale socket that has already been replaced
+          // by a newer connection. Without this guard, the abandoned socket's
+          // onDone fires after a reconnect and tears down the healthy one,
+          // causing an endless reconnect loop (frequent "lost connection").
+          if (identical(channel, _wsChannel)) _handleDisconnect();
         },
         onError: (error) {
           _log("WebSocket error: $error");
-          _handleDisconnect();
+          if (identical(channel, _wsChannel)) _handleDisconnect();
         },
       );
 
@@ -289,9 +295,18 @@ class ConnectorService {
           }));
           _pongTimer?.cancel();
           _pongTimer = Timer(const Duration(seconds: 15), () {
-            _log("Pong timeout: no response for 15s, disconnecting...");
-            _handleDisconnect();
-            _errorController.add('Connection lost: TV not responding');
+            _missedPongs++;
+            // Require two consecutive missed pongs before giving up so a
+            // momentarily busy/slow TV doesn't cause a spurious disconnect.
+            if (_missedPongs >= 2) {
+              _log(
+                "Pong timeout: no response for 2 consecutive pings, disconnecting...",
+              );
+              _handleDisconnect();
+              _errorController.add('Connection lost: TV not responding');
+            } else {
+              _log("Missed pong #$_missedPongs, waiting for the next one...");
+            }
           });
         } catch (e) {
           _log("Ping failed: $e");
@@ -309,7 +324,13 @@ class ConnectorService {
     _isConnected = false;
     _isConnecting = false;
     _connectionStateController.add(false);
+    // Close the socket we're giving up on so its later onDone is ignored by the
+    // stale-socket guard in the stream listener instead of leaving it open.
+    final stale = _wsChannel;
     _wsChannel = null;
+    try {
+      stale?.sink.close();
+    } catch (_) {}
     _log("Disconnected from TV.");
 
     _reconnectTimer?.cancel();

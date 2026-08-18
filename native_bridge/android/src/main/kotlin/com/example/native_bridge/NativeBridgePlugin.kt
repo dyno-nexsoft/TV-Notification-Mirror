@@ -94,11 +94,9 @@ class NativeBridgePlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stream
         } else if (call.method == "isIgnoringBatteryOptimizations") {
             result.success(isIgnoringBatteryOptimizations())
         } else if (call.method == "requestIgnoreBatteryOptimizations") {
-            requestIgnoreBatteryOptimizations()
-            result.success(true)
+            result.success(requestIgnoreBatteryOptimizations())
         } else if (call.method == "openBatteryOptimizationSettings") {
-            openBatteryOptimizationSettings()
-            result.success(true)
+            result.success(openBatteryOptimizationSettings())
         } else {
             result.notImplemented()
         }
@@ -167,35 +165,38 @@ class NativeBridgePlugin : FlutterPlugin, MethodCallHandler, EventChannel.Stream
 
     /// Opens the system dialog asking the user to exempt this app from battery
     /// optimization (Doze). Falls back to the app list if the direct request
-    /// isn't available. This is the stock-Android whitelist; OEM ROMs
-    /// (MIUI, ColorOS, EMUI...) layer extra autostart settings on top that
-    /// still need manual user configuration.
-    private fun requestIgnoreBatteryOptimizations() {
-        val currentContext = context ?: return
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !isIgnoringBatteryOptimizations()) {
+    /// isn't available. Returns whether a settings screen could be shown —
+    /// devices like Fire TV often lack both, so the caller guides the user via
+    /// ADB instead.
+    private fun requestIgnoreBatteryOptimizations(): Boolean {
+        val currentContext = context ?: return false
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            if (isIgnoringBatteryOptimizations()) return true
             val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
                 data = Uri.parse("package:${currentContext.packageName}")
                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             }
             try {
                 currentContext.startActivity(intent)
-                return
+                return true
             } catch (_: Exception) {
                 // Fall through to the generic list.
             }
         }
-        openBatteryOptimizationSettings()
+        return openBatteryOptimizationSettings()
     }
 
-    private fun openBatteryOptimizationSettings() {
-        val currentContext = context ?: return
+    private fun openBatteryOptimizationSettings(): Boolean {
+        val currentContext = context ?: return false
         val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         }
-        try {
+        return try {
             currentContext.startActivity(intent)
+            true
         } catch (_: Exception) {
-            // No battery-optimization screen available; nothing else to do.
+            // No battery-optimization screen available on this device.
+            false
         }
     }
 

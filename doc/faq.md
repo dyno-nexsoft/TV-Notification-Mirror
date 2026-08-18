@@ -23,6 +23,43 @@ adb -s emulator-5556 forward tcp:8080 tcp:8080
 
 On the phone app, connect using IP `10.0.2.2:8080`.
 
+## Fire TV Stick
+
+### Which Fire TV devices are supported?
+
+The TV app runs on Fire TV Stick / Fire TV (Fire OS 6/7/8, i.e. Android 7.1.2+) — all models from the 2016 2nd-gen Stick onwards, including 4K and 4K Max. The 2014 1st-gen Stick (Android 5.1) is too old for the app's minimum SDK.
+
+### How do I install the app on a Fire TV Stick?
+
+Amazon Fire TV has no Google Play Store, so the TV app APK is **sideloaded**:
+
+1. Download `noti-mirror-tv-<version>.apk` from the project's GitHub Releases.
+2. On the Fire TV, enable **ADB debugging**: *Settings → My Fire TV → Developer options → ADB debugging → ON* (and *Install unknown apps* for the Downloader app if you copy the APK via Downloader).
+3. Install over ADB from a computer on the same Wi-Fi network:
+   ```
+   adb connect <FIRE_TV_IP>:5555
+   adb install noti-mirror-tv-<version>.apk
+   ```
+
+### The overlay permission can't be granted — no "Display over other apps" screen
+
+Fire TV lacks a "Display over other apps" settings page for third-party apps, so the in-app **Grant Overlay Permission** button can't open one. The app detects this and shows an ADB guide automatically. Manually, the grant is:
+
+```
+adb connect <FIRE_TV_IP>:5555
+adb shell appops set com.dyno.tv_notification_mirror.tv SYSTEM_ALERT_WINDOW allow
+```
+
+Then relaunch the app — the Home screen banner clears once the permission is detected.
+
+### The battery-optimization whitelist can't be opened either
+
+Fire TV also has no battery-optimization settings screen. Since the Stick is mains-powered this rarely matters, but to whitelist the background service anyway:
+
+```
+adb shell dumpsys deviceidle whitelist +com.dyno.tv_notification_mirror.tv
+```
+
 ## Notifications
 
 ### Which notifications get mirrored?
@@ -61,6 +98,7 @@ On the TV, toggle **Do Not Disturb** from the Home screen. You can set a timed D
 - Make sure the TV app has **Display Over Other Apps** permission enabled.
 - Grant **Notification** permission when prompted.
 - Restart the background service from the TV app's Settings.
+- On **Fire TV Stick** there is no settings toggle — grant it via ADB instead (see the Fire TV Stick section above).
 
 ## Privacy & Security
 
@@ -77,7 +115,7 @@ Yes. The WebSocket connection between phone and TV is secured using a pairing to
 ### What Android versions are supported?
 
 - **Phone app**: Android 8.0 (API 26) and above.
-- **TV app**: Android 8.0 (API 26) and above (Android TV / Google TV).
+- **TV app**: Android 8.0 (API 26) and above — Android TV, Google TV, and **Fire TV Stick** (Fire OS 6/7/8, sideloaded).
 
 ### Is this app open source?
 

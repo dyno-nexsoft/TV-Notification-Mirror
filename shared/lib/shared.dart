@@ -15,6 +15,7 @@ export 'models/notification_item.dart';
 export 'services/battery_optimization_service.dart';
 export 'services/mirror_filter_evaluator.dart';
 export 'theme/yaru_app_theme.dart';
+export 'widgets/adb_instructions_dialog.dart';
 export 'widgets/anchor_position_picker.dart';
 export 'widgets/app_icon_widget.dart';
 export 'widgets/battery_optimization_section.dart';

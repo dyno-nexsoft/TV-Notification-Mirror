@@ -1,11 +1,35 @@
 part of 'tv_home_screen.dart';
 
+/// Package this app is installed under — used in the ADB grant commands shown
+/// on devices (e.g. Fire TV) that have no permission-settings UI.
+const _packageName = 'com.dyno.tv_notification_mirror.tv';
+
 /// Blocks normal use until the overlay/notification permissions this app
 /// needs are granted, surfacing whichever is still missing.
 class _PermissionWarningBanner extends ConsumerWidget {
   const _PermissionWarningBanner({required this.permissions});
 
   final TvPermissionsState permissions;
+
+  Future<void> _grantOverlay(BuildContext context, WidgetRef ref) async {
+    final opened = await OverlayService.requestPermission();
+    if (!opened && context.mounted) {
+      await AdbInstructionsDialog.show(
+        context,
+        title: 'Grant overlay permission via ADB',
+        message: 'This device has no "Display over other apps" settings '
+            'screen. Enable Developer Options → ADB debugging on the TV, then '
+            'run these commands from a computer on the same network:',
+        steps: [
+          'adb connect <DEVICE_IP>:5555',
+          'adb shell appops set $_packageName SYSTEM_ALERT_WINDOW allow',
+        ],
+      );
+    }
+    if (context.mounted) {
+      ref.read(tvPermissionsProvider.notifier).checkPermissions();
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -32,13 +56,11 @@ class _PermissionWarningBanner extends ConsumerWidget {
           children: [
             Text(message),
             FilledButton.icon(
-              onPressed: () async {
+              onPressed: () {
                 if (missingOverlay) {
-                  await OverlayService.requestPermission();
+                  _grantOverlay(context, ref);
                 } else {
-                  await OverlayService.requestNotificationPermission();
-                }
-                if (context.mounted) {
+                  OverlayService.requestNotificationPermission();
                   ref.read(tvPermissionsProvider.notifier).checkPermissions();
                 }
               },

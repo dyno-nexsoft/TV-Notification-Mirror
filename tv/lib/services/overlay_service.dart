@@ -25,11 +25,15 @@ class OverlayService {
     }
   }
 
-  static Future<void> requestPermission() async {
+  /// Attempts to open the system overlay-permission settings screen. Returns
+  /// whether it actually opened — `false` means the device has no such screen
+  /// (common on Fire TV) and the caller should guide the user via ADB.
+  static Future<bool> requestPermission() async {
     try {
-      await _channel.invokeMethod('requestPermission');
+      return await _channel.invokeMethod<bool>('requestPermission') ?? false;
     } on PlatformException catch (e) {
       debugPrint("Failed to request overlay permission: ${e.message}");
+      return false;
     }
   }
 

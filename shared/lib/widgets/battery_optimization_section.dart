@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:yaru/yaru.dart';
 
 import '../services/battery_optimization_service.dart';
+import 'adb_instructions_dialog.dart';
 
 /// Settings section showing whether the app is exempt from battery
 /// optimization. Aggressive OEM ROMs (MIUI, ColorOS, EMUI...) kill background
@@ -31,8 +33,39 @@ class _BatteryOptimizationSectionState extends State<BatteryOptimizationSection>
   }
 
   Future<void> _requestWhitelist() async {
-    await BatteryOptimizationService.requestIgnoreBatteryOptimizations();
+    final opened =
+        await BatteryOptimizationService.requestIgnoreBatteryOptimizations();
+    if (!opened && mounted) {
+      await _showAdbGuide();
+    }
     await _refresh();
+  }
+
+  Future<void> _openSettings() async {
+    final opened =
+        await BatteryOptimizationService.openBatteryOptimizationSettings();
+    if (!opened && mounted) {
+      await _showAdbGuide();
+    }
+    await _refresh();
+  }
+
+  /// Guides the user through whitelisting over ADB when the device has no
+  /// battery-optimization settings screen (e.g. Fire TV).
+  Future<void> _showAdbGuide() async {
+    final packageName = (await PackageInfo.fromPlatform()).packageName;
+    if (!mounted) return;
+    await AdbInstructionsDialog.show(
+      context,
+      title: 'Grant whitelist via ADB',
+      message: 'This device has no battery-optimization settings screen. '
+          'Enable Developer Options → ADB debugging on the device, then run '
+          'these commands from a computer on the same network:',
+      steps: [
+        'adb connect <DEVICE_IP>:5555',
+        'adb shell dumpsys deviceidle whitelist +$packageName',
+      ],
+    );
   }
 
   @override
@@ -69,8 +102,7 @@ class _BatteryOptimizationSectionState extends State<BatteryOptimizationSection>
                 spacing: 8,
                 children: [
                   OutlinedButton.icon(
-                    onPressed: BatteryOptimizationService
-                        .openBatteryOptimizationSettings,
+                    onPressed: _openSettings,
                     icon: const Icon(YaruIcons.settings),
                     label: const Text('Open Settings'),
                   ),

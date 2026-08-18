@@ -54,8 +54,7 @@ class MainActivity : FlutterActivity() {
                     result.success(hasOverlayPermission())
                 }
                 "requestPermission" -> {
-                    requestOverlayPermission()
-                    result.success(true)
+                    result.success(requestOverlayPermission())
                 }
                 "checkNotificationPermission" -> {
                     result.success(hasNotificationPermission())
@@ -101,18 +100,24 @@ class MainActivity : FlutterActivity() {
         }
     }
 
-    private fun requestOverlayPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+    /// Attempts to open the overlay-permission settings screen. Returns whether
+    /// a suitable screen could be launched — Fire TV has no "Display over other
+    /// apps" page for third-party apps, so the caller falls back to ADB guidance.
+    private fun requestOverlayPermission(): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return true
+        val candidates = listOf(
+            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:$packageName")),
+            Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION),
+        )
+        for (intent in candidates) {
             try {
-                val intent = Intent(
-                    Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
-                    Uri.parse("package:$packageName")
-                )
                 startActivity(intent)
+                return true
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to open overlay permission settings: ${e.message}")
+                Log.d(TAG, "Overlay settings not available, trying next: ${e.message}")
             }
         }
+        return false
     }
 
     private fun hasNotificationPermission(): Boolean {

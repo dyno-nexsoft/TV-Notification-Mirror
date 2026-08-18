@@ -21,21 +21,26 @@ class BatteryOptimizationService {
   }
 
   /// Opens the system "ignore battery optimizations" dialog for this app so
-  /// the user can whitelist it. Falls back to the app list on failure.
-  static Future<void> requestIgnoreBatteryOptimizations() async {
+  /// the user can whitelist it. Falls back to the app list on failure. Returns
+  /// whether any settings screen actually opened — `false` (e.g. Fire TV) means
+  /// the caller should show the ADB whitelist guide.
+  static Future<bool> requestIgnoreBatteryOptimizations() async {
     try {
-      await _channel.invokeMethod('requestIgnoreBatteryOptimizations');
+      return await _channel
+          .invokeMethod<bool>('requestIgnoreBatteryOptimizations') ?? false;
     } on PlatformException {
-      // Best-effort; ignore failures.
+      return false;
     }
   }
 
-  /// Opens the generic battery-optimization app list.
-  static Future<void> openBatteryOptimizationSettings() async {
+  /// Opens the generic battery-optimization app list. Returns whether the
+  /// screen could be opened (some devices, e.g. Fire TV, have none).
+  static Future<bool> openBatteryOptimizationSettings() async {
     try {
-      await _channel.invokeMethod('openBatteryOptimizationSettings');
+      return await _channel
+          .invokeMethod<bool>('openBatteryOptimizationSettings') ?? false;
     } on PlatformException {
-      // Best-effort; ignore failures.
+      return false;
     }
   }
 }

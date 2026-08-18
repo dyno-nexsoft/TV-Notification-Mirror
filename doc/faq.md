@@ -93,6 +93,17 @@ On the TV, toggle **Do Not Disturb** from the Home screen. You can set a timed D
 - Check that **Mirror Phone Notifications** is toggled on in the phone app's Settings.
 - Ensure the TV's **Notification Receiving** switch is on.
 
+### Scanning the QR code pairs but the phone still can't connect.
+
+Pairing succeeds when the HTTP request reaches the TV; the WebSocket connect is the step that usually fails. Work through this order:
+
+- **Same network?** Phone and TV must be on the same LAN. If they're split across 2.4/5 GHz with *AP/client isolation* enabled on the router, or the TV is on a guest network, nothing can connect — disable isolation or move both to the same network.
+- **IP shown on the TV screen** — the Pair Device page now displays `IP: <address> Port: <port>` under the QR. Compare it with the IP the TV shows in its own network settings; a mismatch means a VPN/virtual adapter got picked (Fire TV exposes several).
+- **Port conflict** — the server now tries `8080` then falls back to the next ports if it's taken, and the QR advertises the actual port, so a conflict no longer blocks pairing.
+- **TV restarted / IP changed (DHCP)** — the saved IP may be stale. Re-scan the QR; the phone re-pairs against the current IP.
+- **Old app data** — if the TV app was reinstalled, its paired-client list is gone; the phone's saved token is then rejected (403). Re-pair from scratch.
+- **Still stuck?** Check the phone app's **Debug Log** (Settings → Debug Log) for the exact error: a timeout means the TV was unreachable; `403` means the token/code expired.
+
 ### The overlay doesn't show up on TV.
 
 - Make sure the TV app has **Display Over Other Apps** permission enabled.

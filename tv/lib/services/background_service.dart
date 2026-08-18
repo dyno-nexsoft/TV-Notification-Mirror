@@ -122,6 +122,7 @@ void onStart(ServiceInstance service) async {
       service.invoke('stateUpdate', {
         'pin': server.currentPin,
         'qrToken': server.currentQrToken,
+        'port': server.serverPort,
         'isRunning': server.isRunning,
         'isDnd': server.isDndEnabled,
         'dndUntilEpochMs': server.dndUntilEpochMs,

@@ -43,7 +43,12 @@ class TvPairDeviceScreen extends ConsumerWidget {
               spacing: 20,
               children: [
                 Expanded(
-                  child: _QrCard(tvIp: tvIp, qrToken: serviceState.qrToken),
+                  child: _QrCard(
+                    tvIp: tvIp,
+                    port: serviceState.serverPort ??
+                        MirrorProtocol.defaultPort,
+                    qrToken: serviceState.qrToken,
+                  ),
                 ),
                 Expanded(child: _ManualPinCard(pin: serviceState.pairingPin)),
               ],
@@ -56,9 +61,14 @@ class TvPairDeviceScreen extends ConsumerWidget {
 }
 
 class _QrCard extends ConsumerStatefulWidget {
-  const _QrCard({required this.tvIp, required this.qrToken});
+  const _QrCard({
+    required this.tvIp,
+    required this.port,
+    required this.qrToken,
+  });
 
   final String? tvIp;
+  final int port;
   final String? qrToken;
 
   @override
@@ -98,7 +108,7 @@ class _QrCardState extends ConsumerState<_QrCard> {
     final qrData = _canBuildQr
         ? jsonEncode({
             'ip': widget.tvIp,
-            'port': MirrorProtocol.defaultPort,
+            'port': widget.port,
             'token': widget.qrToken,
           })
         : null;
@@ -149,6 +159,11 @@ class _QrCardState extends ConsumerState<_QrCard> {
               const _QrPlaceholder(
                 icon: YaruIcons.warning,
                 message: 'No network connection',
+              ),
+            if (qrData != null)
+              SelectableText(
+                'IP: ${widget.tvIp}  Port: ${widget.port}',
+                textAlign: TextAlign.center,
               ),
             const Text('Scan this code with your phone'),
             const Text(

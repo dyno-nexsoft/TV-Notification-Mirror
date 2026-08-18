@@ -32,17 +32,17 @@ class _QrScanScreenState extends ConsumerState<QrScanScreen> {
     setState(() => _isProcessing = true);
     await _controller.stop();
 
-    final success =
+    final outcome =
         await ref.read(connectorProvider.notifier).pairViaQr(rawValue);
     if (!mounted) return;
 
     ref.read(appToastProvider.notifier).show(
-          success
+          outcome.success
               ? 'Successfully paired via QR code!'
-              : 'Invalid or expired QR code. Please try again.',
+              : (outcome.message ?? 'Invalid or expired QR code. Please try again.'),
         );
 
-    if (success) {
+    if (outcome.success) {
       Navigator.pop(context);
     } else {
       setState(() => _isProcessing = false);

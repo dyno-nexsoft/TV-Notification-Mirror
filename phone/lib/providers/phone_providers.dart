@@ -183,23 +183,31 @@ class Connector extends _$Connector {
     });
   }
 
-  Future<bool> pairViaQr(String rawQrData) async {
+  Future<PairingOutcome> pairViaQr(String rawQrData) async {
     final service = FlutterBackgroundService();
-    final completer = Completer<bool>();
+    final completer = Completer<PairingOutcome>();
 
     StreamSubscription? sub;
     sub = service.on('pairViaQrResult').listen((event) {
       if (event != null) {
-        completer.complete(event['success'] as bool? ?? false);
+        final success = event['success'] as bool? ?? false;
+        completer.complete(
+          success
+              ? const PairingOutcome.success()
+              : PairingOutcome.failure(event['message'] as String?),
+        );
       }
       sub?.cancel();
     });
 
     service.invoke('pairViaQr', {'rawQrData': rawQrData});
 
-    return completer.future.timeout(const Duration(seconds: 10), onTimeout: () {
+    return completer.future
+        .timeout(const Duration(seconds: 20), onTimeout: () {
       sub?.cancel();
-      return false;
+      return const PairingOutcome.failure(
+        'Connection timed out. Check the Wi-Fi network and try again.',
+      );
     });
   }
 

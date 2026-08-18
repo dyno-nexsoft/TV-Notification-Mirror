@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'package:bonsoir/bonsoir.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -9,6 +10,19 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 /// A TV discovered or connected from the phone's side of the mirror link.
 typedef TVDevice = MirrorDevice;
+
+/// Result of a pairing attempt, carrying a user-facing failure reason so the
+/// UI can explain *why* a scan didn't work (network vs. expired code) instead
+/// of a generic error.
+class PairingOutcome {
+  const PairingOutcome.success()
+      : success = true,
+        message = null;
+  const PairingOutcome.failure(this.message) : success = false;
+
+  final bool success;
+  final String? message;
+}
 
 /// Owns the phone's half of the mirror link: mDNS discovery, PIN pairing,
 /// and the WebSocket connection (with auto-reconnect) used to relay
@@ -137,7 +151,7 @@ class ConnectorService {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'deviceName': 'Android Phone'}),
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 10));
 
       return response.statusCode == 200;
     } catch (e) {
@@ -156,9 +170,10 @@ class ConnectorService {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'pin': pin, 'deviceName': 'Android Phone'}),
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 10));
 
-      return _completePairing(device, response);
+      final outcome = await _completePairing(device, response);
+      return outcome.success;
     } catch (e) {
       _log("Failed to confirm pairing: $e");
       return false;
@@ -168,7 +183,7 @@ class ConnectorService {
   /// Pairs using a token scanned from the TV's QR code — skips the PIN step
   /// entirely. [rawQrData] is the raw string decoded from the QR (JSON:
   /// `{"ip", "port", "token"}`, see `TvPairDeviceScreen`).
-  Future<bool> pairViaQr(String rawQrData) async {
+  Future<PairingOutcome> pairViaQr(String rawQrData) async {
     try {
       final decoded = jsonDecode(rawQrData) as Map<String, dynamic>;
       final ip = decoded['ip'] as String;
@@ -182,19 +197,39 @@ class ConnectorService {
             headers: {'Content-Type': 'application/json'},
             body: jsonEncode({'token': token, 'deviceName': 'Android Phone'}),
           )
-          .timeout(const Duration(seconds: 5));
+          .timeout(const Duration(seconds: 10));
 
       return await _completePairing(device, response);
+    } on TimeoutException {
+      _log("Failed to pair via QR: timed out reaching $rawQrData");
+      return const PairingOutcome.failure(
+        'Cannot reach the TV. Make sure both devices are on the same Wi-Fi network.',
+      );
+    } on SocketException catch (e) {
+      _log("Failed to pair via QR: $e");
+      return const PairingOutcome.failure(
+        'Cannot reach the TV at the address in this code. Check the Wi-Fi '
+        'network (e.g. no guest-mode isolation) and re-scan.',
+      );
     } catch (e) {
       _log("Failed to pair via QR: $e");
-      return false;
+      return const PairingOutcome.failure(
+        'Invalid or expired QR code. Please re-scan.',
+      );
     }
   }
 
   /// Shared by [confirmPairing] and [pairViaQr]: on a successful `{status,
   /// token}` response, saves the auth token + connected-TV info and connects.
-  Future<bool> _completePairing(TVDevice device, http.Response response) async {
-    if (response.statusCode != 200) return false;
+  Future<PairingOutcome> _completePairing(
+    TVDevice device,
+    http.Response response,
+  ) async {
+    if (response.statusCode != 200) {
+      return const PairingOutcome.failure(
+        'Pairing rejected by the TV — the code may have expired. Please re-scan.',
+      );
+    }
 
     final body = jsonDecode(response.body);
     final token = body['token'] as String;
@@ -211,7 +246,7 @@ class ConnectorService {
     _connectedTvName = device.name;
 
     connectToSavedTv();
-    return true;
+    return const PairingOutcome.success();
   }
 
   // Establish WebSocket connection
@@ -234,7 +269,7 @@ class ConnectorService {
 
     try {
       final channel = WebSocketChannel.connect(Uri.parse(wsUrl));
-      await channel.ready.timeout(const Duration(seconds: 4));
+      await channel.ready.timeout(const Duration(seconds: 8));
 
       _wsChannel = channel;
       _isConnected = true;

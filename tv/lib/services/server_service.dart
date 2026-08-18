@@ -37,6 +37,10 @@ class ServerService {
   HttpServer? _server;
   BonsoirBroadcast? _broadcast;
 
+  /// The port actually bound, which may differ from the requested one if that
+  /// was taken. Advertised via mDNS and encoded in the pairing QR code.
+  int? get serverPort => _server?.port;
+
   final _pairingSessions = <String, _PairingSession>{};
 
   /// Single-use token proactively displayed as a QR code on the Pair Device
@@ -159,19 +163,36 @@ class ServerService {
 
     final app = Router();
     app.post(MirrorProtocol.apiPair, _handlePairRequest);
-    app.post(MirrorProtocol.apiPairConfirm, (r) => _handlePairConfirm(r, port));
-    app.post(MirrorProtocol.apiPairQr, (r) => _handlePairQr(r, port));
+    app.post(MirrorProtocol.apiPairConfirm, _handlePairConfirm);
+    app.post(MirrorProtocol.apiPairQr, _handlePairQr);
     app.get(MirrorProtocol.wsPath, _handleWebSocketUpgrade);
 
-    try {
-      _server = await shelf_io.serve(app.call, InternetAddress.anyIPv4, port);
-      _log('HTTP Server running on port ${_server!.port}');
-      await _startMdnsBroadcast(tvName, _server!.port);
-      _isRunning = true;
-    } catch (e) {
-      _log("Failed to start server/broadcast: $e");
-      _isRunning = false;
+    // Try the requested port first, then fall back across the next few so a
+    // conflict (another app already bound it on the TV) doesn't kill the
+    // server. mDNS and the QR code advertise whichever port actually bound.
+    for (final candidate in List.generate(10, (i) => port + i)) {
+      try {
+        _server = await shelf_io.serve(
+          app.call,
+          InternetAddress.anyIPv4,
+          candidate,
+        );
+        break;
+      } catch (e) {
+        _log("Port $candidate unavailable, trying next: $e");
+      }
     }
+
+    if (_server == null) {
+      _log("Failed to start server: no free port in range $port-${port + 9}");
+      _isRunning = false;
+      return;
+    }
+
+    final actualPort = _server!.port;
+    _log('HTTP Server running on port $actualPort');
+    await _startMdnsBroadcast(tvName, actualPort);
+    _isRunning = true;
   }
 
   Future<void> _startMdnsBroadcast(String tvName, int port) async {
@@ -214,10 +235,7 @@ class ServerService {
   }
 
   /// HTTP Endpoint: Confirm PIN and retrieve Token.
-  Future<shelf.Response> _handlePairConfirm(
-    shelf.Request request,
-    int port,
-  ) async {
+  Future<shelf.Response> _handlePairConfirm(shelf.Request request) async {
     final payload = await request.readAsString();
     try {
       final body = jsonDecode(payload);
@@ -234,7 +252,6 @@ class ServerService {
 
       final response = await _completePairing(
         request: request,
-        port: port,
         deviceName: session.deviceName,
       );
 
@@ -253,7 +270,7 @@ class ServerService {
   /// screen is scannable from a cold start. The token is single-use: it's
   /// regenerated after every successful (or attempted) confirmation so a
   /// photo of an old QR code stops working.
-  Future<shelf.Response> _handlePairQr(shelf.Request request, int port) async {
+  Future<shelf.Response> _handlePairQr(shelf.Request request) async {
     final payload = await request.readAsString();
     try {
       final body = jsonDecode(payload);
@@ -267,7 +284,6 @@ class ServerService {
 
       final response = await _completePairing(
         request: request,
-        port: port,
         deviceName: deviceName,
       );
       regenerateQrToken();
@@ -281,7 +297,6 @@ class ServerService {
   /// the paired client, and returns the `{status, token}` response body.
   Future<shelf.Response> _completePairing({
     required shelf.Request request,
-    required int port,
     required String deviceName,
   }) async {
     final token = const Uuid().v4();
@@ -290,7 +305,7 @@ class ServerService {
     final client = MirrorDevice(
       name: deviceName,
       ip: ip.remoteAddress.address,
-      port: port,
+      port: serverPort ?? MirrorProtocol.defaultPort,
       token: token,
     );
 

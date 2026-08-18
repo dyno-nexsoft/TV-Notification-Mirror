@@ -80,17 +80,40 @@ class TvPermissions extends _$TvPermissions {
 @Riverpod(keepAlive: true)
 Future<String> tvIp(Ref ref) async {
   try {
+    InternetAddress? best;
+    var bestRank = 3;
     for (final interface in await NetworkInterface.list()) {
+      final rank = _interfaceRank(interface.name);
       for (final addr in interface.addresses) {
-        if (addr.type == InternetAddressType.IPv4 && !addr.isLoopback) {
-          return addr.address;
+        if (addr.type == InternetAddressType.IPv4 &&
+            !addr.isLoopback &&
+            _isUsableAddress(addr.address) &&
+            rank < bestRank) {
+          best = addr;
+          bestRank = rank;
         }
       }
     }
-    return 'Disconnected';
+    return best?.address ?? 'Disconnected';
   } catch (e) {
     return 'Error fetching IP';
   }
+}
+
+/// True for an IPv4 address a phone could actually reach over the LAN: skips
+/// link-local (169.254.x.x) and the unspecified address.
+bool _isUsableAddress(String address) {
+  if (address == '0.0.0.0') return false;
+  return InternetAddress.tryParse(address)?.isLinkLocal != true;
+}
+
+/// Prefers the real Wi-Fi/Ethernet adapter over virtual ones (VPN tunnels,
+/// USB tethering, aliases) that Fire TV and other set-top boxes expose.
+int _interfaceRank(String name) {
+  final lower = name.toLowerCase();
+  if (lower.contains('wlan') || lower.contains('wifi')) return 0;
+  if (lower.contains('eth') || lower.contains('rmnet')) return 1;
+  return 2;
 }
 
 // ── TV Background Service State Provider ───────────────────────────────────
@@ -99,6 +122,7 @@ class TvServiceData {
   const TvServiceData({
     this.pairingPin,
     this.qrToken,
+    this.serverPort,
     this.isRunning = false,
     this.isDnd = false,
     this.dndUntilEpochMs,
@@ -109,6 +133,7 @@ class TvServiceData {
 
   final String? pairingPin;
   final String? qrToken;
+  final int? serverPort;
   final bool isRunning;
   final bool isDnd;
   final int? dndUntilEpochMs;
@@ -119,6 +144,7 @@ class TvServiceData {
   TvServiceData copyWith({
     String? pairingPin,
     String? qrToken,
+    int? serverPort,
     bool? isRunning,
     bool? isDnd,
     int? dndUntilEpochMs,
@@ -129,6 +155,7 @@ class TvServiceData {
     return TvServiceData(
       pairingPin: pairingPin ?? this.pairingPin,
       qrToken: qrToken ?? this.qrToken,
+      serverPort: serverPort ?? this.serverPort,
       isRunning: isRunning ?? this.isRunning,
       isDnd: isDnd ?? this.isDnd,
       dndUntilEpochMs: dndUntilEpochMs ?? this.dndUntilEpochMs,
@@ -172,6 +199,7 @@ class TvServiceState extends _$TvServiceState {
         state = TvServiceData(
           pairingPin: data['pin'],
           qrToken: data['qrToken'],
+          serverPort: data['port'] as int?,
           isRunning: data['isRunning'] ?? false,
           isDnd: data['isDnd'] ?? false,
           dndUntilEpochMs: data['dndUntilEpochMs'],

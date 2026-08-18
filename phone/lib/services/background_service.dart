@@ -117,8 +117,11 @@ void onStart(ServiceInstance service) async {
   service.on('pairViaQr').listen((event) async {
     if (event == null) return;
     final rawQrData = event['rawQrData'] as String;
-    final success = await connector.pairViaQr(rawQrData);
-    service.invoke('pairViaQrResult', {'success': success});
+    final outcome = await connector.pairViaQr(rawQrData);
+    service.invoke('pairViaQrResult', {
+      'success': outcome.success,
+      'message': outcome.message,
+    });
   });
 
   service.on('disconnect').listen((_) {
